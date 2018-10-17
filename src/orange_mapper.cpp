@@ -2,10 +2,26 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include "OrangeConfig.h"
+
 
 void help() {
     printf(
-        "This is help menu");
+        "\n"
+        "The program accepts two files as floating arguments and outputts number of sequences, average length, minimal and maximal length.\n"
+        "Supported formats are .fasta, .fa, .fastq, .fq, .fasta.gz, .fa.gz, .fastq.gz, .fq.gz\n"
+        "\n"
+        "usage: orange_mapper <file_name> <file_name>\n"
+        "\n"
+        "options: \n"
+        "      -h, --help  -  prints help menu (currently displaying)\n"
+        "      -v, --version  -  prints help menu (currently displaying)\n");
+}
+
+void version() {
+    printf("Version: %d\n",
+        orange_mapper_VERSION_MAJOR
+    );
 }
 
 int main(int argc, char** argv) {
@@ -25,11 +41,11 @@ int main(int argc, char** argv) {
             exit(0);
         }
         case 'v': {
-            printf("Version: 1\n");
+            version();
             exit(0);
         }
         default: {
-            printf("Option not recognised.\n", argv[0]);
+            printf("Option not recognised.\n");
             exit(1);
         }
         }
