@@ -9,7 +9,7 @@
 #include <limits>
 
 #include "brown_mapper.hpp"
-#include "bioparser.hpp"
+#include "bioparser/bioparser.hpp"
 
 class FastAQ {
 public:
@@ -174,7 +174,6 @@ int main (int argc, char **argv) {
 
   fprintf(stderr, "File 1:\n");
   print_statistics(fastaq_objects1);
-  printf("%s\n", fasta_objects1[0]->name);
   fprintf(stderr, "File 2:\n");
   print_statistics(fastaq_objects2);
 
