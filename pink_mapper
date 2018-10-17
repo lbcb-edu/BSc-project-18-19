@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+int main(int argc, char* argv[]) {
+    vector<string> allArgs(argv, argv+argc);
+    
+    string arg1;
+    string arg2;
+    int len1;
+    int len2;
+    
+    switch(argc) {
+        case 2: arg1 = allArgs.at(1);
+                len1 = arg1.length();
+                break;
+                 
+        case 3: arg1 = "00000000" + allArgs.at(1);
+                len1 = arg1.length();
+                std::transform(arg1.begin(), arg1.end(), arg1.begin(), ::tolower);
+                
+                arg2 = "00000000" + allArgs.at(2);
+                len2 = arg2.length();
+                std::transform(arg2.begin(), arg2.end(), arg2.begin(), ::tolower);
+                break;
+        
+        default: cout << "Wrong number of arguments." << endl;
+                 return 1;
+    }
+    
+    if(arg1.compare("-h") == 0 || arg1.compare("--help") == 0) {
+        cout << "Poruka!" << endl;
+        
+    } else if(arg1.compare("-v") == 0 || arg1.compare("--version") == 0) {
+        cout << "v0.1.0" << endl;
+        
+    } else if(argc == 3 &&
+              
+              (arg1.substr(len1 - 6).compare(".fasta")    == 0 ||
+               arg1.substr(len1 - 3).compare(".fa")       == 0 ||
+               arg1.substr(len1 - 9).compare(".fasta.gz") == 0 ||
+               arg1.substr(len1 - 6).compare(".fa.gz")    == 0 ||
+               
+               arg1.substr(len1 - 6).compare(".fastq")    == 0 ||
+               arg1.substr(len1 - 3).compare(".fq")       == 0 ||
+               arg1.substr(len1 - 9).compare(".fastq.gz") == 0 ||
+               arg1.substr(len1 - 6).compare(".fq.gz")    == 0) &&
+                   
+              (arg2.substr(len2 - 6).compare(".fastq")    == 0 ||
+               arg2.substr(len2 - 3).compare(".fq")       == 0 ||
+               arg2.substr(len2 - 9).compare(".fastq.gz") == 0 ||
+               arg2.substr(len2 - 6).compare(".fq.gz")    == 0)) {
+                       
+        cout << "Bioparser!" << endl;
+            
+    } else {
+        cout << "Wrong input." << endl;
+        return 1;
+    }
+    
+    return 0;
+}  
