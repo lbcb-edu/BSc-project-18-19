@@ -1,0 +1,2 @@
+#define brown_mapper_VERSION_MAJOR @brown_mapper_VERSION_MAJOR@
+#define brown_mapper_VERSION_MINOR @brown_mapper_VERSION_MINOR@
