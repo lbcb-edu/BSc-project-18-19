@@ -90,12 +90,47 @@ void version() {
     );
 }
 
+void printStatistics(uint32_t max, uint32_t min, uint32_t num_of_seq, uint64_t total_length, string const &filePath) {
+	fprintf(stderr, "----Statistics----\n");
+	fprintf(stderr, "--%s--\n", filePath.c_str());
+	fprintf(stderr, "Maximum length : %d\n", max);
+	fprintf(stderr, "Minimum length : %d\n", max);
+	fprintf(stderr, "Number of sequences : %d\n", num_of_seq);
+	fprintf(stderr, "Average length : %f\n", (double)total_length / num_of_seq);
+	fprintf(stderr, "------------------\n");
+}
+
 void readFASTQFile(string const &filePath) {
 //TODO
 }
 
 void readFASTAFile(string const &filePath) {
-//TODO
+	vector<unique_ptr<FASTAEntity>> fasta_objects;
+	auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FASTAEntity>(filePath);
+	
+	fasta_parser->parse_objects(fasta_objects, -1);
+	
+	uint32_t max = 0;
+
+	uint32_t min = -1;
+
+	uint32_t num_of_seq = 0;
+	uint64_t total_length = 0;
+
+	for(auto const& p : fasta_objects) {
+		num_of_seq++;
+		total_length += p-> sequence_length;
+
+		max = (max > p -> sequence_length) ? max : p-> sequence_length;
+			
+		if(min == -1) {
+			min = p-> sequence_length;
+		} else {
+			min = (min < p -> sequence_length) ? min : p-> sequence_length;
+		}
+	}
+
+	printStatistics(max, min, num_of_seq, total_length, filePath);
 }
 
 
@@ -116,11 +151,9 @@ int main(int argc, char** argv) {
 		{"help", no_argument, 0, 'h'},
 	};
 
-	string short_opts = "hv";
-
 	char optchr;
 
-	while((optchr = getopt_long(argc, argv, short_opts, options, NULL)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
 		switch(optchr) {
 			case 0:
 				break;
