@@ -76,10 +76,10 @@ bool isFasta(string arg) {
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
     
-    return  arg.substr(len - 6).compare(".fasta")   == 0 ||
-           arg.substr(len - 3).compare(".fa")      == 0 ||
+    return arg.substr(len - 6).compare(".fasta")    == 0 ||
+           arg.substr(len - 3).compare(".fa")       == 0 ||
            arg.substr(len - 9).compare(".fasta.gz") == 0 ||
-           arg.substr(len - 6).compare(".fa.gz")   == 0;
+           arg.substr(len - 6).compare(".fa.gz")    == 0;
 }
 
 bool isFastq(string arg) {
@@ -87,10 +87,10 @@ bool isFastq(string arg) {
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
         
-    return  arg.substr(len - 6).compare(".fastq")   == 0 ||
-           arg.substr(len - 3).compare(".fq")      == 0 ||
+    return arg.substr(len - 6).compare(".fastq")    == 0 ||
+           arg.substr(len - 3).compare(".fq")       == 0 ||
            arg.substr(len - 9).compare(".fastq.gz") == 0 ||
-           arg.substr(len - 6).compare(".fq.gz")   == 0;
+           arg.substr(len - 6).compare(".fq.gz")    == 0;
 }
 
 void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
@@ -113,9 +113,9 @@ void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "     << average << endl;
-    cerr << "Minimal length: "     << min    << endl;
-    cerr << "Maximal length: "     << max    << endl;  
+    cerr << "Average length: "      << average << endl;
+    cerr << "Minimal length: "      << min    << endl;
+    cerr << "Maximal length: "      << max    << endl;  
 }
 
 void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
@@ -138,8 +138,8 @@ void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "     << average << endl;
-    cerr << "Minimal length: "     << min    << endl;
+    cerr << "Average length: "      << average << endl;
+    cerr << "Minimal length: "      << min    << endl;
     cerr << "Maximal length: "     << max    << endl;  
 }
 
