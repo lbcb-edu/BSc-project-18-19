@@ -10,6 +10,8 @@ set (orange_mapper_VERSION_MAJOR 0)
 set (orange_mapper_VERSION_MINOR 1)
 set (orange_mapper_VERSION_PATCH 0)
 
+set(CMAKE_CXX_STANDARD 11)
+
 configure_file (
     "${PROJECT_SOURCE_DIR}/src/OrangeConfig.h.in"
     "${PROJECT_BINARY_DIR}/OrangeConfig.h"
