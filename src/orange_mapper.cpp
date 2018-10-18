@@ -90,8 +90,9 @@ void help() {
 }
 
 void version() {
-    printf("Version: %d\n",
-        orange_mapper_VERSION_MAJOR
+    printf("v%d.%d.0\n",
+        orange_mapper_VERSION_MAJOR,
+		orange_mapper_VERSION_MINOR
     );
 }
 
