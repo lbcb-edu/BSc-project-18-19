@@ -101,7 +101,39 @@ void printStatistics(uint32_t max, uint32_t min, uint32_t num_of_seq, uint64_t t
 }
 
 void readFASTQFile(string const &filePath) {
-//TODO
+	vector<unique_ptr<FASTQEntity>> fastq_objects;
+	auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FASTQEntity>(filePath);
+
+	uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
+	while (true) {
+		auto status = fastq_parser->parse_objects(fastq_objects, size_in_bytes);
+		if (status == false) {
+			break;
+		}
+	}
+
+	uint32_t max = 0;
+
+	uint32_t min = -1;
+
+	uint32_t num_of_seq = 0;
+	uint64_t total_length = 0;
+
+	for(auto const& p : fastq_objects) {
+		num_of_seq++;
+		total_length += p-> sequence_length;
+
+		max = (max > p -> sequence_length) ? max : p-> sequence_length;
+			
+		if(min == -1) {
+			min = p-> sequence_length;
+		} else {
+			min = (min < p -> sequence_length) ? min : p-> sequence_length;
+		}
+	}
+
+	printStatistics(max, min, num_of_seq, total_length, filePath);
+
 }
 
 void readFASTAFile(string const &filePath) {
