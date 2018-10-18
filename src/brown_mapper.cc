@@ -10,6 +10,15 @@
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
 
+const std::set<std::string> fasta_formats = {".fasta", ".fa", ".fasta.gz", ".fa.gz"};
+const std::set<std::string> fastq_formats = {".fastq", ".fq", ".fastq.gz", ".fq.gz"};
+
+static struct option long_options[] = {
+  {"help",    no_argument, NULL, 'h'},
+  {"version", no_argument, NULL, 'v'},
+  {NULL,      no_argument, NULL,  0 }
+};
+
 class FastAQ {
 public:
   std::string name;
@@ -24,33 +33,27 @@ public:
     const char* name, uint32_t name_length,
     const char* sequence, uint32_t sequence_length,
     const char* quality, uint32_t quality_length) {
-      this->name = name;
-      this->sequence = sequence;
-      this->quality = quality;
+      this->name = {name, name_length};
+      this->sequence = {sequence, sequence_length};
+      this->quality = {quality, quality_length};
   }
 
   static void parse(
     std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
-    const std::string &file, const int &file_format) {
+    const std::string file, const int file_format) {
       if (file_format == 1) {
         auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file);
         fasta_parser->parse_objects(fastaq_objects, -1);
       } else {
         auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FastAQ>(file);
-        uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
-        while (true) {
-          auto status = fastq_parser->parse_objects(fastaq_objects, size_in_bytes);
-          if (status == false) {
-            break;
-          }
-        }
+        fastq_parser->parse_objects(fastaq_objects, -1);
       }
       FastAQ::print_statistics(fastaq_objects, file);
     }
 
     static void print_statistics(
       const std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
-      const std::string &file) {
+      const std::string file) {
         int num = fastaq_objects.size();
         double average = 0;
         uint32_t max = 0;
@@ -104,7 +107,7 @@ void version(void) {
   );
 }
 
-bool contains_extension(const std::string &file, const std::set<std::string> &extensions) {
+bool contains_extension(const std::string file, const std::set<std::string> &extensions) {
   for (const auto& it: extensions) {
     if (file.size() > it.size()) {
       if (file.compare(file.size()-it.size(), std::string::npos, it) == 0) {
@@ -117,11 +120,6 @@ bool contains_extension(const std::string &file, const std::set<std::string> &ex
 
 int main (int argc, char **argv) {
   int optchr;
-  static struct option long_options[] = {
-    {"help",    no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'},
-    {NULL,      no_argument, NULL,  0 }
-  };
 
   while ((optchr = getopt_long(argc, argv, "hv", long_options, NULL)) != -1) {
     switch (optchr) {
@@ -144,9 +142,6 @@ int main (int argc, char **argv) {
     printf("Expected 2 mapping arguments! Use --help for usage.\n");
     exit(1);
   }
-
-  std::set<std::string> fasta_formats = {".fasta", ".fa", ".fasta.gz", ".fa.gz"};
-  std::set<std::string> fastq_formats = {".fastq", ".fq", ".fastq.gz", ".fq.gz"};
 
   std::string file1 (argv[optind]);
   std::string file2 (argv[optind+1]);
