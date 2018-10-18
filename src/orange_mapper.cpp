@@ -19,6 +19,23 @@ struct option options[] = {
 		{"help", no_argument, 0, 'h'},
 	};
 
+struct statsStruct {
+	uint32_t max;
+	uint32_t min;
+
+	uint32_t num_of_seq;
+	uint64_t total_length;
+
+	statsStruct() {
+		max = 0;
+		min = -1;
+
+		num_of_seq = 0;
+		total_length = 0;
+	}
+};
+typedef struct statsStruct stats;
+
 class FASTAEntity {
 	
 	public:
@@ -96,14 +113,31 @@ void version() {
     );
 }
 
-void printStatistics(uint32_t max, uint32_t min, uint32_t num_of_seq, uint64_t total_length, string const &filePath) {
+void printStatistics(stats const &fileStats, string const &filePath) {
 	fprintf(stderr, "----Statistics----\n");
 	fprintf(stderr, "--%s--\n", filePath.c_str());
-	fprintf(stderr, "Maximum length : %d\n", max);
-	fprintf(stderr, "Minimum length : %d\n", min);
-	fprintf(stderr, "Number of sequences : %d\n", num_of_seq);
-	fprintf(stderr, "Average length : %f\n", (double)total_length / num_of_seq);
+	fprintf(stderr, "Maximum length : %d\n", fileStats.max);
+	fprintf(stderr, "Minimum length : %d\n", fileStats.min);
+	fprintf(stderr, "Number of sequences : %d\n", fileStats.num_of_seq);
+	fprintf(stderr, "Average length : %f\n", (double)fileStats.total_length / fileStats.num_of_seq);
 	fprintf(stderr, "------------------\n");
+}
+
+template<class T>
+void calculateStats(vector<unique_ptr<T>> const &entities, stats *fileStats) {
+	
+	for(auto const& p : entities) {
+		fileStats->num_of_seq++;
+		fileStats->total_length += p-> sequence_length;
+
+		fileStats->max = (fileStats->max > p -> sequence_length) ? fileStats->max : p-> sequence_length;
+			
+		if(fileStats->min == -1) {
+			fileStats->min = p-> sequence_length;
+		} else {
+			fileStats->min = (fileStats->min < p -> sequence_length) ? fileStats->min : p-> sequence_length;
+		}
+	}
 }
 
 void readFASTQFile(string const &filePath) {
@@ -111,35 +145,17 @@ void readFASTQFile(string const &filePath) {
 	auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FASTQEntity>(filePath);
 
 	uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
+	stats fileStats;
 	while (true) {
 		auto status = fastq_parser->parse_objects(fastq_objects, size_in_bytes);
+		calculateStats<FASTQEntity>(fastq_objects, &fileStats);	
+		
 		if (status == false) {
 			break;
 		}
 	}
 
-	uint32_t max = 0;
-
-	uint32_t min = -1;
-
-	uint32_t num_of_seq = 0;
-	uint64_t total_length = 0;
-
-	for(auto const& p : fastq_objects) {
-		num_of_seq++;
-		total_length += p-> sequence_length;
-
-		max = (max > p -> sequence_length) ? max : p-> sequence_length;
-			
-		if(min == -1) {
-			min = p-> sequence_length;
-		} else {
-			min = (min < p -> sequence_length) ? min : p-> sequence_length;
-		}
-	}
-
-	printStatistics(max, min, num_of_seq, total_length, filePath);
-
+	printStatistics(fileStats, filePath);
 }
 
 void readFASTAFile(string const &filePath) {
@@ -148,29 +164,11 @@ void readFASTAFile(string const &filePath) {
 	
 	fasta_parser->parse_objects(fasta_objects, -1);
 	
-	uint32_t max = 0;
+	stats fileStats;
+	calculateStats<FASTAEntity>(fasta_objects, &fileStats);
 
-	uint32_t min = -1;
-
-	uint32_t num_of_seq = 0;
-	uint64_t total_length = 0;
-
-	for(auto const& p : fasta_objects) {
-		num_of_seq++;
-		total_length += p-> sequence_length;
-
-		max = (max > p -> sequence_length) ? max : p-> sequence_length;
-			
-		if(min == -1) {
-			min = p-> sequence_length;
-		} else {
-			min = (min < p -> sequence_length) ? min : p-> sequence_length;
-		}
-	}
-
-	printStatistics(max, min, num_of_seq, total_length, filePath);
+	printStatistics(fileStats, filePath);
 }
-
 
 void calculateAndPrintOutStatistics(string const &firstFilePath, string const &secondFilePath, bool isFirstFileFASTA) {
 	if(isFirstFileFASTA) {
