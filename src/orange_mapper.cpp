@@ -94,7 +94,7 @@ void printStatistics(uint32_t max, uint32_t min, uint32_t num_of_seq, uint64_t t
 	fprintf(stderr, "----Statistics----\n");
 	fprintf(stderr, "--%s--\n", filePath.c_str());
 	fprintf(stderr, "Maximum length : %d\n", max);
-	fprintf(stderr, "Minimum length : %d\n", max);
+	fprintf(stderr, "Minimum length : %d\n", min);
 	fprintf(stderr, "Number of sequences : %d\n", num_of_seq);
 	fprintf(stderr, "Average length : %f\n", (double)total_length / num_of_seq);
 	fprintf(stderr, "------------------\n");
