@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <getopt.h>
 #include <stdlib.h>
 #include <iostream>
@@ -14,11 +13,8 @@
 class FastAQ {
 public:
   std::string name;
-  uint32_t name_length;
   std::string sequence;
-  uint32_t sequence_length;
   std::string quality;
-  uint32_t quality_length;
 
   FastAQ(
     const char* name, uint32_t name_length,
@@ -29,12 +25,53 @@ public:
     const char* sequence, uint32_t sequence_length,
     const char* quality, uint32_t quality_length) {
       this->name = name;
-      this->name_length = name_length;
       this->sequence = sequence;
-      this->sequence_length = sequence_length;
       this->quality = quality;
-      this->quality_length = quality_length;
   }
+
+  static void parse(
+    std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
+    const std::string &file, const int &file_format) {
+      if (file_format == 1) {
+        auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file);
+        fasta_parser->parse_objects(fastaq_objects, -1);
+      } else {
+        auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FastAQ>(file);
+        uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
+        while (true) {
+          auto status = fastq_parser->parse_objects(fastaq_objects, size_in_bytes);
+          if (status == false) {
+            break;
+          }
+        }
+      }
+      FastAQ::print_statistics(fastaq_objects, file);
+    }
+
+    static void print_statistics(
+      const std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
+      const std::string &file) {
+        int num = fastaq_objects.size();
+        double average = 0;
+        uint32_t max = 0;
+        uint32_t min = std::numeric_limits<int>::max();
+        for (int i = 0; i < num; i++) {
+          average += fastaq_objects[i]->sequence.size();
+          if (fastaq_objects[i]->sequence.size() > max) {
+            max = fastaq_objects[i]->sequence.size();
+          }
+          if (fastaq_objects[i]->sequence.size() < min) {
+            min = fastaq_objects[i]->sequence.size();
+          }
+        }
+        average /= num;
+        fprintf(stderr, "Stats for: %s\n"
+                        "  Number of sequences: %d\n"
+                        "  Average length:      %g\n"
+                        "  Maximum length:      %d\n"
+                        "  Minimum length:      %d\n",
+                        file.c_str(), num, average, max, min);
+    }
 };
 
 void help(void) {
@@ -67,7 +104,7 @@ void version(void) {
   );
 }
 
-bool contains_extension(std::string file, std::set<std::string> extensions) {
+bool contains_extension(const std::string &file, const std::set<std::string> &extensions) {
   for (const auto& it: extensions) {
     if (file.size() > it.size()) {
       if (file.compare(file.size()-it.size(), std::string::npos, it) == 0) {
@@ -76,28 +113,6 @@ bool contains_extension(std::string file, std::set<std::string> extensions) {
     }
   }
   return false;
-}
-
-void print_statistics(const std::vector<std::unique_ptr<FastAQ>> &fastaq_objects) {
-    int num = fastaq_objects.size();
-    double average = 0;
-    uint32_t max = 0;
-    uint32_t min = std::numeric_limits<int>::max();
-    for (int i = 0; i < num; i++) {
-      average += fastaq_objects[i]->sequence_length;
-      if (fastaq_objects[i]->sequence_length > max) {
-        max = fastaq_objects[i]->sequence_length;
-      }
-      if (fastaq_objects[i]->sequence_length < min) {
-        min = fastaq_objects[i]->sequence_length;
-      }
-    }
-    average /= num;
-    fprintf(stderr, "Number of sequences: %d\n"
-                    "Average length:      %g\n"
-                    "Maximum length:      %d\n"
-                    "Minimum length:      %d\n",
-                    num, average, max, min);
 }
 
 int main (int argc, char **argv) {
@@ -153,28 +168,10 @@ int main (int argc, char **argv) {
   }
 
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects1;
-  if (file1_format == 1) {
-    auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file1);
-    fasta_parser->parse_objects(fastaq_objects1, -1);
-  } else {
-    auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FastAQ>(file1);
-    uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
-    while (true) {
-      auto status = fastq_parser->parse_objects(fastaq_objects1, size_in_bytes);
-      if (status == false) {
-        break;
-      }
-    }
-  }
-  
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects2;
-  auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file2);
-  fasta_parser->parse_objects(fastaq_objects2, -1);
 
-  fprintf(stderr, "File 1:\n");
-  print_statistics(fastaq_objects1);
-  fprintf(stderr, "File 2:\n");
-  print_statistics(fastaq_objects2);
+  FastAQ::parse(fastaq_objects1, file1, file1_format);
+  FastAQ::parse(fastaq_objects2, file2, file2_format);
 
   return 0;
 }
