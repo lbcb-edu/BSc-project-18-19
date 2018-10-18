@@ -19,7 +19,13 @@ public:
   uint32_t sequence_length;
   std::string quality;
   uint32_t quality_length;
-  void init(const char* name, uint32_t name_length,
+
+  FastAQ(
+    const char* name, uint32_t name_length,
+    const char* sequence, uint32_t sequence_length) : FastAQ(name, name_length, sequence, sequence_length, "", 0){}
+
+  FastAQ(
+    const char* name, uint32_t name_length,
     const char* sequence, uint32_t sequence_length,
     const char* quality, uint32_t quality_length) {
       this->name = name;
@@ -28,17 +34,6 @@ public:
       this->sequence_length = sequence_length;
       this->quality = quality;
       this->quality_length = quality_length;
-    }
-  FastAQ(
-    const char* name, uint32_t name_length,
-    const char* sequence, uint32_t sequence_length) {
-      init(name, name_length, sequence, sequence_length, "", 0);
-  }
-  FastAQ(
-    const char* name, uint32_t name_length,
-    const char* sequence, uint32_t sequence_length,
-    const char* quality, uint32_t quality_length) {
-      init(name, name_length, sequence, sequence_length, quality, quality_length);
   }
 };
 
@@ -73,11 +68,9 @@ void version(void) {
 }
 
 bool contains_extension(std::string file, std::set<std::string> extensions) {
-  std::set<std::string>::iterator it;
-  for (it = extensions.begin(); it != extensions.end(); it++) {
-    std::string format = *it;
-    if (file.size() > format.size()) {
-      if (file.compare(file.size()-format.size(), std::string::npos, format) == 0) {
+  for (const auto& it: extensions) {
+    if (file.size() > it.size()) {
+      if (file.compare(file.size()-it.size(), std::string::npos, it) == 0) {
         return true;
       }
     }
@@ -142,18 +135,23 @@ int main (int argc, char **argv) {
 
   std::string file1 (argv[optind]);
   std::string file2 (argv[optind+1]);
+
   int file1_format = 0;
   int file2_format = 0;
+
   if (contains_extension(file1, fasta_formats)) {
     file1_format = 1;
   } else if (contains_extension(file1, fastq_formats)) {
     file1_format = 2;
   }
+
   file2_format = contains_extension(file2, fasta_formats);
+
   if ( !(file1_format && file2_format) ) {
     printf("Unsupported format(s)! Check --help for supported file formats.\n");
     exit(1);
   }
+
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects1;
   if (file1_format == 1) {
     auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file1);
@@ -168,6 +166,7 @@ int main (int argc, char **argv) {
       }
     }
   }
+  
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects2;
   auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FastAQ>(file2);
   fasta_parser->parse_objects(fastaq_objects2, -1);
