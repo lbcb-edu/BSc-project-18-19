@@ -14,6 +14,11 @@ using namespace std;
 vector<string> FASTAExtensionVector{".fasta", ".fa", ".fasta.gz", ".fa.gz"};
 vector<string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq.gz"};
 
+struct option options[] = {
+		{"version", no_argument, 0, 'v'},
+		{"help", no_argument, 0, 'h'},
+	};
+
 class FASTAEntity {
 	
 	public:
@@ -177,11 +182,6 @@ void calculateAndPrintOutStatistics(string const &firstFilePath, string const &s
 }
 
 int main(int argc, char** argv) {
-
-	struct option options[] = {
-		{"version", no_argument, 0, 'v'},
-		{"help", no_argument, 0, 'h'},
-	};
 
 	char optchr;
 
