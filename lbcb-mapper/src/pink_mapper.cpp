@@ -8,10 +8,10 @@ using namespace std;
 class Fasta {
 
 public:
-        const char* name;
-        const char* sequence;
-        uint32_t name_length;
-        uint32_t sequence_length;
+    const char* name;
+    const char* sequence;
+    uint32_t name_length;
+    uint32_t sequence_length;
 
     Fasta(
         const char* name, uint32_t name_length,
@@ -26,12 +26,12 @@ public:
 class Fastq {
 
 public:
-        const char* name;
-        const char* sequence;
-        const char* quality;
-        uint32_t name_length;
-        uint32_t sequence_length;
-        uint32_t quality_length;
+    const char* name;
+    const char* sequence;
+    const char* quality;
+    uint32_t name_length;
+    uint32_t sequence_length;
+    uint32_t quality_length;
 
     Fastq(
         const char* name, uint32_t name_length,
@@ -76,10 +76,10 @@ bool isFasta(string arg) {
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
     
-    return arg.substr(len - 6).compare(".fasta")       == 0 ||
-                 arg.substr(len - 3).compare(".fa")             == 0 ||
-                 arg.substr(len - 9).compare(".fasta.gz") == 0 ||
-                 arg.substr(len - 6).compare(".fa.gz")       == 0;
+    return  arg.substr(len - 6).compare(".fasta")   == 0 ||
+           arg.substr(len - 3).compare(".fa")      == 0 ||
+           arg.substr(len - 9).compare(".fasta.gz") == 0 ||
+           arg.substr(len - 6).compare(".fa.gz")   == 0;
 }
 
 bool isFastq(string arg) {
@@ -87,10 +87,10 @@ bool isFastq(string arg) {
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
         
-    return  arg.substr(len - 6).compare(".fastq")       == 0 ||
-                  arg.substr(len - 3).compare(".fq")             == 0 ||
-                  arg.substr(len - 9).compare(".fastq.gz") == 0 ||
-                  arg.substr(len - 6).compare(".fq.gz")       == 0;
+    return  arg.substr(len - 6).compare(".fastq")   == 0 ||
+           arg.substr(len - 3).compare(".fq")      == 0 ||
+           arg.substr(len - 9).compare(".fastq.gz") == 0 ||
+           arg.substr(len - 6).compare(".fq.gz")   == 0;
 }
 
 void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
@@ -113,9 +113,9 @@ void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "              << average      << endl;
-    cerr << "Minimal length: "              << min              << endl;
-    cerr << "Maximal length: "             << max             << endl;  
+    cerr << "Average length: "     << average << endl;
+    cerr << "Minimal length: "     << min    << endl;
+    cerr << "Maximal length: "     << max    << endl;  
 }
 
 void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
@@ -138,27 +138,27 @@ void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "              << average      << endl;
-    cerr << "Minimal length: "              << min              << endl;
-    cerr << "Maximal length: "             << max             << endl;    
+    cerr << "Average length: "     << average << endl;
+    cerr << "Minimal length: "     << min    << endl;
+    cerr << "Maximal length: "     << max    << endl;  
 }
 
 void help() {
     printf(
-                "usage: lbcb-mapper [options ...] <fragments> <genome>\n"
-                "\n"
-                "   <fragments>\n"
-                "       input file in FASTA/FASTQ format (can be compressed with gzip)\n"
-                "       containing set of fragments\n"
-                "   <genome>\n"
-                "       input file in FASTA format (can be compressed with gzip)\n"
-                "       containing corresponding reference genome\n"
-                "\n"
-                "   options:\n"
-                "       -v, --version\n"
-                "           prints the version number\n"
-                "       -h, --help\n"
-                "           prints the usage\n");
+        "usage: lbcb-mapper [options ...] <fragments> <genome>\n"
+        "\n"
+        "   <fragments>\n"
+        "       input file in FASTA/FASTQ format (can be compressed with gzip)\n"
+        "       containing set of fragments\n"
+        "   <genome>\n"
+        "       input file in FASTA format (can be compressed with gzip)\n"
+        "       containing corresponding reference genome\n"
+        "\n"
+        "   options:\n"
+        "       -v, --version\n"
+        "           prints the version number\n"
+        "       -h, --help\n"
+        "           prints the usage\n");
 }
 
 void version() {
@@ -173,14 +173,14 @@ int main(int argc, char* argv[]) {
     
     switch(argc) {
         case 2: arg1 = allArgs.at(1);
-                     break;
+                break;
                  
         case 3: arg1 = allArgs.at(1);
-                     arg2 = allArgs.at(2);
-                     break;
+                arg2 = allArgs.at(2);
+                break;
         
         default: cout << "Wrong number of arguments." << endl;
-                       return 1;
+                 return 1;
     }
     
     if(arg1.compare("-h") == 0 || arg1.compare("--help") == 0) {
