@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(blue_mapper)
 
-add_subdirectory(/home/sara/bioinf/blue_mapper/bioparser EXCLUDE_FROM_ALL)
+set (CMAKE_CXX_STANDARD 11)
+
+add_subdirectory(bioparser EXCLUDE_FROM_ALL)
 
 add_executable(blue_mapper main.cpp)
 
