@@ -113,9 +113,9 @@ void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "      << average << endl;
-    cerr << "Minimal length: "      << min    << endl;
-    cerr << "Maximal length: "      << max    << endl;  
+    cerr << "Average length: "      << average  << endl;
+    cerr << "Minimal length: "      << min      << endl;
+    cerr << "Maximal length: "      << max      << endl;  
 }
 
 void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
@@ -138,9 +138,9 @@ void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
     average = sum/numOfSeq;
     
     cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "      << average << endl;
-    cerr << "Minimal length: "      << min    << endl;
-    cerr << "Maximal length: "     << max    << endl;  
+    cerr << "Average length: "      << average  << endl;
+    cerr << "Minimal length: "      << min      << endl;
+    cerr << "Maximal length: "      << max      << endl;  
 }
 
 void help() {
