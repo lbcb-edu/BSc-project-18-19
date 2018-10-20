@@ -49,15 +49,15 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
     uint64_t sum=0;
 
     for (auto& i : fq_objects) {
-        if ((*i).sequence_length>max){
-            max=(*i).sequence_length;
+        if (i->sequence_length>max){
+            max=i->sequence_length;
         }
 
-        if ((*i).sequence_length<min) {
-            min=(*i).sequence_length;
+        if (i->sequence_length<min) {
+            min=i->sequence_length;
         }
 
-        sum+=(*i).sequence_length;
+        sum+=i->sequence_length;
     }
 
     std::cout << "Maximum length of a sequence is: " << max << std::endl;
