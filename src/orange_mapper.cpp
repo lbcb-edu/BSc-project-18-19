@@ -6,7 +6,7 @@
 #include <string>
 
 #include "OrangeConfig.h"
-#include "bioparser.hpp"
+#include "bioparser/bioparser.hpp"
 
 
 using namespace std;
