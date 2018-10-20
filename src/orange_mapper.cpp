@@ -8,11 +8,8 @@
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
 
-
-using namespace std;
-
-vector<string> FASTAExtensionVector{".fasta", ".fa", ".fasta.gz", ".fa.gz"};
-vector<string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq.gz"};
+std::vector<std::string> FASTAExtensionVector{".fasta", ".fa", ".fasta.gz", ".fa.gz"};
+std::vector<std::string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq.gz"};
 
 struct option options[] = {
 		{"version", no_argument, 0, 'v'},
@@ -79,14 +76,14 @@ class FASTQEntity {
 		}
 };
 
-bool endsWith(string const &fullString, string const &ending) {
+bool endsWith(std::string const &fullString, std::string const &ending) {
 	if(fullString.length() < ending.length()) return false;
 	
 	return (fullString.compare(fullString.length() - ending.length(), ending.length(), ending) == 0);
 }
 
-bool isExtensionMemberOfVector(string const &str, vector<string> const vec) {
-	for(string s : vec) {
+bool isExtensionMemberOfVector(std::string const &str, std::vector<std::string> const vec) {
+	for(std::string s : vec) {
 		if(endsWith(str, s)) return true;
 	}
 
@@ -113,7 +110,7 @@ void version() {
     );
 }
 
-void printStatistics(stats const &fileStats, string const &filePath) {
+void printStatistics(stats const &fileStats, std::string const &filePath) {
 	fprintf(stderr, "----Statistics----\n");
 	fprintf(stderr, "--%s--\n", filePath.c_str());
 	fprintf(stderr, "Maximum length : %d\n", fileStats.max);
@@ -124,7 +121,7 @@ void printStatistics(stats const &fileStats, string const &filePath) {
 }
 
 template<class T>
-void calculateStats(vector<unique_ptr<T>> const &entities, stats *fileStats) {
+void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *fileStats) {
 	
 	for(auto const& p : entities) {
 		fileStats->num_of_seq++;
@@ -140,8 +137,8 @@ void calculateStats(vector<unique_ptr<T>> const &entities, stats *fileStats) {
 	}
 }
 
-void readFASTQFile(string const &filePath) {
-	vector<unique_ptr<FASTQEntity>> fastq_objects;
+void readFASTQFile(std::string const &filePath) {
+	std::vector<std::unique_ptr<FASTQEntity>> fastq_objects;
 	auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FASTQEntity>(filePath);
 
 	uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
@@ -158,8 +155,8 @@ void readFASTQFile(string const &filePath) {
 	printStatistics(fileStats, filePath);
 }
 
-void readFASTAFile(string const &filePath) {
-	vector<unique_ptr<FASTAEntity>> fasta_objects;
+void readFASTAFile(std::string const &filePath) {
+	std::vector<std::unique_ptr<FASTAEntity>> fasta_objects;
 	auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FASTAEntity>(filePath);
 	
 	fasta_parser->parse_objects(fasta_objects, -1);
@@ -170,7 +167,7 @@ void readFASTAFile(string const &filePath) {
 	printStatistics(fileStats, filePath);
 }
 
-void calculateAndPrintOutStatistics(string const &firstFilePath, string const &secondFilePath, bool isFirstFileFASTA) {
+void calculateAndPrintOutStatistics(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFileFASTA) {
 	if(isFirstFileFASTA) {
 		readFASTAFile(firstFilePath);
 	} else {
@@ -207,8 +204,8 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	string firstFilePath = argv[1];
-	string secondFilePath = argv[2];
+	std::string firstFilePath = argv[1];
+	std::string secondFilePath = argv[2];
 
 	bool isFirstFASTA = isExtensionMemberOfVector(firstFilePath, FASTAExtensionVector);
 
