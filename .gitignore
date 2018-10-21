@@ -2,6 +2,8 @@
 *.sh
 *.cmake
 *.db
+*.codelite
+*.workspace
 
 lbcb-mapper/data
 lbcb-mapper/build
