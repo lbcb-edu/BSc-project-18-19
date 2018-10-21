@@ -5,6 +5,6 @@ set (CMAKE_CXX_STANDARD 11)
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
-add_executable(blue_mapper blue_mapper.cpp)
+add_executable(blue_mapper src/blue_mapper.cpp)
 
 target_link_libraries(blue_mapper bioparser)
