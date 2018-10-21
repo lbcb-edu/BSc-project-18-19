@@ -1,1 +1,7 @@
-build/
+white_mapper.h
+white_mapper
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeCache.txt
+
