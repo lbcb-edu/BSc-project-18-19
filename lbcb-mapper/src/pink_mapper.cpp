@@ -3,25 +3,7 @@
 #include <algorithm>
 #include <bioparser/bioparser.hpp>
 
-class Fasta {
-
-public:
-    const char* name;
-    const char* sequence;
-    uint32_t name_length;
-    uint32_t sequence_length;
-
-    Fasta(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length) {
-            this -> name = name;
-            this -> name_length = name_length;
-            this -> sequence = sequence;
-            this -> sequence_length = sequence_length; 
-        }
-};
-
-class Fastq {
+class Fast {
 
 public:
     const char* name;
@@ -31,7 +13,16 @@ public:
     uint32_t sequence_length;
     uint32_t quality_length;
 
-    Fastq(
+    Fast(
+        const char* name, uint32_t name_length,
+        const char* sequence, uint32_t sequence_length) {
+            this -> name = name;
+            this -> name_length = name_length;
+            this -> sequence = sequence;
+            this -> sequence_length = sequence_length; 
+        }
+        
+    Fast(
         const char* name, uint32_t name_length,
         const char* sequence, uint32_t sequence_length,
         const char* quality, uint32_t quality_length) {
@@ -44,19 +35,19 @@ public:
     }
 };
 
-std::vector<std::unique_ptr<Fasta>> parseFasta (std::string fastaFile) {
-    std::vector<std::unique_ptr<Fasta>> fasta_objects;
+std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
+    std::vector<std::unique_ptr<Fast>> fasta_objects;
         
-    auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fasta>(fastaFile);
+    auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fast>(fastaFile);
     fasta_parser->parse_objects(fasta_objects, -1);
         
     return fasta_objects;
 }
 
-std::vector<std::unique_ptr<Fastq>> parseFastq (std::string fastqFile) {
-    std::vector<std::unique_ptr<Fastq>> fastq_objects;
+std::vector<std::unique_ptr<Fast>> parseFastq (std::string fastqFile) {
+    std::vector<std::unique_ptr<Fast>> fastq_objects;
         
-    auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fastq>(fastqFile);
+    auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fast>(fastqFile);
     uint64_t size_in_bytes = 500 * 1024 * 1024;  // 500 MB
         
     while (true) {
@@ -91,46 +82,21 @@ bool isFastq(std::string arg) {
            arg.substr(len - 6).compare(".fq.gz")    == 0;
 }
 
-void printStatsFasta(std::vector<std::unique_ptr<Fasta>> fasta_objects) {
-    unsigned numOfSeq = fasta_objects.size();
+void printStats(std::vector<std::unique_ptr<Fast>> fast_objects) {
+    unsigned numOfSeq = fast_objects.size();
     unsigned sum = 0;
     float average;
-    unsigned min = fasta_objects[0] -> sequence_length;
+    unsigned min = fast_objects[0] -> sequence_length;
     unsigned max = min;
     
     for (unsigned i=0; i < numOfSeq;  i++) {
-        sum += fasta_objects[i] -> sequence_length;
+        sum += fast_objects[i] -> sequence_length;
                 
-        if (fasta_objects[i] -> sequence_length < min) {
-            min = fasta_objects[i] -> sequence_length;
+        if (fast_objects[i] -> sequence_length < min) {
+            min = fast_objects[i] -> sequence_length;
         }
-        if (fasta_objects[i] -> sequence_length > max) {
-            max = fasta_objects[i] -> sequence_length;
-        }
-    }
-    average = sum/numOfSeq;
-    
-    std::cerr << "Number of sequences: " << numOfSeq << std::endl;
-    std::cerr << "Average length: "      << average  << std::endl;
-    std::cerr << "Minimal length: "      << min      << std::endl;
-    std::cerr << "Maximal length: "      << max      << std::endl;  
-}
-
-void printStatsFastq(std::vector<std::unique_ptr<Fastq>> fastq_objects) {
-    unsigned numOfSeq = fastq_objects.size();
-    unsigned sum = 0;
-    float average;
-    unsigned min = fastq_objects[0] -> sequence_length;
-    unsigned max = min;
-            
-    for (unsigned i=0; i < numOfSeq;  i++) {
-        sum += fastq_objects[i] -> sequence_length;
-                
-        if (fastq_objects[i] -> sequence_length < min) {
-            min = fastq_objects[i] -> sequence_length;
-        }
-        if (fastq_objects[i] -> sequence_length > max) {
-            max = fastq_objects[i] -> sequence_length;
+        if (fast_objects[i] -> sequence_length > max) {
+            max = fast_objects[i] -> sequence_length;
         }
     }
     average = sum/numOfSeq;
@@ -191,13 +157,13 @@ int main(int argc, char* argv[]) {
         
         std::cerr << "~FIRST FILE~" << std::endl;
         if (isFasta(arg1)) {
-            printStatsFasta(parseFasta(arg1));
+            printStats(parseFasta(arg1));
         } else {
-            printStatsFastq(parseFastq(arg1));
+            printStats(parseFastq(arg1));
         }
         
         std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-        printStatsFasta(parseFasta(arg2));
+        printStats(parseFasta(arg2));
         
     } else {
         std::cout << "Wrong input." << std::endl;
