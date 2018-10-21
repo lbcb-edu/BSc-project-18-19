@@ -10,3 +10,6 @@
 [submodule "lbcb-mapper/lbcb-mapper/vendor/bioparser"]
 	path = lbcb-mapper/lbcb-mapper/vendor/bioparser
 	url = https://github.com/rvaser/bioparser
+[submodule "vendor/bioparser"]
+	path = vendor/bioparser
+	url = https://github.com/rvaser/bioparser
