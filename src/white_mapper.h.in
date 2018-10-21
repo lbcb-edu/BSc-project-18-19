@@ -1,0 +1,2 @@
+#define white_mapper_VERSION_MAJOR @white_mapper_VERSION_MAJOR@
+#define white_mapper_VERSION_MINOR @white_mapper_VERSION_MINOR@
