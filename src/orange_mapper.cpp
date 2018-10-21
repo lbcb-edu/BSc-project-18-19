@@ -36,43 +36,38 @@ typedef struct statsStruct stats;
 class FASTAEntity {
 	
 	public:
-		const char *name;
+		std::string name;
 		uint32_t name_length;
-		const char *sequence;
+		std::string sequence;
 		uint32_t sequence_length;
 		
 		FASTAEntity(
 			const char *name, uint32_t name_length,
 			const char *sequence, uint32_t sequence_length) {
 
-			this->name = name;
 			this->name_length = name_length;
-			this->sequence = sequence;
+			(this->name).assign(name, name_length);
+
 			this->sequence_length = sequence_length;
+			(this->sequence).assign(sequence, sequence_length);
 		}
 };
 
-class FASTQEntity {
+class FASTQEntity : public FASTAEntity {
 
 	public:
-		const char *name;
-		uint32_t name_length;
-		const char *sequence;
-		uint32_t sequence_length;
-		const char* quality;
+		std::string quality;
 		uint32_t quality_length;
 		
 		FASTQEntity(
 			const char* name, uint32_t name_length,
 			const char* sequence, uint32_t sequence_length,
-			const char* quality, uint32_t quality_length) {
-
-			this->name = name;
-			this->name_length = name_length;
-			this->sequence = sequence;
-			this->sequence_length = sequence_length;
-			this->quality = quality;
+			const char* quality, uint32_t quality_length)
+			: FASTAEntity(name, name_length, sequence, sequence_length) {
+			
 			this->quality_length = quality_length;
+			(this->quality).assign(quality, quality_length);
+
 		}
 };
 
