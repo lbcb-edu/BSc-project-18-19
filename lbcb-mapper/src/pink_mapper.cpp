@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <bioparser/bioparser.hpp>
 
-using namespace std;
-
 class Fasta {
 
 public:
@@ -46,8 +44,8 @@ public:
     }
 };
 
-vector<unique_ptr<Fasta>> parseFasta (string fastaFile) {
-    vector<unique_ptr<Fasta>> fasta_objects;
+std::vector<std::unique_ptr<Fasta>> parseFasta (std::string fastaFile) {
+    std::vector<std::unique_ptr<Fasta>> fasta_objects;
         
     auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fasta>(fastaFile);
     fasta_parser->parse_objects(fasta_objects, -1);
@@ -55,8 +53,8 @@ vector<unique_ptr<Fasta>> parseFasta (string fastaFile) {
     return fasta_objects;
 }
 
-vector<unique_ptr<Fastq>> parseFastq (string fastqFile) {
-    vector<unique_ptr<Fastq>> fastq_objects;
+std::vector<std::unique_ptr<Fastq>> parseFastq (std::string fastqFile) {
+    std::vector<std::unique_ptr<Fastq>> fastq_objects;
         
     auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fastq>(fastqFile);
     uint64_t size_in_bytes = 500 * 1024 * 1024;  // 500 MB
@@ -71,7 +69,7 @@ vector<unique_ptr<Fastq>> parseFastq (string fastqFile) {
     return fastq_objects;
 }
 
-bool isFasta(string arg) {
+bool isFasta(std::string arg) {
     arg = "        " + arg;
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
@@ -82,7 +80,7 @@ bool isFasta(string arg) {
            arg.substr(len - 6).compare(".fa.gz")    == 0;
 }
 
-bool isFastq(string arg) {
+bool isFastq(std::string arg) {
     arg = "        " + arg;
     int len = arg.length();
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
@@ -93,7 +91,7 @@ bool isFastq(string arg) {
            arg.substr(len - 6).compare(".fq.gz")    == 0;
 }
 
-void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
+void printStatsFasta(std::vector<std::unique_ptr<Fasta>> fasta_objects) {
     unsigned numOfSeq = fasta_objects.size();
     unsigned sum = 0;
     float average;
@@ -112,13 +110,13 @@ void printStatsFasta(vector<unique_ptr<Fasta>> fasta_objects) {
     }
     average = sum/numOfSeq;
     
-    cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "      << average  << endl;
-    cerr << "Minimal length: "      << min      << endl;
-    cerr << "Maximal length: "      << max      << endl;  
+    std::cerr << "Number of sequences: " << numOfSeq << std::endl;
+    std::cerr << "Average length: "      << average  << std::endl;
+    std::cerr << "Minimal length: "      << min      << std::endl;
+    std::cerr << "Maximal length: "      << max      << std::endl;  
 }
 
-void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
+void printStatsFastq(std::vector<std::unique_ptr<Fastq>> fastq_objects) {
     unsigned numOfSeq = fastq_objects.size();
     unsigned sum = 0;
     float average;
@@ -137,10 +135,10 @@ void printStatsFastq(vector<unique_ptr<Fastq>> fastq_objects) {
     }
     average = sum/numOfSeq;
     
-    cerr << "Number of sequences: " << numOfSeq << endl;
-    cerr << "Average length: "      << average  << endl;
-    cerr << "Minimal length: "      << min      << endl;
-    cerr << "Maximal length: "      << max      << endl;  
+    std::cerr << "Number of sequences: " << numOfSeq << std::endl;
+    std::cerr << "Average length: "      << average  << std::endl;
+    std::cerr << "Minimal length: "      << min      << std::endl;
+    std::cerr << "Maximal length: "      << max      << std::endl;  
 }
 
 void help() {
@@ -166,10 +164,10 @@ void version() {
 }
 
 int main(int argc, char* argv[]) {
-    vector<string> allArgs(argv, argv+argc);
+    std::vector<std::string> allArgs(argv, argv+argc);
     
-    string arg1;
-    string arg2;
+    std::string arg1;
+    std::string arg2;
     
     switch(argc) {
         case 2: arg1 = allArgs.at(1);
@@ -179,7 +177,7 @@ int main(int argc, char* argv[]) {
                 arg2 = allArgs.at(2);
                 break;
         
-        default: cout << "Wrong number of arguments." << endl;
+        default: std::cout << "Wrong number of arguments." << std::endl;
                  return 1;
     }
     
@@ -191,18 +189,18 @@ int main(int argc, char* argv[]) {
         
     } else if(argc == 3 && (isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)) {
         
-        cerr << "~FIRST FILE~" << endl;
+        std::cerr << "~FIRST FILE~" << std::endl;
         if (isFasta(arg1)) {
             printStatsFasta(parseFasta(arg1));
         } else {
             printStatsFastq(parseFastq(arg1));
         }
         
-        cerr << "\n" << "~SECOND FILE~" << endl;
+        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
         printStatsFasta(parseFasta(arg2));
         
     } else {
-        cout << "Wrong input." << endl;
+        std::cout << "Wrong input." << std::endl;
         return 1;
     }
     

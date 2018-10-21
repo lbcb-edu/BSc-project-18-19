@@ -1,0 +1,7 @@
+*.project
+*.sh
+*.cmake
+*.db
+
+lbcb-mapper/data
+lbcb-mapper/build
