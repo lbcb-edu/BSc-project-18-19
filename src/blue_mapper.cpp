@@ -1,10 +1,12 @@
 #include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
 #include <memory>
 #include <stdint.h>
+#include <getopt.h>
 #include "bioparser/bioparser.hpp"
 
 class Example1{
@@ -41,11 +43,16 @@ class Example2 {
         }
 };
 
+static struct option long_options[] = {
+    {"help", no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'v'},
+    {NULL, no_argument, NULL, 0}
+};
+
 template<typename T>
 void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
 
     uint32_t max=0, min=INT_MAX;
-    double average;
     uint64_t sum=0;
 
     for (auto& i : fq_objects) {
@@ -72,7 +79,7 @@ int main (int argc, char* argv[]) {
 
     if (argc == 2) {
         int c;
-        while ((c = getopt (argc, argv, "hv")) != -1) {
+        while ((c = getopt_long (argc, argv, "hv", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
                     std::cout << "You've asked for help. This is help." << std::endl;
@@ -81,7 +88,7 @@ int main (int argc, char* argv[]) {
                     std::cout << "v0.1.0" << std::endl ;
                     break;
                 default:
-                    std::cout << "We're starting parsing!" << std::endl;
+                    std::cout << "The option you entered is unknown!" << std::endl;
             }
         }
 
