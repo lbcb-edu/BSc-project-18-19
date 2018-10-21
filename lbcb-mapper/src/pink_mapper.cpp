@@ -6,16 +6,16 @@
 class Fast {
 
 public:
-    const char* name;
-    const char* sequence;
-    const char* quality;
+    std::string name;
+    std::string sequence;
+    std::string quality;
     uint32_t name_length;
     uint32_t sequence_length;
     uint32_t quality_length;
-
+    
     Fast(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length) {
+        std::string name, uint32_t name_length,
+        std::string sequence, uint32_t sequence_length) {
             this -> name = name;
             this -> name_length = name_length;
             this -> sequence = sequence;
@@ -23,9 +23,9 @@ public:
         }
         
     Fast(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length,
-        const char* quality, uint32_t quality_length) {
+        std::string name, uint32_t name_length,
+        std::string sequence, uint32_t sequence_length,
+        std::string quality, uint32_t quality_length) {
             this -> name = name;
             this -> name_length = name_length;
             this -> sequence = sequence;
