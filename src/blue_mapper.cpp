@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 #include <stdint.h>
-#include "./bioparser/include/bioparser/bioparser.hpp"
+#include "bioparser/bioparser.hpp"
 
 class Example1{
 
