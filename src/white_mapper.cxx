@@ -8,9 +8,9 @@
 class SequenceFormat
 {
 	 public:
-                const char* name;
-                const char* sequence;
-		const char* quality;
+                std::string name;
+                std::string sequence;
+		std::string quality;
                 uint32_t name_length;
                 uint32_t sequence_length;
 		uint32_t quality_length;
@@ -24,12 +24,12 @@ class SequenceFormat
                         const char* sequence, uint32_t sequence_length,
 			const char* quality, uint32_t quality_length)
                         {
-                                this -> name = name;
+                                this -> name = std::string (name, name_length);
                                 this -> name_length = name_length;
-                                this -> sequence = sequence;
+                                this -> sequence = std::string (sequence, sequence_length);
                                 this -> sequence_length = sequence_length;
-				this -> quality;
-				this -> quality_length;
+				this -> quality = std::string (quality, quality_length);
+				this -> quality_length = quality_length;
 			}
 
 		SequenceFormat (
@@ -37,11 +37,11 @@ class SequenceFormat
                         const char* sequence, uint32_t sequence_length
                         )
                         {
-                                this -> name = name;
+                                this -> name = std::string (name, name_length);
                                 this -> name_length = name_length;
-                                this -> sequence = sequence;
+                                this -> sequence = std::string (sequence, sequence_length);
                                 this -> sequence_length = sequence_length;
-                                this -> quality = NULL;
+                                this -> quality = std::string ("");
                                 this -> quality_length = 0;
                         }
 
