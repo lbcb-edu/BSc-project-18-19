@@ -9,5 +9,5 @@ file (GLOB source_files "${source_dir}/*.cpp")
 
 add_executable (pink_mapper ${source_files})
 
-add_subdirectory(bioparser EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 target_link_libraries(pink_mapper bioparser)
