@@ -41,6 +41,27 @@ v0.1.0
 
 The first version of the mapper will be tested on an Oxford Nanopore Technologies data set obtained by sequencing the Escherichia coli K-12 substr. MG1655 genome. The data set is freely available from Loman Labs [here](https://nanopore.s3.climb.ac.uk/MAP006-1_2D_pass.fasta), while the reference genome is freely available from NCBI [here](https://bit.ly/2PCYHWr).
 
+## Alignment
+
+The objective is to implement a library for pairwise sequence alignment. It is a series of transformations which describe how to obtain one sequence from the other. The main use case for it in bioinformatics is to find similar regions between DNA chains, RNA chains or proteins in order to infer evolutionary and functional relationships. Alignments can be found with a dynamic programming algorithm, which is a method that simplifies a complicated problem by breaking it into simpler subproblems in a recursive manner. Results of the subproblems are stored and used to reconstruct the final solution. When applied to sequence alignment, a `(n + 1) * (m + 1)` matrix is used, where `n` and `m` are the lengths of sequences that are being aligned. Each cell of the matrix stores the score of the best alignment thus far, and can be calculated as the maximal score between the value of the upper cell plus the deletion cost, the value of the upper left cell plus the match or mismatch cost, and the value of the left cell plus the insertion cost. Once the matrix is filled, the optimal alignment can be found by backtracking from the best cell of the matrix. A visual example can be seen bellow.
+
+![](misc/sample_alignment.png)
+
+There exist different versions of pairwise alignment, the Needleman-Wunsch algorithm for global alignment, the Smith-Waterman algorithm for local alignment and semi-global algorithms used for suffix-prefix and prefix-suffix alignments. The main differences between them are in the initialization step and the place from which the backtrack procedure can start.
+
+As stated above, students have to create a library which implements all three alignments algorithms. The library should be named in form of `<team name>_alignment` (e.g. `blue_alignment`) and should have its own namespace called after the team (e.g. `blue`). The library has to be created with the same `CMakeLists.txt` file as the mapper, and eventually be linked to it. The implementation has no requirements (it can be just one function or through a class) but the alignment function should have the following prototype:
+
+```cpp
+std::string pairwise_alignment(const char* query, unsigned int query_length,
+                              const char* target, unsigned int target_length,
+                              AlignmentType type,
+                              int match,
+                              int mismatch,
+                              int gap);
+```
+
+where the return value is the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment, `AlignmentType` is a `enum class` determining the alignment type (i.e. global, local or semi-global), and gap is the insertion/deletion cost (other variables are self explanatory). Once the library is completed, link it to the mapper and add input arguments for the alignment type and match, mismatch and gap costs. Afterwards, choose two random sequences from the first file, align them and print the `CIGAR` string.
+
 ## Disclaimer
 
 Laboratory for Bioinformatics and Computational Biology cannot be held responsible for any copyright infringement caused by actions of students contributing to any of its repositories. Any case of copyright infringement will be promptly removed from the affected repositories and reported to appropriate faculty organs.
