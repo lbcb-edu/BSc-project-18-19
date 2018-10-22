@@ -9,37 +9,28 @@
 #include <getopt.h>
 #include "bioparser/bioparser.hpp"
 
-class Example1{
-
+class Example1 {
     public:
-    const char* name;
-    uint32_t name_length;
-    const char* sequence;
-    uint32_t sequence_length;
+        std::string name;
+        std::string sequence;
+        std::string quality;
+        uint32_t name_length;
+        uint32_t sequence_length;
+        uint32_t quality_length;
 
     Example1(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length
-    ):  name{name}, name_length{name_length}, sequence{sequence}, sequence_length{sequence_length} {
-        }
-
-};
-
-class Example2 {
-    public:
-    const char* name;
-    uint32_t name_length;
-    const char* sequence;
-    uint32_t sequence_length;
-    const char* quality;
-    uint32_t quality_length;
-
-    Example2(
         const char* name, uint32_t name_length,
         const char* sequence, uint32_t sequence_length,
         const char* quality, uint32_t quality_length
     ):  name{name}, name_length{name_length}, sequence{sequence},
         sequence_length{sequence_length}, quality{quality}, quality_length{quality_length} {
+        }
+
+     Example1(
+        const char* name, uint32_t name_length,
+        const char* sequence, uint32_t sequence_length
+    ):  name{name}, name_length{name_length}, sequence{sequence},
+        sequence_length{sequence_length} {
         }
 };
 
@@ -73,8 +64,6 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
     std::cout << "Number of sequences is: "<< fq_objects.size() << std::endl;
 };
 
-
-
 int main (int argc, char* argv[]) {
 
     if (argc == 2) {
@@ -101,7 +90,6 @@ int main (int argc, char* argv[]) {
 
 
         for (size_t i=0; i<extensions.size(); i++) {
-
             if(first.find(extensions[i])>=0) {
                 for (size_t j=0; j<extensions.size(); j++) {
                         if (second.find(extensions[j])>=0){
@@ -109,13 +97,11 @@ int main (int argc, char* argv[]) {
                             break;
                         }
                 }
-            if (okay) {
-                break;
-            }
+                if (okay) break;
             }
         }
 
-        if (okay==false){
+        if (!okay){
             std::cout << "Format you entered is not compatible with our parser." << std::endl;
             return 1;
         }
@@ -130,8 +116,8 @@ int main (int argc, char* argv[]) {
             fastaq_stat(first_object);
 
         } else {
-            std::vector<std::unique_ptr<Example2>> first_object;
-            auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Example2>(first);
+            std::vector<std::unique_ptr<Example1>> first_object;
+            auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Example1>(first);
 
             uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
                 while (true) {
@@ -157,14 +143,4 @@ int main (int argc, char* argv[]) {
 
     return 0;
 }
-
-
-
-
-
-
-
-
-
-
 
