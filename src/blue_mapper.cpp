@@ -18,20 +18,28 @@ class Example1 {
         uint32_t sequence_length;
         uint32_t quality_length;
 
-    Example1(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length,
-        const char* quality, uint32_t quality_length
-    ):  name{name}, name_length{name_length}, sequence{sequence},
-        sequence_length{sequence_length}, quality{quality}, quality_length{quality_length} {
-        }
+     Example1(
+       const char* name_, uint32_t name_length_,
+       const char* sequence_, uint32_t sequence_length_,
+       const char* quality_, uint32_t quality_length_
+    ) {
+         name_length = name_length_;
+         sequence_length = sequence_length_;
+         quality_length = quality_length_;
+         name = std::string(name_, name_length_);
+         sequence = std::string(sequence_, sequence_length_);
+         quality = std::string(quality_, quality_length_);
+    }
 
      Example1(
-        const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length
-    ):  name{name}, name_length{name_length}, sequence{sequence},
-        sequence_length{sequence_length} {
-        }
+       const char* name_, uint32_t name_length_,
+        const char* sequence_, uint32_t sequence_length_
+    ) {
+         name_length = name_length_;
+         sequence_length = sequence_length_;
+         name = std::string(name_, name_length_);
+         sequence = std::string(sequence_, sequence_length_);
+    }
 };
 
 static struct option long_options[] = {
