@@ -53,11 +53,11 @@ As stated above, students have to create a library which implements all three al
 
 ```cpp
 std::string pairwise_alignment(const char* query, unsigned int query_length,
-                              const char* target, unsigned int target_length,
-                              AlignmentType type,
-                              int match,
-                              int mismatch,
-                              int gap);
+                               const char* target, unsigned int target_length,
+                               AlignmentType type,
+                               int match,
+                               int mismatch,
+                               int gap);
 ```
 
 where the return value is the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment, `AlignmentType` is a `enum class` determining the alignment type (i.e. global, local or semi-global), and gap is the insertion/deletion cost (other variables are self explanatory). Once the library is completed, link it to the mapper and add input arguments for the alignment type and match, mismatch and gap costs. Afterwards, choose two random sequences from the first file, align them and print the `CIGAR` string.
