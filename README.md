@@ -60,7 +60,7 @@ std::string pairwise_alignment(const char* query, unsigned int query_length,
                                int gap);
 ```
 
-where the return value is the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment, `AlignmentType` is a `enum class` determining the alignment type (i.e. global, local or semi-global), and gap is the insertion/deletion cost (other variables are self explanatory). Once the library is completed, link it to the mapper and add input arguments for the alignment type and match, mismatch and gap costs. Afterwards, choose two random sequences from the first file, align them and print the `CIGAR` string.
+where the return value is the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment, `AlignmentType` is a `enum class` determining the alignment type (i.e. global, local or semi-global), and gap is the insertion/deletion cost (other variables are self explanatory). Once the library is completed, it has to be used in the mapper which includes adding input arguments for the alignment type and match, mismatch and gap costs. Afterwards, two random sequences from the first input file have to be aligned and the resulting `CIGAR` string printed.
 
 ## Disclaimer
 
