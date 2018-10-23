@@ -10,17 +10,12 @@ public:
     std::string name;
     std::string sequence;
     std::string quality;
-    uint32_t name_length;
-    uint32_t sequence_length;
-    uint32_t quality_length;
     
     Fast(
         std::string name, uint32_t name_length,
         std::string sequence, uint32_t sequence_length) {
             this -> name = name;
-            this -> name_length = name_length;
             this -> sequence = sequence;
-            this -> sequence_length = sequence_length; 
         }
         
     Fast(
@@ -28,17 +23,14 @@ public:
         std::string sequence, uint32_t sequence_length,
         std::string quality, uint32_t quality_length) {
             this -> name = name;
-            this -> name_length = name_length;
             this -> sequence = sequence;
-            this -> sequence_length = sequence_length; 
             this -> quality = quality;
-            this -> quality_length = quality_length;
     }
 };
 
 static struct option options[] = {
-    {"help", no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'}
+    {"help",    no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'v'},
 };
 
 std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
@@ -92,20 +84,20 @@ void printStats(std::vector<std::unique_ptr<Fast>> fast_objects) {
     unsigned numOfSeq = fast_objects.size();
     unsigned sum = 0;
     float average;
-    unsigned min = fast_objects[0] -> sequence_length;
+    unsigned min = fast_objects[0] -> sequence.size();
     unsigned max = min;
     
     for (unsigned i=0; i < numOfSeq;  i++) {
-        sum += fast_objects[i] -> sequence_length;
+        sum += (fast_objects[i] -> sequence).size();
                 
-        if (fast_objects[i] -> sequence_length < min) {
-            min = fast_objects[i] -> sequence_length;
+        if ((fast_objects[i] -> sequence).size() < min) {
+            min = (fast_objects[i] -> sequence).size();
         }
-        if (fast_objects[i] -> sequence_length > max) {
-            max = fast_objects[i] -> sequence_length;
+        if ((fast_objects[i] -> sequence.size()) > max) {
+            max = (fast_objects[i] -> sequence.size());
         }
     }
-    average = sum/numOfSeq;
+    average = (float)sum / numOfSeq;
     
     std::cerr << "Number of sequences: " << numOfSeq << std::endl;
     std::cerr << "Average length: "      << average  << std::endl;
@@ -141,37 +133,33 @@ int main(int argc, char* argv[]) {
     std::string arg1;
     std::string arg2;
     
-    if (argc == 2) {
-        
+    if (argc == 2)  {
         char optchr;
+        
         while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
             switch(optchr) {
-                case 0:
-                    break;
-                case 'h':
-                    help();
-                    break;
-                case 'v':
-                    version();
-                    break;
-                default:
-                std::cerr << "Wrong input. Use \"-h\" or \"--help\"." << std::endl;
-                    return 1;
+                case 0: break;
+                case 'h': help();
+                          break;
+                case 'v': version();
+                          break;
+                default: std:: cerr << "Wrong input. Use \"-h\" or \"--help\"" << std::endl;
+                         return 1;
             }
         }
-        if (argc  == optind){
+        
+        if (argc  == optind) {
             return 0;
         } else if(argc - optind < 2) {
             std::cerr << "Wrong input. Use \"-h\" or \"--help\"." << std::endl;
             return 1;
         }
         
-    } else if(argc == 3) {
-        
+    } else if (argc == 3) {
         arg1 = allArgs.at(1);
         arg2 = allArgs.at(2);
          
-        if ( (isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)){
+        if ((isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)) {
             
             std::cerr << "~FIRST FILE~" << std::endl;
             if (isFasta(arg1)) {
@@ -182,10 +170,6 @@ int main(int argc, char* argv[]) {
             
             std::cerr << "\n" << "~SECOND FILE~" << std::endl;
             printStats(parseFasta(arg2));
-            
-        } else {
-            std::cout << "Wrong input." << std::endl;
-            return 1;
         }
         
     } else {
