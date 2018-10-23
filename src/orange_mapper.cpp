@@ -134,13 +134,11 @@ void readFASTQFile(std::string const &filePath) {
 	stats fileStats;
 	while (true) {
 		auto status = fastq_parser->parse_objects(fastq_objects, size_in_bytes);
-		calculateStats<FASTQEntity>(fastq_objects, &fileStats);	
-		
 		if (status == false) {
 			break;
 		}
 	}
-
+	calculateStats<FASTQEntity>(fastq_objects, &fileStats);	
 	printStatistics(fileStats, filePath);
 }
 
