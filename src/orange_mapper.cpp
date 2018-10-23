@@ -37,18 +37,14 @@ class FASTAEntity {
 	
 	public:
 		std::string name;
-		uint32_t name_length;
 		std::string sequence;
-		uint32_t sequence_length;
 		
 		FASTAEntity(
 			const char *name, uint32_t name_length,
 			const char *sequence, uint32_t sequence_length) {
 
-			this->name_length = name_length;
 			(this->name).assign(name, name_length);
 
-			this->sequence_length = sequence_length;
 			(this->sequence).assign(sequence, sequence_length);
 		}
 };
@@ -57,7 +53,6 @@ class FASTQEntity : public FASTAEntity {
 
 	public:
 		std::string quality;
-		uint32_t quality_length;
 		
 		FASTQEntity(
 			const char* name, uint32_t name_length,
@@ -65,7 +60,6 @@ class FASTQEntity : public FASTAEntity {
 			const char* quality, uint32_t quality_length)
 			: FASTAEntity(name, name_length, sequence, sequence_length) {
 			
-			this->quality_length = quality_length;
 			(this->quality).assign(quality, quality_length);
 
 		}
@@ -78,7 +72,7 @@ bool endsWith(std::string const &fullString, std::string const &ending) {
 }
 
 bool isExtensionMemberOfVector(std::string const &str, std::vector<std::string> const vec) {
-	for(std::string s : vec) {
+	for(auto const& s : vec) {
 		if(endsWith(str, s)) return true;
 	}
 
@@ -120,14 +114,14 @@ void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *file
 	
 	for(auto const& p : entities) {
 		fileStats->num_of_seq++;
-		fileStats->total_length += p-> sequence_length;
+		fileStats->total_length += (p-> sequence).length();
 
-		fileStats->max = (fileStats->max > p -> sequence_length) ? fileStats->max : p-> sequence_length;
+		fileStats->max = (fileStats->max > (p-> sequence).length()) ? fileStats->max : (p-> sequence).length();
 			
 		if(fileStats->min == -1) {
-			fileStats->min = p-> sequence_length;
+			fileStats->min = (p-> sequence).length();
 		} else {
-			fileStats->min = (fileStats->min < p -> sequence_length) ? fileStats->min : p-> sequence_length;
+			fileStats->min = (fileStats->min < (p-> sequence).length()) ? fileStats->min : (p-> sequence).length();
 		}
 	}
 }
