@@ -176,10 +176,10 @@ int main(int argc, char** argv) {
 				break;
 			case 'h':
 				help();
-				return 0;
+				break;
 			case 'v':
 				version();
-				return 0;
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
@@ -187,14 +187,16 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if(argc - 1 < 2) {
+	if (argc  == optind){
+		return 0;
+	} else if(argc - optind < 2) {
 		fprintf(stderr, "Program requires more than one argument!\n");
 		fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
 		return 1;
 	}
 
-	std::string firstFilePath = argv[1];
-	std::string secondFilePath = argv[2];
+	std::string firstFilePath = argv[optind];
+	std::string secondFilePath = argv[optind + 1];
 
 	bool isFirstFASTA = isExtensionMemberOfVector(firstFilePath, FASTAExtensionVector);
 
