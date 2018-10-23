@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <bioparser/bioparser.hpp>
+#include <getopt.h>
 
 class Fast {
 
@@ -33,6 +34,12 @@ public:
             this -> quality = quality;
             this -> quality_length = quality_length;
     }
+};
+
+static struct option options[] = {
+    {"help", no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'v'},
+    {NULL,      no_argument, NULL,  0 }
 };
 
 std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
@@ -135,35 +142,43 @@ int main(int argc, char* argv[]) {
     std::string arg1;
     std::string arg2;
     
-    switch(argc) {
-        case 2: arg1 = allArgs.at(1);
-                break;
-                 
-        case 3: arg1 = allArgs.at(1);
-                arg2 = allArgs.at(2);
-                break;
+    if (argc == 2) {
         
-        default: std::cout << "Wrong number of arguments." << std::endl;
-                 return 1;
-    }
-    
-    if(arg1.compare("-h") == 0 || arg1.compare("--help") == 0) {
-        help();
-        
-    } else if(arg1.compare("-v") == 0 || arg1.compare("--version") == 0) {
-        version();
-        
-    } else if(argc == 3 && (isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)) {
-        
-        std::cerr << "~FIRST FILE~" << std::endl;
-        if (isFasta(arg1)) {
-            printStats(parseFasta(arg1));
-        } else {
-            printStats(parseFastq(arg1));
+        char optchr;
+        while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
+            switch(optchr) {
+                case 0:
+                    break;
+                case 'h':
+                    help();
+                    break;
+                case 'v':
+                    version();
+                    break;
+                default:
+                    fprintf(stderr, "Wrong input. Use \"-h\" or \"--help\" .\n");
+                    return 1;
+            }
         }
         
-        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-        printStats(parseFasta(arg2));
+    } else if(argc == 3) {
+        
+        arg1 = allArgs.at(1);
+        arg2 = allArgs.at(2);
+         
+        if ( (isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)){
+            
+            std::cerr << "~FIRST FILE~" << std::endl;
+            if (isFasta(arg1)) {
+                printStats(parseFasta(arg1));
+            } else {
+                printStats(parseFastq(arg1));
+            }
+            
+            std::cerr << "\n" << "~SECOND FILE~" << std::endl;
+            printStats(parseFasta(arg2));
+            
+        }
         
     } else {
         std::cout << "Wrong input." << std::endl;
