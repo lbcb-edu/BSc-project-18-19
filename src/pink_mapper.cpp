@@ -170,6 +170,9 @@ int main(int argc, char* argv[]) {
             
             std::cerr << "\n" << "~SECOND FILE~" << std::endl;
             printStats(parseFasta(arg2));
+        } else {
+            std::cout << "Wrong input." << std::endl;
+            return 1;
         }
         
     } else {
