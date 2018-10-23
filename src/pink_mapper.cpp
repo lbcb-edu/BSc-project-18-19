@@ -38,8 +38,7 @@ public:
 
 static struct option options[] = {
     {"help", no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'},
-    {NULL,      no_argument, NULL,  0 }
+    {"version", no_argument, NULL, 'v'}
 };
 
 std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
@@ -156,9 +155,15 @@ int main(int argc, char* argv[]) {
                     version();
                     break;
                 default:
-                    fprintf(stderr, "Wrong input. Use \"-h\" or \"--help\" .\n");
+                std::cerr << "Wrong input. Use \"-h\" or \"--help\"." << std::endl;
                     return 1;
             }
+        }
+        if (argc  == optind){
+            return 0;
+        } else if(argc - optind < 2) {
+            std::cerr << "Wrong input. Use \"-h\" or \"--help\"." << std::endl;
+            return 1;
         }
         
     } else if(argc == 3) {
@@ -178,6 +183,9 @@ int main(int argc, char* argv[]) {
             std::cerr << "\n" << "~SECOND FILE~" << std::endl;
             printStats(parseFasta(arg2));
             
+        } else {
+            std::cout << "Wrong input." << std::endl;
+            return 1;
         }
         
     } else {
