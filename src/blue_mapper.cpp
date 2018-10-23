@@ -14,18 +14,14 @@ class Example1 {
         std::string name;
         std::string sequence;
         std::string quality;
-        uint32_t name_length;
-        uint32_t sequence_length;
-        uint32_t quality_length;
+
 
      Example1(
        const char* name_, uint32_t name_length_,
        const char* sequence_, uint32_t sequence_length_,
        const char* quality_, uint32_t quality_length_
     ) {
-         name_length = name_length_;
-         sequence_length = sequence_length_;
-         quality_length = quality_length_;
+
          name = std::string(name_, name_length_);
          sequence = std::string(sequence_, sequence_length_);
          quality = std::string(quality_, quality_length_);
@@ -35,8 +31,6 @@ class Example1 {
        const char* name_, uint32_t name_length_,
         const char* sequence_, uint32_t sequence_length_
     ) {
-         name_length = name_length_;
-         sequence_length = sequence_length_;
          name = std::string(name_, name_length_);
          sequence = std::string(sequence_, sequence_length_);
     }
@@ -55,15 +49,16 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
     uint64_t sum=0;
 
     for (auto& i : fq_objects) {
-        if (i->sequence_length>max){
-            max=i->sequence_length;
+        uint32_t my_length = (i->sequence).length();
+        if (my_length>max){
+            max=my_length;
         }
 
-        if (i->sequence_length<min) {
-            min=i->sequence_length;
+        if (my_length<min) {
+            min=my_length;
         }
 
-        sum+=i->sequence_length;
+        sum+=my_length;
     }
 
     std::cout << "Maximum length of a sequence is: " << max << std::endl;
