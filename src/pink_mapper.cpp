@@ -1,14 +1,15 @@
 #include <iostream>
+#include <string>
 #include <vector>
 #include <algorithm>
 #include <getopt.h>
 #include <bioparser/bioparser.hpp>
-#include <string>
 
 
 static struct option options[] = {
-    {"help",    no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'},
+    {"help",    no_argument, 0, 'h'},
+    {"version", no_argument, 0, 'v'},
+    {NULL     , no_argument, 0,  0 }
 };
 
 class Fast {
@@ -20,26 +21,26 @@ public:
     
     Fast(
         const char* name, uint32_t name_length,
-        const char* sequence, uint32_t sequence_length): 
+        const char* sequence, uint32_t sequence_length) : 
             name {std::string (name, name_length)},
             sequence {std::string (sequence, sequence_length)} 
-		{}
+        {}
         
     Fast(
         const char* name, uint32_t name_length,
         const char* sequence, uint32_t sequence_length,
-        const char* quality, uint32_t quality_length):
+        const char* quality, uint32_t quality_length) :
             name {std::string (name, name_length)},
             sequence {std::string (sequence, sequence_length)}, 
             quality {std::string (quality, quality_length)}
-		{}
+        {}
 };
 
 void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     unsigned numOfSeq = fast_objects.size();
     unsigned sum = 0;
     float average;
-    unsigned min = (fast_objects[0] -> sequence).size();
+    unsigned min = (fast_objects[0] -> sequence).length();
     unsigned max = min;
     
     for (unsigned i=0; i < numOfSeq;  i++) {
@@ -48,8 +49,8 @@ void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
         if ((fast_objects[i] -> sequence).length() < min) {
             min = (fast_objects[i] -> sequence).length();
         }
-        if ((fast_objects[i] -> sequence.length()) > max) {
-            max = (fast_objects[i] -> sequence.length());
+        if ((fast_objects[i] -> sequence).length() > max) {
+            max = (fast_objects[i] -> sequence).length();
         }
     }
     average = (float)sum / numOfSeq;
@@ -125,55 +126,48 @@ void version() {
 }
 
 int main(int argc, char* argv[]) {
-    std::vector<std::string> allArgs(argv, argv+argc);
+    std::string helpMessage = "Wrong input. Use \"-h\" or \"--help\" for help.";
     
-    if (argc == 2)  {
+    if (argc - optind == 1) {
         char optchr;
         
         while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
             switch(optchr) {
-                case 0: break;
                 case 'h': help();
-                          break;
+                          return 0;
                 case 'v': version();
-                          break;
-                default: std:: cerr << "Wrong input. Use \"-h\" or \"--help\"" << std::endl;
+                          return 0;
+                default: std::cerr << helpMessage << std::endl;
                          return 1;
             }
         }
-        
-        if (argc  == optind) {
-            return 0;
-        } else if(argc - optind < 2) {
-            std::cerr << "Wrong input. Use \"-h\" or \"--help\"." << std::endl;
-            return 1;
-        }
-        
-    } else if (argc == 3) {
-        std::string arg1 = allArgs.at(1);
-        std::string arg2 = allArgs.at(2);
-        std::vector<std::string> fastaExtensions = {".fa", ".fasta", ".fa.gz", ".fasta.gz"};
-        std::vector<std::string> fastqExtensions = {".fq", ".fastq", ".fq.gz", ".fastq.gz"};
+    }   
+    
+    if (argc - optind != 2) {
+        std::cerr << helpMessage << std::endl;
+        return 1;
+    }
+    
+    std::string arg1 = argv[1];
+    std::string arg2 = argv[2];
+    std::vector<std::string> fastaExtensions = {".fa", ".fasta", ".fa.gz", ".fasta.gz"};
+    std::vector<std::string> fastqExtensions = {".fq", ".fastq", ".fq.gz", ".fastq.gz"};
 
-        if ((correctExtension(arg1, fastaExtensions) || correctExtension(arg1, fastaExtensions)) 
-                && correctExtension(arg2, fastaExtensions)) {
+    if ((correctExtension(arg1, fastaExtensions) || correctExtension(arg1, fastaExtensions)) 
+            && correctExtension(arg2, fastaExtensions)) {
             
-            std::cerr << "~FIRST FILE~" << std::endl;
-            if (correctExtension(arg1, fastaExtensions)) {
-                parseFasta(arg1);
-            } else {
-                parseFastq(arg1);
-            }
-            
-            std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-            parseFasta(arg2);
+        std::cerr << "~FIRST FILE~" << std::endl;
+        if (correctExtension(arg1, fastaExtensions)) {
+            parseFasta(arg1);
         } else {
-            std::cout << "Wrong input." << std::endl;
-            return 1;
+            parseFastq(arg1);
         }
-        
+            
+        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
+        parseFasta(arg2);
+            
     } else {
-        std::cout << "Wrong input." << std::endl;
+        std::cout << helpMessage << std::endl;
         return 1;
     }
     
