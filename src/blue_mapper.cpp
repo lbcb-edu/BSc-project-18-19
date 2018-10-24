@@ -20,9 +20,9 @@ class InputFile {
        const char* sequence_, uint32_t sequence_length_,
        const char* quality_, uint32_t quality_length_
     ) :
-         name {std::string(name_, name_length_)},
-         sequence {std::string(sequence_, sequence_length_)},
-         quality {std::string(quality_, quality_length_)}
+         name(name_, name_length_),
+         sequence(sequence_, sequence_length_),
+         quality(quality_, quality_length_)
 
      { }
 
@@ -30,8 +30,8 @@ class InputFile {
        const char* name_, uint32_t name_length_,
         const char* sequence_, uint32_t sequence_length_
     ) :
-        name {std::string(name_, name_length_)},
-        sequence {std::string(sequence_, sequence_length_)}
+         name(name_, name_length_),
+         sequence(sequence_, sequence_length_)
      { }
 };
 
@@ -87,6 +87,11 @@ int main (int argc, char* argv[]) {
                     std::cout << "The option you entered is unknown!" << std::endl;
                     exit(1);
             }
+        }
+
+        if (argc != (optind + 2)) {
+            std::cout << "You should've entered two files to work with. Please try again or ask for --help." << std::endl;
+            exit(1);
         }
 
         std::vector<std::string> extensions {".fasta", ".fa", ".fastq", ".fq", ".fasta.gz", ".fa.gz", ".fastq.gz", ".fq.gz"};
