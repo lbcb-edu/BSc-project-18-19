@@ -15,7 +15,6 @@ class InputFile {
         std::string sequence;
         std::string quality;
 
-
      InputFile(
        const char* name_, uint32_t name_length_,
        const char* sequence_, uint32_t sequence_length_,
@@ -89,9 +88,6 @@ int main (int argc, char* argv[]) {
                     exit(1);
             }
         }
-
-
-
 
         std::vector<std::string> extensions {".fasta", ".fa", ".fastq", ".fq", ".fasta.gz", ".fa.gz", ".fastq.gz", ".fq.gz"};
         bool okay = false;
