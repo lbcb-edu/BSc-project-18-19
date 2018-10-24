@@ -69,22 +69,34 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
 
 int main (int argc, char* argv[]) {
 
-    if (argc == 2) {
+        bool done = false;
         int c;
         while ((c = getopt_long (argc, argv, "hv", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
-                    std::cout << "You've asked for help. This is help." << std::endl;
+                    std::cout << "You've asked for help. " << std::endl << "This program accepts two files as floating arguments." << std::endl
+                    << "It prints out the statistics such as number of sequnces, maximum, minimun and average length." << std::endl
+                    << "It supports formats: \".fasta\", \".fa\", \".fastq\", \".fq\", \".fasta.gz\", \".fa.gz\", \".fastq.gz\", \".fq.gz\"" << std::endl
+                    << "correct usage: blue_mapper <fileame> <filename>" << std::endl
+                    << "It also supports options:" << std::endl
+                    << "    -h --help for help menu" << std::endl
+                    << "    -v --version for current version" << std::endl;
                     break;
                 case 'v':
                     std::cout << "v0.1.0" << std::endl ;
                     break;
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
+                    exit(1);
             }
+            done = true;
         }
 
-    } else if (argc == 3) {
+        if (done) {
+            return 0;
+        }
+
+
         std::vector<std::string> extensions {".fasta", ".fa", ".fastq", ".fq", ".fasta.gz", ".fa.gz", ".fastq.gz", ".fq.gz"};
         bool okay = false;
 
@@ -105,8 +117,8 @@ int main (int argc, char* argv[]) {
         }
 
         if (!okay){
-            std::cout << "Format you entered is not compatible with our parser." << std::endl;
-            return 1;
+            //std::cout << "Format you entered is not compatible with our parser." << std::endl;
+            exit(0);
         }
 
         if (first.find("fastq")>first.length() && first.find("fq")>first.length()){
@@ -142,7 +154,6 @@ int main (int argc, char* argv[]) {
         std::cout << "We've parsed second file." << std::endl;
 
         fastaq_stat(second_object);
-    }
 
     return 0;
 }
