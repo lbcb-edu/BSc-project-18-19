@@ -9,31 +9,31 @@
 #include <getopt.h>
 #include "bioparser/bioparser.hpp"
 
-class Example1 {
+class InputFile {
     public:
         std::string name;
         std::string sequence;
         std::string quality;
 
 
-     Example1(
+     InputFile(
        const char* name_, uint32_t name_length_,
        const char* sequence_, uint32_t sequence_length_,
        const char* quality_, uint32_t quality_length_
-    ) {
+    ) :
+         name {std::string(name_, name_length_)},
+         sequence {std::string(sequence_, sequence_length_)},
+         quality {std::string(quality_, quality_length_)}
 
-         name = std::string(name_, name_length_);
-         sequence = std::string(sequence_, sequence_length_);
-         quality = std::string(quality_, quality_length_);
-    }
+     { }
 
-     Example1(
+     InputFile(
        const char* name_, uint32_t name_length_,
         const char* sequence_, uint32_t sequence_length_
-    ) {
-         name = std::string(name_, name_length_);
-         sequence = std::string(sequence_, sequence_length_);
-    }
+    ) :
+        name {std::string(name_, name_length_)},
+        sequence {std::string(sequence_, sequence_length_)}
+     { }
 };
 
 static struct option long_options[] = {
@@ -69,7 +69,6 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
 
 int main (int argc, char* argv[]) {
 
-        bool done = false;
         int c;
         while ((c = getopt_long (argc, argv, "hv", long_options, NULL)) != -1) {
             switch(c) {
@@ -81,27 +80,24 @@ int main (int argc, char* argv[]) {
                     << "It also supports options:" << std::endl
                     << "    -h --help for help menu" << std::endl
                     << "    -v --version for current version" << std::endl;
-                    break;
+                    return(0);
                 case 'v':
                     std::cout << "v0.1.0" << std::endl ;
-                    break;
+                    return(0);
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
                     exit(1);
             }
-            done = true;
         }
 
-        if (done) {
-            return 0;
-        }
+
 
 
         std::vector<std::string> extensions {".fasta", ".fa", ".fastq", ".fq", ".fasta.gz", ".fa.gz", ".fastq.gz", ".fq.gz"};
         bool okay = false;
 
-        std::string first = argv[1];
-        std::string second = argv[2];
+        std::string first = argv[optind];
+        std::string second = argv[optind+1];
 
 
         for (size_t i=0; i<extensions.size(); i++) {
@@ -117,22 +113,22 @@ int main (int argc, char* argv[]) {
         }
 
         if (!okay){
-            //std::cout << "Format you entered is not compatible with our parser." << std::endl;
+            std::cout << "Format you entered is not compatible with our parser." << std::endl;
             exit(0);
         }
 
         if (first.find("fastq")>first.length() && first.find("fq")>first.length()){
 
-            std::vector<std::unique_ptr<Example1>> first_object;
-            auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Example1>(first);
+            std::vector<std::unique_ptr<InputFile>> first_object;
+            auto fasta_parser = bioparser::createParser<bioparser::FastaParser, InputFile>(first);
             fasta_parser->parse_objects(first_object, -1);
 
             std::cout << "We've parsed first file." << std::endl;
             fastaq_stat(first_object);
 
         } else {
-            std::vector<std::unique_ptr<Example1>> first_object;
-            auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Example1>(first);
+            std::vector<std::unique_ptr<InputFile>> first_object;
+            auto fastq_parser = bioparser::createParser<bioparser::FastqParser, InputFile>(first);
 
             uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
                 while (true) {
@@ -147,8 +143,8 @@ int main (int argc, char* argv[]) {
             fastaq_stat(first_object);
         }
 
-        std::vector<std::unique_ptr<Example1>> second_object;
-        auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Example1>(second);
+        std::vector<std::unique_ptr<InputFile>> second_object;
+        auto fasta_parser = bioparser::createParser<bioparser::FastaParser, InputFile>(second);
         fasta_parser->parse_objects(second_object, -1);
 
         std::cout << "We've parsed second file." << std::endl;
