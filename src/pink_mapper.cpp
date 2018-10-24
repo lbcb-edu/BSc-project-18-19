@@ -1,8 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <bioparser/bioparser.hpp>
 #include <getopt.h>
+#include <bioparser/bioparser.hpp>
+
+
+static struct option options[] = {
+    {"help",    no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'v'},
+};
 
 class Fast {
 
@@ -28,63 +34,11 @@ public:
     }
 };
 
-static struct option options[] = {
-    {"help",    no_argument, NULL, 'h'},
-    {"version", no_argument, NULL, 'v'},
-};
-
-std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
-    std::vector<std::unique_ptr<Fast>> fasta_objects;
-        
-    auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fast>(fastaFile);
-    fasta_parser->parse_objects(fasta_objects, -1);
-        
-    return fasta_objects;
-}
-
-std::vector<std::unique_ptr<Fast>> parseFastq (std::string fastqFile) {
-    std::vector<std::unique_ptr<Fast>> fastq_objects;
-        
-    auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fast>(fastqFile);
-    uint64_t size_in_bytes = 500 * 1024 * 1024;  // 500 MB
-        
-    while (true) {
-        auto status = fastq_parser->parse_objects(fastq_objects, size_in_bytes);
-        if (status == false) {
-            break;
-        }
-    }
-        
-    return fastq_objects;
-}
-
-bool isFasta(std::string arg) {
-    arg = "        " + arg;
-    int len = arg.length();
-    std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
-    
-    return arg.substr(len - 6).compare(".fasta")    == 0 ||
-           arg.substr(len - 3).compare(".fa")       == 0 ||
-           arg.substr(len - 9).compare(".fasta.gz") == 0 ||
-           arg.substr(len - 6).compare(".fa.gz")    == 0;
-}
-
-bool isFastq(std::string arg) {
-    arg = "        " + arg;
-    int len = arg.length();
-    std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
-        
-    return arg.substr(len - 6).compare(".fastq")    == 0 ||
-           arg.substr(len - 3).compare(".fq")       == 0 ||
-           arg.substr(len - 9).compare(".fastq.gz") == 0 ||
-           arg.substr(len - 6).compare(".fq.gz")    == 0;
-}
-
-void printStats(std::vector<std::unique_ptr<Fast>> fast_objects) {
+void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     unsigned numOfSeq = fast_objects.size();
     unsigned sum = 0;
     float average;
-    unsigned min = fast_objects[0] -> sequence.size();
+    unsigned min = (fast_objects[0] -> sequence).size();
     unsigned max = min;
     
     for (unsigned i=0; i < numOfSeq;  i++) {
@@ -103,6 +57,48 @@ void printStats(std::vector<std::unique_ptr<Fast>> fast_objects) {
     std::cerr << "Average length: "      << average  << std::endl;
     std::cerr << "Minimal length: "      << min      << std::endl;
     std::cerr << "Maximal length: "      << max      << std::endl;  
+}
+
+void parseFasta (std::string fastaFile) {
+    std::vector<std::unique_ptr<Fast>> fasta_objects;
+        
+    auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fast>(fastaFile);
+    fasta_parser->parse_objects(fasta_objects, -1);
+        
+    printStats(fasta_objects);
+}
+
+void parseFastq (std::string fastqFile) {
+    std::vector<std::unique_ptr<Fast>> fastq_objects;
+        
+    auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fast>(fastqFile);
+    uint64_t size_in_bytes = 500 * 1024 * 1024;  // 500 MB
+        
+    while (true) {
+        auto status = fastq_parser->parse_objects(fastq_objects, size_in_bytes);
+        if (status == false) {
+            break;
+        }
+    }
+        
+    printStats(fastq_objects);
+}
+
+bool correctExtension(std::string arg, std::vector<std::string> ext) {
+    std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
+    
+    for (unsigned i=0; i < ext.size(); i++) {
+        if (arg.size() < ext[i].size()) {
+            break;
+        
+        } else {
+            if (arg.substr(arg.size() - ext[i].size()).compare(ext[i]) == 0) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
 }
 
 void help() {
@@ -130,9 +126,6 @@ void version() {
 int main(int argc, char* argv[]) {
     std::vector<std::string> allArgs(argv, argv+argc);
     
-    std::string arg1;
-    std::string arg2;
-    
     if (argc == 2)  {
         char optchr;
         
@@ -156,20 +149,23 @@ int main(int argc, char* argv[]) {
         }
         
     } else if (argc == 3) {
-        arg1 = allArgs.at(1);
-        arg2 = allArgs.at(2);
-         
-        if ((isFasta(arg1) || isFastq(arg1)) && isFasta(arg2)) {
+        std::string arg1 = allArgs.at(1);
+        std::string arg2 = allArgs.at(2);
+        std::vector<std::string> fastaExtensions = {".fa", ".fasta", ".fa.gz", ".fasta.gz"};
+        std::vector<std::string> fastqExtensions = {".fq", ".fastq", ".fq.gz", ".fastq.gz"};
+
+        if ((correctExtension(arg1, fastaExtensions) || correctExtension(arg1, fastaExtensions)) 
+                && correctExtension(arg2, fastaExtensions)) {
             
             std::cerr << "~FIRST FILE~" << std::endl;
-            if (isFasta(arg1)) {
-                printStats(parseFasta(arg1));
+            if (correctExtension(arg1, fastaExtensions)) {
+                parseFasta(arg1);
             } else {
-                printStats(parseFastq(arg1));
+                parseFastq(arg1);
             }
             
             std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-            printStats(parseFasta(arg2));
+            parseFasta(arg2);
         } else {
             std::cout << "Wrong input." << std::endl;
             return 1;
