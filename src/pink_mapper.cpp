@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <getopt.h>
 #include <bioparser/bioparser.hpp>
+#include <string>
 
 
 static struct option options[] = {
@@ -18,20 +19,20 @@ public:
     std::string quality;
     
     Fast(
-        std::string name, uint32_t name_length,
-        std::string sequence, uint32_t sequence_length) {
-            this -> name = name;
-            this -> sequence = sequence;
-        }
+        const char* name, uint32_t name_length,
+        const char* sequence, uint32_t sequence_length): 
+            name {std::string (name, name_length)},
+            sequence {std::string (sequence, sequence_length)} 
+		{}
         
     Fast(
-        std::string name, uint32_t name_length,
-        std::string sequence, uint32_t sequence_length,
-        std::string quality, uint32_t quality_length) {
-            this -> name = name;
-            this -> sequence = sequence;
-            this -> quality = quality;
-    }
+        const char* name, uint32_t name_length,
+        const char* sequence, uint32_t sequence_length,
+        const char* quality, uint32_t quality_length):
+            name {std::string (name, name_length)},
+            sequence {std::string (sequence, sequence_length)}, 
+            quality {std::string (quality, quality_length)}
+		{}
 };
 
 void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
@@ -42,13 +43,13 @@ void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     unsigned max = min;
     
     for (unsigned i=0; i < numOfSeq;  i++) {
-        sum += (fast_objects[i] -> sequence).size();
+        sum += (fast_objects[i] -> sequence).length();
                 
-        if ((fast_objects[i] -> sequence).size() < min) {
-            min = (fast_objects[i] -> sequence).size();
+        if ((fast_objects[i] -> sequence).length() < min) {
+            min = (fast_objects[i] -> sequence).length();
         }
-        if ((fast_objects[i] -> sequence.size()) > max) {
-            max = (fast_objects[i] -> sequence.size());
+        if ((fast_objects[i] -> sequence.length()) > max) {
+            max = (fast_objects[i] -> sequence.length());
         }
     }
     average = (float)sum / numOfSeq;
