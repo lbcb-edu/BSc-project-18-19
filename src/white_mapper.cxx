@@ -24,21 +24,16 @@ class SequenceFormat
 		SequenceFormat (
                         const char* name, uint32_t name_length,
                         const char* sequence, uint32_t sequence_length,
-			const char* quality, uint32_t quality_length)
+			const char* quality, uint32_t quality_length
+			) : name (name, name_length), sequence (sequence, sequence_length), quality (quality, quality_length)
                         {
-                                this -> name = std::string (name, name_length);
-                                this -> sequence = std::string (sequence, sequence_length);
-				this -> quality = std::string (quality, quality_length);
 			}
 
 		SequenceFormat (
                         const char* name, uint32_t name_length,
                         const char* sequence, uint32_t sequence_length
-                        )
+                        ) : name (name, name_length), sequence (sequence, sequence_length), quality ("")
                         {
-                                this -> name = std::string (name, name_length);
-                                this -> sequence = std::string (sequence, sequence_length);
-                                this -> quality = std::string ("");
                         }
 
 };
@@ -128,37 +123,22 @@ void parse_file (std::string file_path)
 int main (int argc, char* argv[])
 {
 	int option = 0;
-	int option_done[] = {0, 0};
 
         while ((option = getopt_long(argc, argv, "hv", long_options, NULL)) != -1) {
                 switch (option) {
                         case 'h':
-
-				if(option_done[0] == 0) {
-					option_done[0] = 1;
-                                	help();
-				}
-                                break;
+				help();
+                                exit(0);
 
                         case 'v':
-
-				if(option_done[1] == 0) {
-                                        option_done[1] = 1;
-                                        version();
-                                }
-                                break;
+				version();
+                                exit(0);
 
                         default:
                                 fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] sequence_file reference_genome_file\n\n", argv[0]);
-                                break;
-
-
+                                exit(0);
                 }
 	}
-
-	if (optind == argc && option != 0)
-		exit (0);
-
 
 	if (argc - optind == 2)
 	{
