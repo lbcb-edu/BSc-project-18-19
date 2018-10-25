@@ -5,15 +5,13 @@
 #include <getopt.h>
 #include <bioparser/bioparser.hpp>
 
-
 static struct option options[] = {
     {"help",    no_argument, 0, 'h'},
     {"version", no_argument, 0, 'v'},
-    {NULL     , no_argument, 0,  0 }
+    {NULL,      no_argument, 0,  0 }
 };
 
 class Fast {
-
 public:
     std::string name;
     std::string sequence;
