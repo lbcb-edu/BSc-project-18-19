@@ -186,6 +186,9 @@ int main(int argc, char** argv) {
 	}
 
 	if (argc  == optind){
+		if (argc==1) {
+			fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
+		}
 		return 0;
 	} else if(argc - optind < 2) {
 		fprintf(stderr, "Program requires more than one argument!\n");
