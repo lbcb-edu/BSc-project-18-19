@@ -7,6 +7,7 @@
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
+#include "orange_alignment.h"
 
 std::vector<std::string> FASTAExtensionVector{".fasta", ".fa", ".fasta.gz", ".fa.gz"};
 std::vector<std::string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq.gz"};
