@@ -2,13 +2,16 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <set>
 #include <string>
 #include <limits>
+#include <ctime>
 
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
+#include "brown_alignment.hpp"
 
 const std::set<std::string> fasta_formats = {".fasta", ".fa", ".fasta.gz", ".fa.gz"};
 const std::set<std::string> fastq_formats = {".fastq", ".fq", ".fastq.gz", ".fq.gz"};
@@ -167,6 +170,35 @@ int main (int argc, char **argv) {
 
   FastAQ::parse(fastaq_objects1, file1, file1_format);
   FastAQ::parse(fastaq_objects2, file2, file2_format);
+
+  srand(time(NULL));
+  int i1 = rand() % fastaq_objects1.size();
+  int i2 = rand() % fastaq_objects1.size();
+
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
+  //                                       fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
+  //                                       brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
+  // std::cout << value << std::endl;
+  // std::cout << target_begin << std::endl;
+  // std::ofstream out("CIGAR.txt");
+  // out << cigar;
+  // out.close();
+
+  std::string q = {"ACTA"};
+  std::string t = {"GGGACTAGGG"};
+  std::string cigar;
+  unsigned int target_begin = 0;
+  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
+  std::cout << value << std::endl;
+  std::cout << target_begin << std::endl;
+  std::cout << cigar << std::endl;
+
+  // std::string q = {"ACCTAAGG"};
+  // std::string t = {"GGCTCAATCA"};
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2);
+  // std::cout << value << std::endl;
 
   return 0;
 }

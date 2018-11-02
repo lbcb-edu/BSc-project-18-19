@@ -13,12 +13,14 @@ configure_file(
   "${PROJECT_BINARY_DIR}/brown_mapper.hpp"
 )
 
+add_library(brown_alignment STATIC src/brown_alignment.cc)
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
 add_executable(brown_mapper src/brown_mapper.cc)
-target_link_libraries(brown_mapper bioparser)
+target_link_libraries(brown_mapper bioparser brown_alignment)
 
 #install(TARGETS brown_mapper DESTINATION bin)
 #install(FILES "${PROJECT_BINARY_DIR}/brown_mapper.hpp" DESTINATION include)
