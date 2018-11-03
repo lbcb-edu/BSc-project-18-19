@@ -15,16 +15,23 @@ int needleman_wunsch(const char* query, int rows,
     
     int i, j;
     int opt[3];
+    int d = 1;
     std::string s;
     std::string t;
     
-    s {std::string (query, rows)};
-    t {std::string (target, cols)};
+    s = std::string(query, rows);
+    t = std::string(target, cols);
     
-    for (i = 0; i <= rows; i++){
-        for (j = 0; j <= cols; j++){
-            pink::cell_init(m, i, j);
-        }
+    int max;
+    if (rows > cols){
+        max = rows;
+    } else {
+        max = cols;
+    }
+    
+    for (i = 0; i < max; i++) {
+        m[0][i].cost = i * d;
+        m[i][0].cost = i * d;
     }
     
     for (i = 1; i < rows; ++i) {
@@ -47,7 +54,7 @@ int needleman_wunsch(const char* query, int rows,
         }
     }
     
-    pink::goal_cell(s, t, &i, &j);
+    pink::goal_cell(rows, cols, &i, &j);
     
     return m[i][j].cost;
 }

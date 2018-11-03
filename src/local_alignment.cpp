@@ -17,8 +17,8 @@ int smith_waterman(const char* query, int rows,
     std::string s;
     std::string t;
     
-    s {std::string (query, rows)};
-    t {std::string (target, cols)};
+    s = std::string (query, rows);
+    t = std::string (target, cols);
     
     for (i = 0; i <= rows; i++){
         for (j = 0; j <= cols; j++){
@@ -32,6 +32,7 @@ int smith_waterman(const char* query, int rows,
             opt[MATCH] = m[i - 1][j - 1].cost + pink::match(s[i], t[j], match, mismatch);
             opt[INSERT] = m[i][j - 1].cost + pink::indel(t[j], gap);
             opt[DELETE] = m[i - 1][j].cost + pink::indel(s[i], gap);
+            
             m[i][j].cost = 0;
             
             for (k = MATCH; k <= DELETE; k++){
@@ -44,9 +45,14 @@ int smith_waterman(const char* query, int rows,
         }
     }
     
-    pink::goal_cell(s, t, &i, &j);
+    pink::goal_cell(rows, cols, &i, &j);
     
     return (m[i][j].cost);
+}
+
+void cell_init(cell** m, int i, int j){
+    m[i][j].cost = 0;
+    m[i][j].parent = -1;
 }
 
 
