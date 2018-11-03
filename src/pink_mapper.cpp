@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <getopt.h>
 #include <bioparser/bioparser.hpp>
+#include <pink_alignment/pink_alignment.hpp>
 
 static struct option options[] = {
     {"help",    no_argument, 0, 'h'},
