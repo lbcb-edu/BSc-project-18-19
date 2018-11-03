@@ -2,7 +2,12 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include <map>
+#include <algorithm>
+#include <list>
+#include <utility>
 
+#define STOP -1
 #define MATCH 0
 #define INSERT 1
 #define DELETE 2
@@ -18,7 +23,72 @@ namespace orange {
             int parent;
         } cell;
 
-        void initMatrix (std::vector<std::vector<cell> > &matrix, int query_length, int target_length, int cost, AlignmentType type) {
+	std::map<int, char> CIGAR_map = {
+			{MATCH, 'M'},
+			{INSERT, 'I'},
+			{DELETE, 'D'}
+	};
+
+	void updatePosition(unsigned int& i, unsigned int& j, int parent) {
+		switch(parent) {
+			case MATCH:
+				i = i - 1;
+				j = j - 1;
+				break;
+			case INSERT:
+				j = j - 1;
+				break;
+			case DELETE:
+				i = i - 1;
+				break;	
+		}
+	}
+
+	std::string convertListToCIGARString(std::list<std::pair<char, unsigned int>> const &temp_list) {
+		std::string CIGAR;
+
+		for(auto const &pair : temp_list) {
+			CIGAR += std::to_string(pair.second) + pair.first;
+		}
+
+		return CIGAR;
+	}
+
+	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column) {
+		unsigned int i = target_cell_row;
+		unsigned int j = target_cell_column;
+
+		bool firstIdentified = false;
+		unsigned int counter;
+		char lastChar;
+	
+		std::list<std::pair<char, unsigned int>> temp_list;	
+
+		while(matrix[i][j].parent != STOP) {
+			char c = CIGAR_map.at(matrix[i][j].parent);
+
+			if(firstIdentified && c == lastChar) {
+				counter++;
+			} else {
+				if(firstIdentified) {
+					temp_list.push_front(std::make_pair(lastChar, counter));
+				} else {
+					firstIdentified = true;
+				}
+
+				lastChar = c;
+				counter = 1;
+			}
+
+			updatePosition(i, j, matrix[i][j].parent);
+		}
+
+		temp_list.push_front(std::make_pair(lastChar, counter));
+
+		return convertListToCIGARString(temp_list);
+	}
+
+        void initMatrix (std::vector<std::vector<cell>> &matrix, int query_length, int target_length, int cost, AlignmentType type) {
             int startRowMultiplyFactor, startColumnMultiplyFactor;
 	    switch(type) {
 		case AlignmentType::global :
@@ -34,23 +104,38 @@ namespace orange {
 
 
 	    matrix[0][0].cost = 0;
+	    matrix[0][0].parent = STOP;
 
             int i;
             for (i=1; i<=target_length; i++){
                 matrix[0][i].cost = i*startRowMultiplyFactor;
-		matrix[0][i].parent = INSERT;
+		matrix[0][i].parent = (type != AlignmentType::local) ? INSERT : STOP;
             }
             for (i=1; i<=query_length; i++){
                 matrix[i][0].cost = i*startColumnMultiplyFactor;
-		matrix[i][0].parent = DELETE;
+		matrix[i][0].parent = (type != AlignmentType::local) ? DELETE : STOP;
             }
         }
 
-        int populateMatrix (std::vector<std::vector<cell> > &matrix, const char* query, const char* target, int match, int mismatch, int gap, AlignmentType type){
-            int i, j, k;
+	int checkIfMaxAndUpdatePosition(int max, std::vector<std::vector<cell>> const &matrix, unsigned int i, unsigned int j, unsigned int& position_row, unsigned int& position_column) {
+		int new_max = std::max(max, matrix[i][j].cost);
+			
+		if(new_max == matrix[i][j].cost) {
+			position_row = i;
+			position_column = j;
+		}
+
+		return new_max;
+	}
+
+        int populateMatrix (std::vector<std::vector<cell>> &matrix, const char* query, const char* target, int match, int mismatch, int gap, AlignmentType type, unsigned int& target_cell_row, unsigned int& target_cell_column){
+            unsigned int i, j, k;
             int costs[3];
 
 	    int max = (type == AlignmentType::local) ? 0 : matrix[0][strlen(target)].cost;
+
+	    target_cell_row = strlen(query);
+	    target_cell_column = strlen(target);
 
             for (i=1; i <= strlen(query); i++) {
                 for (j=1; j <= strlen(target); j++) {
@@ -70,16 +155,27 @@ namespace orange {
 		    if(type == AlignmentType::local) {
 			if(matrix[i][j].cost < 0) {
 			    matrix[i][j].cost = 0;
-			 } else {
-			    max = std::max(max, matrix[i][j].cost);
-			 }
+			} else {
+			    max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
+			}
+
+			if(matrix[i][j].cost == 0) {
+			    matrix[i][j].parent = STOP;
+			}
+
 		    } else if(type == AlignmentType::semi_global && j == strlen(target)) {
-			max = std::max(max, matrix[i][j].cost);
+			max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
 		    }
                 }
             }
 
-	    return ((type == AlignmentType::local || type == AlignmentType::semi_global) ? max : matrix[strlen(query)][strlen(target)].cost);
+            switch(type) {
+		case AlignmentType::local :
+		case AlignmentType::semi_global :
+		    return max;
+		default :
+		    return matrix[strlen(query)][strlen(target)].cost;
+	    }
         }
 
 
@@ -95,7 +191,11 @@ namespace orange {
                         std::vector<std::vector<cell>> matrix (query_length+1, std::vector<cell>(target_length+1));
 
 			initMatrix(matrix, query_length, target_length, gap, type);
-			return populateMatrix(matrix, query, target, match , mismatch, gap, type);
+
+			unsigned int temp_i;
+			unsigned int temp_j;
+
+			return populateMatrix(matrix, query, target, match , mismatch, gap, type, temp_i, temp_j);
                        }
 
     int pairwise_alignment(const char* query, unsigned int query_length,
@@ -107,9 +207,18 @@ namespace orange {
                        std::string& cigar,
                        unsigned int& target_begin) {
                            
-                           //TO DO
-                           return 0;
+                        std::vector<std::vector<cell>> matrix (query_length+1, std::vector<cell>(target_length+1));
 
+			initMatrix(matrix, query_length, target_length, gap, type);
+			
+			unsigned int target_cell_row;
+			unsigned int target_cell_column;
+
+			int score = populateMatrix(matrix, query, target, match , mismatch, gap, type, target_cell_row, target_cell_column);
+
+			cigar = constructCIGAR(matrix, target_cell_row, target_cell_column);
+
+			return score;
                        }
 
 }
