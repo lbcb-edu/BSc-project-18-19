@@ -7,10 +7,10 @@
 
 #include "brown_alignment.hpp"
 
-#define U      'I'       // UP
-#define L      'D'       // LEFT
-#define UL     'M'       // UP-LEFT
-#define EMPTY  '0'       // EMPTY (LOCAL ALIGNMENT)
+#define UP      'I'       // UP
+#define LEFT    'D'       // LEFT
+#define UPLEFT  'M'       // UP-LEFT
+#define EMPTY   '0'       // EMPTY (LOCAL ALIGNMENT)
 
 namespace brown {
 
@@ -23,6 +23,16 @@ void print_val_matrix(cell** m, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
       printf("%3d", m[i][j].val);
+    }
+    printf("\n");
+  }
+}
+
+void print_char_matrix(cell** m, int rows, int cols) {
+  printf("\n");
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      printf("  %c", m[i][j].parent);
     }
     printf("\n");
   }
@@ -41,19 +51,20 @@ int maximum(int a, int b, int c, int d) {
 void init_row(cell** m, int cols, int mult) {
   for (int i = 1; i < cols; ++i) {
     m[0][i].val = i * mult;
-    m[0][i].parent = L;
+    m[0][i].parent = LEFT;
   }
 }
 
 void init_col(cell** m, int rows, int mult) {
   for (int i = 1; i < rows; ++i) {
     m[i][0].val = i * mult;
-    m[i][0].parent = U;
+    m[i][0].parent = UP;
   }
 }
 
 void init_matrix(cell** m, int rows, int cols, int mult_row, int mult_col) {
   m[0][0].val = 0;
+  m[0][0].parent = EMPTY;
   init_row(m, cols, mult_row);
   init_col(m, rows, mult_col);
 }
@@ -68,13 +79,15 @@ void align_global(cell** m, int rows, int cols,
       int matched = m[i-1][j-1].val + w(query[i-1], target[j-1], match, mismatch);
       int insertion = m[i][j-1].val + gap;
       int deletion = m[i-1][j].val + gap;
+
       m[i][j].val = maximum(matched, insertion, deletion, std::numeric_limits<int>::min());
+
       if (m[i][j].val == matched) {
-        m[i][j].parent = UL;
+        m[i][j].parent = UPLEFT;
       } else if (m[i][j].val == insertion) {
-        m[i][j].parent = L;
+        m[i][j].parent = LEFT;
       } else {
-        m[i][j].parent = U;
+        m[i][j].parent = UP;
       }
     }
   }
@@ -88,25 +101,29 @@ int align_local(cell** m, int rows, int cols,
                 unsigned int& row, unsigned int& col) {
 
   int max = 0;
+
   for (int i = 1; i < rows; ++i) {
     for (int j = 1; j < cols; ++j) {
       int matched = m[i-1][j-1].val + w(query[i-1], target[j-1], match, mismatch);
       int insertion = m[i][j-1].val + gap;
       int deletion = m[i-1][j].val + gap;
+
       m[i][j].val = maximum(matched, insertion, deletion, 0);
+
       if (m[i][j].val > max) {
         max = m[i][j].val;
         row = i;
         col = j;
       }
+
       if (m[i][j].val == 0) {
         m[i][j].parent = EMPTY;
       } else if (m[i][j].val == matched) {
-        m[i][j].parent = UL;
+        m[i][j].parent = UPLEFT;
       } else if (m[i][j].val == insertion) {
-        m[i][j].parent = L;
+        m[i][j].parent = LEFT;
       } else {
-        m[i][j].parent = U;
+        m[i][j].parent = UP;
       }
     }
   }
@@ -121,6 +138,7 @@ int find_alignment_score(cell** m, int rows, int cols,
   row = rows-1;
   col = cols-1;
   int max = m[row][col].val;
+
   for (int i = rows-2; i >= 0; --i) {
     if (m[i][cols-1].val > max) {
       max = m[i][cols-1].val;
@@ -146,12 +164,8 @@ void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
   int counter = 0;
   char current = m[row][col].parent;
   target_begin = 0;
+
   while (condition(m, row, col)) {
-    if (row == 0) {
-      target_begin++;
-      col--;
-      continue;
-    }
     if (current != m[row][col].parent) {
       cigar.push_back(current);
       std::string num = std::to_string(counter);
@@ -162,10 +176,10 @@ void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
     } else {
       counter++;
     }
-    if (m[row][col].parent == UL) {
+    if (m[row][col].parent == UPLEFT) {
       row--;
       col--;
-    } else if (m[row][col].parent == U) {
+    } else if (m[row][col].parent == UP) {
       row--;
     } else {
       col--;
@@ -176,6 +190,11 @@ void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
   std::reverse(num.begin(), num.end());
   cigar.append(num);
   std::reverse(cigar.begin(), cigar.end());
+
+  if(col != 0){
+    target_begin = col;
+  }
+
 }
 
 // Needleman-Wunsch algorithm for global sequence alignment
@@ -205,8 +224,13 @@ int needleman_wunsch(const char* query, int rows,
   init_matrix(m, rows, cols, gap, gap);
   align_global(m, rows, cols, query, target, match, mismatch, gap);
   int alignment_score = m[rows-1][cols-1].val;
+
+  print_val_matrix(m, rows, cols);
+  print_char_matrix(m, rows, cols);
+
   find_cigar(m, cigar, target_begin, rows-1, cols-1, [](cell** m, int& row, int col)
     { return row > 0 || col > 0; });
+
   return alignment_score;
 }
 
@@ -241,6 +265,10 @@ int prefix_suffix(const char* query, int rows,
   unsigned int row;
   unsigned int col;
   int alignment_score = find_alignment_score(m, rows, cols, row, col);
+
+  print_val_matrix(m, rows, cols);
+  print_char_matrix(m, rows, cols);
+
   find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
     { return row > 0 || col > 0; });
   return alignment_score;
@@ -277,11 +305,15 @@ int smith_waterman(const char* query, int rows,
   unsigned int col;
   align_local(m, rows, cols, query, target, match, mismatch, gap, row, col);
   int alignment_score = m[row][col].val;
+
+  print_val_matrix(m, rows, cols);
+  print_char_matrix(m, rows, cols);
+
   find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
     { if (m[row][col].parent == EMPTY) {
         row = 0;
       }
-      return row > 0 || col > 0;
+      return row > 0 && col > 0;
     });
 //    { return (m[row][col].parent != EMPTY) && (row > 0 || col > 0); });
   return alignment_score;
@@ -316,15 +348,16 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                                      match, mismatch, gap);
   }
 
+  //dal je potrebno brisati??
   for (int i = 0; i < rows; ++i) {
     delete m[i];
   }
   delete m;
 
   return alignment_score;
-}
+  }
 
-// With CIGAR string
+  // With CIGAR string
 int pairwise_alignment(const char* query, unsigned int query_length,
                        const char* target, unsigned int target_length,
                        AlignmentType type,
@@ -354,6 +387,7 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                                      match, mismatch, gap, cigar, target_begin);
   }
 
+  //dal je potrebo brisati??
   for (int i = 0; i < rows; ++i) {
     delete m[i];
   }

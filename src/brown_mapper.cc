@@ -51,7 +51,6 @@ public:
         auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FastAQ>(file);
         fastq_parser->parse_objects(fastaq_objects, -1);
       }
-      FastAQ::print_statistics(fastaq_objects, file);
     }
 
     static void print_statistics(
@@ -171,6 +170,9 @@ int main (int argc, char **argv) {
   FastAQ::parse(fastaq_objects1, file1, file1_format);
   FastAQ::parse(fastaq_objects2, file2, file2_format);
 
+  //FastAQ::print_statistics(fastaq_objects1, file1);
+  //FastAQ::print_statistics(fastaq_objects2, file2);
+
   srand(time(NULL));
   int i1 = rand() % fastaq_objects1.size();
   int i2 = rand() % fastaq_objects1.size();
@@ -186,19 +188,33 @@ int main (int argc, char **argv) {
   // out << cigar;
   // out.close();
 
-  std::string q = {"ACTA"};
-  std::string t = {"GGGACTAGGG"};
+  // std::string q = {"TCCG"};
+  // std::string t = {"ACTCCGAT"};
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 2, -1, -2, cigar, target_begin);
+  // std::cout << value << std::endl;
+  // std::cout << target_begin << std::endl;
+  // std::cout << cigar << std::endl;
+
+  // std::string q = {"ACCTAAGG"};
+  // std::string t = {"GGCTCAATCA"};
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2, cigar, target_begin);
+  // std::cout << value << std::endl;
+  // std::cout << target_begin << std::endl;
+  // std::cout << cigar << std::endl;
+
+  std::string q = {"TGCATAT"};
+  std::string t = {"ATCCGAT"};
   std::string cigar;
   unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
+  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::global, 2, -1, -2, cigar, target_begin);
   std::cout << value << std::endl;
   std::cout << target_begin << std::endl;
   std::cout << cigar << std::endl;
 
-  // std::string q = {"ACCTAAGG"};
-  // std::string t = {"GGCTCAATCA"};
-  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2);
-  // std::cout << value << std::endl;
 
   return 0;
 }
