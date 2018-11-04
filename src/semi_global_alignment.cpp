@@ -1,9 +1,10 @@
 #include <iostream>
 #include <string>
+#include "pink_alingment.hpp"
+
 #define MATCH 0
 #define INSERT 1
 #define DELETE 2
-#include "pink_alingment.hpp"
 
 int prefix_suffix(const char* query, int rows,
                    const char* target, int cols,

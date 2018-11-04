@@ -1,13 +1,12 @@
-
 namespace pink {
-    
+
     enum AlignmentType {global, local, semi_global};
-    
+
     typedef struct {
         int cost;
         int parent;
     } cell;
-    
+
     void cell_init(cell** m, int i, int j);
     void matrix_init(int num_rows, int num_cols;
     int match(char c, char d, int cost_pos, int cost_neg);
@@ -19,7 +18,7 @@ namespace pink {
                            int match,
                            int mismatch,
                            int gap);
-    
+
 }
 
 void cell_init(cell** m, int i, int j){
@@ -55,6 +54,4 @@ void goal_cell(char *s, char *t, int *x, int *y){
         }
     }
 }
-
-
 
