@@ -36,13 +36,14 @@ int letter_match(char s, char t, int match, int mismatch) {
 }
 
 int string_compare(cell** matrix, const char *s, const char *t,
+                                    unsigned rows, unsigned columns,
                                     int match, int mismatch, int gap) {
     unsigned i, j, k;  //counters
     int options[3];  //cost of options
-
-    for (i = 1; i < strlen(s); i++) {
-        for (j = 1; j < strlen(t); j++) {
-            options[MATCH] = matrix[i-1][j-1].cost + letter_match(s[i], t[j], match, mismatch);
+    
+    for (i = 1; i < rows; i++) {
+        for (j = 1; j < columns; j++) {
+            options[MATCH] = matrix[i-1][j-1].cost + letter_match(s[i - 1], t[j - 1], match, mismatch);
             options[INSERT] = matrix[i][j-1].cost + gap;
             options[DELETE] = matrix[i-1][j].cost + gap;
              
@@ -50,7 +51,7 @@ int string_compare(cell** matrix, const char *s, const char *t,
             matrix[i][j].parent = MATCH;
             
             for (k = 1; k <= 2; k++) {
-                if (options[k] > matrix[i][j].cost) {
+                if (options[k] < matrix[i][j].cost) {
                     matrix[i][j].cost = options[k];
                     matrix[i][j].parent = k;
                 }
@@ -59,14 +60,14 @@ int string_compare(cell** matrix, const char *s, const char *t,
     }
     
     std::cout << "\n~FINAL MATRIX~" << std::endl;
-    for (unsigned i = 0; i < strlen(s); i++) {
-        for (unsigned j = 0; j < strlen(t); j++) {
+    for (unsigned i = 0; i < rows; i++) {
+        for (unsigned j = 0; j < columns; j++) {
             std::cout << matrix[i][j].cost << " ";
         }
         std::cout << std::endl;
     }
     
-    return matrix[strlen(s)-1][strlen(t)-1].cost;
+    return matrix[rows - 1][columns - 1].cost;
 }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
@@ -75,23 +76,26 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                        int match,
                        int mismatch,
                        int gap) {
-                           
-    cell** matrix = new cell*[query_length];  //dynamical matrix
-    for (unsigned i = 0; i < query_length; i++) {
-        matrix[i] = new cell[target_length];
+    
+    unsigned rows = query_length + 1;
+    unsigned columns = target_length +1;
+    
+    cell** matrix = new cell*[rows];  //dynamical matrix
+    for (unsigned i = 0; i < rows; i++) {
+        matrix[i] = new cell[columns];
     }
     
-    matrix_init(matrix, query_length, target_length, gap);
+    matrix_init(matrix, rows, columns, gap);
     
     std::cout << "\n~INITIAL MATRIX~" << std::endl;
-    for (unsigned i = 0; i < query_length; i++) {
-        for (unsigned j = 0; j < target_length; j++) {
+    for (unsigned i = 0; i < rows; i++) {
+        for (unsigned j = 0; j < columns; j++) {
             std::cout << matrix[i][j].cost << " ";
         }
         std::cout << std::endl;
     }
     
-    return string_compare(matrix, query, target, match, mismatch, gap);
+    return string_compare(matrix, query, target, rows, columns, match, mismatch, gap);
 }
 }
 
