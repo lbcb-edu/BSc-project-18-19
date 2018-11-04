@@ -118,12 +118,14 @@ int align_local(cell** m, int rows, int cols,
 
       if (m[i][j].val == 0) {
         m[i][j].parent = EMPTY;
-      } else if (m[i][j].val == matched) {
+      } else if (m[i][j].val == matched && m[i-1][j-1].val != 0) {
         m[i][j].parent = UPLEFT;
-      } else if (m[i][j].val == insertion) {
+      } else if (m[i][j].val == insertion && m[i][j-1].val != 0) {
         m[i][j].parent = LEFT;
-      } else {
+      } else if(m[i][j].val == deletion && m[i-1][j].val != 0){
         m[i][j].parent = UP;
+      } else{
+        m[i][j].parent = EMPTY;
       }
     }
   }
@@ -348,7 +350,6 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                                      match, mismatch, gap);
   }
 
-  //dal je potrebno brisati??
   for (int i = 0; i < rows; ++i) {
     delete m[i];
   }
@@ -387,7 +388,6 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                                      match, mismatch, gap, cigar, target_begin);
   }
 
-  //dal je potrebo brisati??
   for (int i = 0; i < rows; ++i) {
     delete m[i];
   }
