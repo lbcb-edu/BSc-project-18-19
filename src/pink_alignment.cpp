@@ -239,14 +239,16 @@ int pairwise_alignment_cigar(const char* query, unsigned int query_length,
 }
 
 int main() {
-    const char* query =  "ACCTAAGG";
-    const char* target = "GGCTCAATCA";
+    const char* query =  "ACTCCGAT";
+    const char* target = "TCCG";
     std::string cigar;
     unsigned int target_begin = 0;
     
     //pick global, semi_global or local
     int cost = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::semi_global, 2, -1, -2);
     int cost_cigar = pink::pairwise_alignment_cigar(query, strlen(query), target, strlen(target), pink::semi_global ,2, -1, -2, cigar, target_begin);
+    
+    std::reverse(cigar.begin(), cigar.end());
     
     std::cout << "\nFinal cost: " << cost << std::endl;
     std::cout << "\nFinal cost_cigar: " << cost_cigar << std::endl;
