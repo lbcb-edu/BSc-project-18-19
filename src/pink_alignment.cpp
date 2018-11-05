@@ -86,11 +86,9 @@ int string_compare(cell** matrix, AlignmentType type,
             
             if (type == local) {
                 if (matrix[i][j].cost < 0) {
-                   
                     matrix[i][j].cost = 0;
                 } 
-                if (max_cost < matrix[i][j].cost) {
-                    
+                if (max_cost < matrix[i][j].cost) {   
                     max_cost = matrix[i][j].cost;
                     *row = i;
                     *col = j;
@@ -117,68 +115,65 @@ int string_compare(cell** matrix, AlignmentType type,
     if (type == global) {
         *row = rows - 1;
         *col = columns - 1;
-        
         return matrix[rows - 1][columns - 1].cost;
+
     } else {
         return matrix[*row][*col].cost;
     }
 }
     
-    char switch_cell (unsigned* i, unsigned* j, cell** matrix){
+char switch_cell (unsigned* i, unsigned* j, cell** matrix) {
+	char position;
         
-        char position;
-        
-        switch (matrix[*i][*j].parent) {
-            case MATCH:
-                (*i)--;
-                (*j)--;
-                position = 'M';
-                break;
-            case INSERT:
-                (*j)--;
-                position = 'I';
-                break;
-            case DELETE:
-                (*i)--;
-                position = 'D';
-                break;
-        }
-        return position;
-        
+    switch (matrix[*i][*j].parent) {
+        case MATCH:  (*i)--;
+               		 (*j)--;
+               		 position = 'M';
+               		 break;
+
+        case INSERT: (*j)--;
+               		 position = 'I';
+               		 break;
+
+        case DELETE: (*i)--;
+               		 position = 'D';
+               		 break;
     }
     
+	return position;
+}
     
-    void makeCigar(cell** matrix, unsigned row, unsigned col, std::string& cigar, unsigned int& target_begin, AlignmentType type){
-        unsigned i = row;
-        unsigned j = col;
-     
-        if(type == global || type == semi_global){
+    
+void makeCigar(cell** matrix, AlignmentType type, unsigned row, unsigned col, 
+			   std::string& cigar, unsigned int& target_begin) {
+    unsigned i = row;
+    unsigned j = col;
+   
+    if (type == global || type == semi_global) {
+        while (matrix[i][j].parent != HEAD) {
+            cigar.push_back(switch_cell(&i, &j, matrix));
+        }
         
-            while (matrix[i][j].parent != HEAD){
-                cigar.push_back(switch_cell(&i, &j, matrix));
-                }
-        
-            while (i != 0) {
-                i--;
-                cigar.push_back('D');
-            }
+        while (i != 0) {
+            i--;
+            cigar.push_back('D');
+        }
 
-            while (j != 0) {
-                j--;
-                cigar.push_back('I');
-            }
-        } else if (type == local){
+        while (j != 0) {
+            j--;
+            cigar.push_back('I');
+        }
 
-            while (matrix[i][j].cost != 0){
-                     cigar.push_back(switch_cell(&i, &j, matrix));
-                }
-            }
-        
-        
-        if (col != 0){
-            target_begin = col;
+    } else if (type == local) {
+        while (matrix[i][j].cost != 0){
+             cigar.push_back(switch_cell(&i, &j, matrix));
         }
     }
+        
+    if (col != 0) {
+        target_begin = col;
+    }
+}
 
 int pairwise_alignment(const char* query, unsigned int query_length,
                        const char* target, unsigned int target_length,
@@ -206,7 +201,6 @@ int pairwise_alignment(const char* query, unsigned int query_length,
     unsigned row;
     unsigned col;
     
-    
     return string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
 }
     
@@ -232,7 +226,7 @@ int pairwise_alignment_cigar(const char* query, unsigned int query_length,
     
     int cost = string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
     
-    makeCigar(matrix, row, col, cigar, target_begin, type);
+    makeCigar(matrix, type, row, col, cigar, target_begin);
     
     return cost;
 }
@@ -241,6 +235,7 @@ int pairwise_alignment_cigar(const char* query, unsigned int query_length,
 int main() {
     const char* query =  "ACTCCGAT";
     const char* target = "TCCG";
+    
     std::string cigar;
     unsigned int target_begin = 0;
     
@@ -248,11 +243,12 @@ int main() {
     int cost = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::semi_global, 2, -1, -2);
     int cost_cigar = pink::pairwise_alignment_cigar(query, strlen(query), target, strlen(target), pink::semi_global ,2, -1, -2, cigar, target_begin);
     
-    std::reverse(cigar.begin(), cigar.end());
+    cigar = std::string(cigar.rbegin(), cigar.rend());
     
     std::cout << "\nFinal cost: " << cost << std::endl;
     std::cout << "\nFinal cost_cigar: " << cost_cigar << std::endl;
     std::cout << "\nCigar: " << cigar << std::endl;
+    
     return 0;
 }
 
