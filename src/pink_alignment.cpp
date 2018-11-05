@@ -19,7 +19,7 @@ typedef struct {
 void row_init(cell** matrix, int columns, int gap) {
     for (int j = 1; j < columns; j++) {
         matrix[0][j].cost = j * gap;
-        matrix[0][j] .parent = HEAD;
+        matrix[0][j].parent = HEAD;
     }
 }
 
@@ -62,7 +62,8 @@ int letter_match(char s, char t, int match, int mismatch) {
 int string_compare(cell** matrix, AlignmentType type,
                    const char *s, const char *t,
                    unsigned rows, unsigned columns,
-                   int match, int mismatch, int gap) {
+                   int match, int mismatch, int gap,
+                   unsigned* row, unsigned* col) {
     unsigned i, j, k;  
     int options[3];  
     int max_cost = 0;
@@ -85,18 +86,25 @@ int string_compare(cell** matrix, AlignmentType type,
             
             if (type == local) {
                 if (matrix[i][j].cost < 0) {
+                   
                     matrix[i][j].cost = 0;
                 } 
                 if (max_cost < matrix[i][j].cost) {
+                    
                     max_cost = matrix[i][j].cost;
+                    *row = i;
+                    *col = j;
                 }
             }
             
             if (type == semi_global && j == columns - 1 && max_cost < matrix[i][j].cost) {
                 max_cost = matrix[i][j].cost;
+                *row = i;
+                *col = j;
             }
         }
     }
+    
     
     std::cout << "\n~FINAL MATRIX~" << std::endl;
     for (unsigned i = 0; i < rows; i++) {
@@ -107,11 +115,70 @@ int string_compare(cell** matrix, AlignmentType type,
     }
     
     if (type == global) {
+        *row = rows - 1;
+        *col = columns - 1;
+        
         return matrix[rows - 1][columns - 1].cost;
     } else {
-        return max_cost;
+        return matrix[*row][*col].cost;
     }
 }
+    
+    char switch_cell (unsigned* i, unsigned* j, cell** matrix){
+        
+        char position;
+        
+        switch (matrix[*i][*j].parent) {
+            case MATCH:
+                (*i)--;
+                (*j)--;
+                position = 'M';
+                break;
+            case INSERT:
+                (*j)--;
+                position = 'I';
+                break;
+            case DELETE:
+                (*i)--;
+                position = 'D';
+                break;
+        }
+        return position;
+        
+    }
+    
+    
+    void makeCigar(cell** matrix, unsigned row, unsigned col, std::string& cigar, unsigned int& target_begin, AlignmentType type){
+        unsigned i = row;
+        unsigned j = col;
+     
+        if(type == global || type == semi_global){
+        
+            while (matrix[i][j].parent != HEAD){
+                cigar.push_back(switch_cell(&i, &j, matrix));
+                }
+        
+            while (i != 0) {
+                i--;
+                cigar.push_back('D');
+            }
+
+            while (j != 0) {
+                j--;
+                cigar.push_back('I');
+            }
+        } else if (type == local){
+
+            while (matrix[i][j].cost != 0){
+                     cigar.push_back(switch_cell(&i, &j, matrix));
+                }
+            }
+        
+        
+        if (col != 0){
+            target_begin = col;
+        }
+    }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
                        const char* target, unsigned int target_length,
@@ -136,18 +203,54 @@ int pairwise_alignment(const char* query, unsigned int query_length,
         std::cout << std::endl;
     }
     
-    return string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap);
+    unsigned row;
+    unsigned col;
+    
+    
+    return string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
+}
+    
+
+int pairwise_alignment_cigar(const char* query, unsigned int query_length,
+                        const char* target, unsigned int target_length,
+                        AlignmentType type,
+                        int match, int mismatch, int gap,
+                        std::string& cigar, unsigned int& target_begin){
+    
+    unsigned rows = query_length + 1;
+    unsigned columns = target_length + 1;
+    
+    cell** matrix = new cell*[rows];
+    for (unsigned i = 0; i < rows; i++){
+        matrix[i] = new cell[columns];
+    }
+    
+    matrix_init(matrix, type, rows, columns, gap);
+    
+    unsigned row;
+    unsigned col;
+    
+    int cost = string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
+    
+    makeCigar(matrix, row, col, cigar, target_begin, type);
+    
+    return cost;
 }
 }
 
 int main() {
-    const char* query = "ACCTAAGG";
+    const char* query =  "ACCTAAGG";
     const char* target = "GGCTCAATCA";
+    std::string cigar;
+    unsigned int target_begin = 0;
     
     //pick global, semi_global or local
-    int cost = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::local, 2, -1, -2);
-                                
+    int cost = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::semi_global, 2, -1, -2);
+    int cost_cigar = pink::pairwise_alignment_cigar(query, strlen(query), target, strlen(target), pink::semi_global ,2, -1, -2, cigar, target_begin);
+    
     std::cout << "\nFinal cost: " << cost << std::endl;
+    std::cout << "\nFinal cost_cigar: " << cost_cigar << std::endl;
+    std::cout << "\nCigar: " << cigar << std::endl;
     return 0;
 }
 
