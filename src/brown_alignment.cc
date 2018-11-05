@@ -272,7 +272,7 @@ int prefix_suffix(const char* query, int rows,
   print_char_matrix(m, rows, cols);
 
   find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
-    { return row > 0 || col > 0; });
+    { return row > 0; });
   return alignment_score;
 }
 
@@ -317,7 +317,6 @@ int smith_waterman(const char* query, int rows,
       }
       return row > 0 && col > 0;
     });
-//    { return (m[row][col].parent != EMPTY) && (row > 0 || col > 0); });
   return alignment_score;
 }
 
