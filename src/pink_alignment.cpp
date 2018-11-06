@@ -67,6 +67,8 @@ int string_compare(cell** matrix, AlignmentType type,
     unsigned i, j, k;  
     int options[3];  
     int max_cost = 0;
+    *row = 0;
+    *col = 0;
     
     for (i = 1; i < rows; i++) {
         for (j = 1; j < columns; j++) {
@@ -88,14 +90,14 @@ int string_compare(cell** matrix, AlignmentType type,
                 if (matrix[i][j].cost < 0) {
                     matrix[i][j].cost = 0;
                 } 
-                if (max_cost < matrix[i][j].cost) {   
+                if (max_cost <= matrix[i][j].cost) {
                     max_cost = matrix[i][j].cost;
                     *row = i;
                     *col = j;
                 }
             }
             
-            if (type == semi_global && j == columns - 1 && max_cost < matrix[i][j].cost) {
+            if (type == semi_global && j == columns - 1 && max_cost <= matrix[i][j].cost) {
                 max_cost = matrix[i][j].cost;
                 *row = i;
                 *col = j;
@@ -118,7 +120,7 @@ int string_compare(cell** matrix, AlignmentType type,
         return matrix[rows - 1][columns - 1].cost;
 
     } else {
-        return matrix[*row][*col].cost;
+        return max_cost;
     }
 }
     
@@ -201,7 +203,9 @@ int pairwise_alignment(const char* query, unsigned int query_length,
     unsigned row;
     unsigned col;
     
-    return string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
+    int cost = string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
+
+    return cost;
 }
     
 
@@ -233,8 +237,8 @@ int pairwise_alignment_cigar(const char* query, unsigned int query_length,
 }
 
 int main() {
-    const char* query =  "ACTCCGAT";
-    const char* target = "TCCG";
+    const char* query =  "TTACGATTAAGG";
+    const char* target = "GCCA";
     
     std::string cigar;
     unsigned int target_begin = 0;
