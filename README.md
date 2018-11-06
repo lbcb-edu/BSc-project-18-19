@@ -49,18 +49,31 @@ The objective is to implement a library for pairwise sequence alignment. Sequenc
 
 There are several different versions of pairwise alignment algorithms, the Needleman-Wunsch algorithm for global alignment, the Smith-Waterman algorithm for local alignment and semi-global algorithms used for suffix-prefix and prefix-suffix alignments. The main differences between them are in the initialization step and the place from which the backtrack procedure can start.
 
-As stated above, students have to create a library which implements all three alignment algorithms. The library should be named in form of `<team name>_alignment` (e.g. `blue_alignment`) and should have its own namespace called after the team (e.g. `blue`). The library has to be created with the same `CMakeLists.txt` file as the mapper, and eventually be linked to it. The implementation has no requirements (it can be just one function or through a class) but the alignment function should have the following prototype:
+As stated above, students have to create a library which implements all three alignment algorithms. The library should be named in form of `<team name>_alignment` (e.g. `blue_alignment`) and should have its own namespace called after the team (e.g. `blue`). The library has to be created with the same `CMakeLists.txt` file as the mapper, and eventually be linked to it. The implementation has no requirements (it can be just one function or through a class) but the alignment functions should have the following prototypes:
 
 ```cpp
-std::string pairwise_alignment(const char* query, unsigned int query_length,
-                               const char* target, unsigned int target_length,
-                               AlignmentType type,
-                               int match,
-                               int mismatch,
-                               int gap);
+int pairwise_alignment(const char* query, unsigned int query_length,
+                       const char* target, unsigned int target_length,
+                       AlignmentType type,
+                       int match,
+                       int mismatch,
+                       int gap);
 ```
 
-where the return value is the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment, `AlignmentType` is an `enum class` determining the alignment type (i.e. global, local or semi-global), while `match`, `mismatch` and `gap` represent match, mismatch and insertion/deletion cost respectively. Once the library is completed, it has to be used in the mapper which includes adding input arguments for the alignment type and match, mismatch and gap costs. Afterwards, two random sequences from the first input file have to be aligned and the resulting `CIGAR` string printed.
+where the return value is the alignment score, `AlignmentType` is an `enum class` determining the alignment type (i.e. global, local or semi-global), while `match`, `mismatch` and `gap` represent match, mismatch and insertion/deletion cost respectively. There should also be an overloaded function with two additional arguments in which the [CIGAR](https://samtools.github.io/hts-specs/SAMv1.pdf) string of the alignment and the alignment begining position on the target sequence should be stored:
+
+```cpp
+int pairwise_alignment(const char* query, unsigned int query_length,
+                       const char* target, unsigned int target_length,
+                       AlignmentType type,
+                       int match,
+                       int mismatch,
+                       int gap,
+                       std::string& cigar,
+                       unsigned int& target_begin);
+```
+
+Once the library is completed, it has to be used in the mapper which includes adding input arguments for the alignment type and match, mismatch and gap costs. Afterwards, two random sequences from the first input file have to be aligned and the resulting `CIGAR` string printed.
 
 A good read for this part of the project is the second chapter of the Bioinformatics course held at University of Zagreb, Faculty of Electrical Engineering and Computing (located [here](https://www.fer.unizg.hr/_download/repository/bioinformatika_skripta_v1.2.pdf)).
 
