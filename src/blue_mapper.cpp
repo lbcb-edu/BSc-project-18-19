@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <getopt.h>
 #include "bioparser/bioparser.hpp"
+//#include "blue_alignment.h"
 
 class InputFile {
     public:
@@ -38,6 +39,10 @@ class InputFile {
 static struct option long_options[] = {
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'v'},
+    {"match", required_argument, NULL, 'm' },
+    {"mismatch", required_argument, NULL, 's'},
+    {"gap", required_argument, NULL, 'g'},
+    {"type", required_argument, NULL, 't'},
     {NULL, no_argument, NULL, 0}
 };
 
@@ -69,7 +74,12 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
 int main (int argc, char* argv[]) {
 
         int c;
-        while ((c = getopt_long (argc, argv, "hv", long_options, NULL)) != -1) {
+        int match = 1;
+        int mismatch = 1;
+        int gap = -1;
+        char* align_type = "global";
+
+        while ((c = getopt_long (argc, argv, "hvm:s:g:t:", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
                     std::cout << "You've asked for help. " << std::endl << "This program accepts two files as floating arguments." << std::endl
@@ -83,11 +93,25 @@ int main (int argc, char* argv[]) {
                 case 'v':
                     std::cout << "v0.1.0" << std::endl ;
                     return(0);
+                case 'm':
+                    match = atoi(optarg);
+                    break;
+                case 's':
+                    mismatch = atoi(optarg);
+                    break;
+                case 'g':
+                    gap = atoi(optarg);
+                    break;
+                case 't':
+                    align_type = optarg;
+                    break;
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
                     exit(1);
             }
         }
+
+
 
         if (argc != (optind + 2)) {
             std::cout << "You should've entered two files to work with. Please try again or ask for --help." << std::endl;
