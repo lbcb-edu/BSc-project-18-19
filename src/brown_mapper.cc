@@ -188,23 +188,23 @@ int main (int argc, char **argv) {
   // out << cigar;
   // out.close();
 
-  std::string q = {"TCCG"};
-  std::string t = {"ACTCCGAT"};
-  std::string cigar;
-  unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
-  std::cout << value << std::endl;
-  std::cout << target_begin << std::endl;
-  std::cout << cigar << std::endl;
-
-  // std::string q = {"ACCTAAGG"};
-  // std::string t = {"GGCTCAATCA"};
+  // std::string q = {"TCCG"};
+  // std::string t = {"ACTCCGAT"};
   // std::string cigar;
   // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2, cigar, target_begin);
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
   // std::cout << value << std::endl;
   // std::cout << target_begin << std::endl;
   // std::cout << cigar << std::endl;
+
+  std::string q = {"TTCCGCCAA"};
+  std::string t = {"AACCCCTT"};
+  std::string cigar;
+  unsigned int target_begin = 0;
+  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2, cigar, target_begin);
+  std::cout << value << std::endl;
+  std::cout << target_begin << std::endl;
+  std::cout << cigar << std::endl;
 
   // std::string q = {"TGCATAT"};
   // std::string t = {"ATCCGAT"};

@@ -19,8 +19,19 @@ typedef struct {
   char parent;
 } cell;
 
-void print_val_matrix(cell** m, int rows, int cols) {
+void print_val_matrix(cell** m, int rows, int cols, const char* s, const char* t) {
+  printf("%3c", ' ');
+  printf("%3c", ' ');
+  for (int i = 0; i < cols; i++) {
+    printf("%3c", t[i]);
+  }
+  printf("\n");
   for (int i = 0; i < rows; ++i) {
+    if (i > 0) {
+      printf("%3c", s[i-1]);
+    } else {
+      printf("%3c", ' ');
+    }
     for (int j = 0; j < cols; ++j) {
       printf("%3d", m[i][j].val);
     }
@@ -28,9 +39,20 @@ void print_val_matrix(cell** m, int rows, int cols) {
   }
 }
 
-void print_char_matrix(cell** m, int rows, int cols) {
+void print_char_matrix(cell** m, int rows, int cols, const char* s, const char* t) {
+  printf("\n");
+  printf("%3c", ' ');
+  printf("%3c", ' ');
+  for (int i = 0; i < cols; i++) {
+    printf("%3c", t[i]);
+  }
   printf("\n");
   for (int i = 0; i < rows; ++i) {
+    if (i > 0) {
+      printf("%3c", s[i-1]);
+    } else {
+      printf("%3c", ' ');
+    }
     for (int j = 0; j < cols; ++j) {
       printf("  %c", m[i][j].parent);
     }
@@ -118,14 +140,12 @@ int align_local(cell** m, int rows, int cols,
 
       if (m[i][j].val == 0) {
         m[i][j].parent = EMPTY;
-      } else if (m[i][j].val == matched && m[i-1][j-1].val != 0) {
+      } else if (m[i][j].val == matched) {
         m[i][j].parent = UPLEFT;
-      } else if (m[i][j].val == insertion && m[i][j-1].val != 0) {
+      } else if (m[i][j].val == insertion) {
         m[i][j].parent = LEFT;
-      } else if(m[i][j].val == deletion && m[i-1][j].val != 0){
+      } else {
         m[i][j].parent = UP;
-      } else{
-        m[i][j].parent = EMPTY;
       }
     }
   }
@@ -227,8 +247,8 @@ int needleman_wunsch(const char* query, int rows,
   align_global(m, rows, cols, query, target, match, mismatch, gap);
   int alignment_score = m[rows-1][cols-1].val;
 
-  print_val_matrix(m, rows, cols);
-  print_char_matrix(m, rows, cols);
+  print_val_matrix(m, rows, cols, query, target);
+  print_char_matrix(m, rows, cols, query, target);
 
   find_cigar(m, cigar, target_begin, rows-1, cols-1, [](cell** m, int& row, int col)
     { return row > 0 || col > 0; });
@@ -268,8 +288,8 @@ int prefix_suffix(const char* query, int rows,
   unsigned int col;
   int alignment_score = find_alignment_score(m, rows, cols, row, col);
 
-  print_val_matrix(m, rows, cols);
-  print_char_matrix(m, rows, cols);
+  print_val_matrix(m, rows, cols, query, target);
+  print_char_matrix(m, rows, cols, query, target);
 
   find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
     { return row > 0; });
@@ -308,8 +328,8 @@ int smith_waterman(const char* query, int rows,
   align_local(m, rows, cols, query, target, match, mismatch, gap, row, col);
   int alignment_score = m[row][col].val;
 
-  print_val_matrix(m, rows, cols);
-  print_char_matrix(m, rows, cols);
+  print_val_matrix(m, rows, cols, query, target);
+  print_char_matrix(m, rows, cols, query, target);
 
   find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
     { if (m[row][col].parent == EMPTY) {
