@@ -14,7 +14,7 @@
 
 namespace orange {
 
-    enum class AlignmentType {global, local, semi_global};
+    enum class AlignmentType {global, local, semi_global, no_alignment,};
 
     namespace {
         

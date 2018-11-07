@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <ctime> 
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
@@ -15,7 +16,18 @@ std::vector<std::string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq
 struct option options[] = {
 		{"version", no_argument, 0, 'v'},
 		{"help", no_argument, 0, 'h'},
+		{"global", no_argument, 0, 'g'},
+		{"semi-global", no_argument, 0, 's'},
+		{"local", no_argument, 0, 'l'},
 	};
+
+struct alignmentStruct {
+	orange::AlignmentType type = orange::AlignmentType::no_alignment;
+	int match;
+	int mismatch;
+	int gap;
+};
+typedef struct alignmentStruct alignment;
 
 struct statsStruct {
 	uint32_t max;
@@ -111,7 +123,7 @@ void printStatistics(stats const &fileStats, std::string const &filePath) {
 }
 
 template<class T>
-void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *fileStats) {
+void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *fileStats, alignment alignment) {
 	
 	for(auto const& p : entities) {
 		fileStats->num_of_seq++;
@@ -125,9 +137,20 @@ void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *file
 			fileStats->min = (fileStats->min < (p-> sequence).length()) ? fileStats->min : (p-> sequence).length();
 		}
 	}
+
+	if(alignment.type != orange::AlignmentType::no_alignment) {
+		auto const &query = entities[rand()%entities.size()];
+		auto const &target = entities[rand()%entities.size()];
+		std::string cigar;
+		unsigned int target_begin;
+		orange::pairwise_alignment(query->sequence.c_str(), query->sequence.length(), target->sequence.c_str(), target->sequence.length(), 
+		alignment.type, alignment.match, alignment.mismatch, alignment.gap, cigar, target_begin);
+		printf("\n\n%s\n\n", cigar.c_str());
+	}
+
 }
 
-void readFASTQFile(std::string const &filePath) {
+void readFASTQFile(std::string const &filePath, alignment alignment) {
 	std::vector<std::unique_ptr<FASTQEntity>> fastq_objects;
 	auto fastq_parser = bioparser::createParser<bioparser::FastqParser, FASTQEntity>(filePath);
 
@@ -139,37 +162,40 @@ void readFASTQFile(std::string const &filePath) {
 			break;
 		}
 	}
-	calculateStats<FASTQEntity>(fastq_objects, &fileStats);	
+	calculateStats<FASTQEntity>(fastq_objects, &fileStats, alignment);	
 	printStatistics(fileStats, filePath);
 }
 
-void readFASTAFile(std::string const &filePath) {
+void readFASTAFile(std::string const &filePath, alignment alignment) {
 	std::vector<std::unique_ptr<FASTAEntity>> fasta_objects;
 	auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FASTAEntity>(filePath);
 	
 	fasta_parser->parse_objects(fasta_objects, -1);
 	
 	stats fileStats;
-	calculateStats<FASTAEntity>(fasta_objects, &fileStats);
+	calculateStats<FASTAEntity>(fasta_objects, &fileStats, alignment);
 
 	printStatistics(fileStats, filePath);
 }
 
-void calculateAndPrintOutStatistics(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFileFASTA) {
+void calculateAndPrintOutStatistics(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFileFASTA, alignment alignment) {
 	if(isFirstFileFASTA) {
-		readFASTAFile(firstFilePath);
+		readFASTAFile(firstFilePath, alignment);
 	} else {
-		readFASTQFile(firstFilePath);
+		readFASTQFile(firstFilePath, alignment);
 	}
-
-	readFASTAFile(secondFilePath);
+	alignment.type = orange::AlignmentType::no_alignment;
+	readFASTAFile(secondFilePath, alignment);
 }
 
 int main(int argc, char** argv) {
 
+	srand((unsigned)time(0)); 
+	alignment alignment;
+
 	char optchr;
 
-	while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hvgsl", options, NULL)) != -1) {
 		switch(optchr) {
 			case 0:
 				break;
@@ -179,11 +205,30 @@ int main(int argc, char** argv) {
 			case 'v':
 				version();
 				break;
+			case 'g':
+				alignment.type = orange::AlignmentType::global;
+				break;
+			case 's':
+				alignment.type = orange::AlignmentType::semi_global;
+				break;
+			case 'l':
+				alignment.type = orange::AlignmentType::local;
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
 				return 1;
 		}
+	}
+
+	if(alignment.type!=orange::AlignmentType::no_alignment && argc-optind < 5) {
+		fprintf(stderr, "Missing parameters for alignment.\n");
+		fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
+		return 0;
+	} else {
+		alignment.match = strtol(argv[optind+2], NULL, 10);
+		alignment.mismatch = strtol(argv[optind+2], NULL, 10);
+		alignment.gap = strtol(argv[optind+2], NULL, 10);
 	}
 
 	if (argc  == optind){
@@ -209,7 +254,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	calculateAndPrintOutStatistics(firstFilePath, secondFilePath, isFirstFASTA);
+	calculateAndPrintOutStatistics(firstFilePath, secondFilePath, isFirstFASTA, alignment);
 
 	return 0;
 }
