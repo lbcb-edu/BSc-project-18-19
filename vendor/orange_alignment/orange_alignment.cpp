@@ -54,7 +54,7 @@ namespace orange {
 		return CIGAR;
 	}
 
-	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column) {
+	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column, unsigned int &target_begin) {
 		unsigned int i = target_cell_row;
 		unsigned int j = target_cell_column;
 
@@ -81,6 +81,11 @@ namespace orange {
 			}
 
 			updatePosition(i, j, matrix[i][j].parent);
+		}
+
+		target_begin=j;
+		if(target_begin){
+			target_begin--;
 		}
 
 		temp_list.push_front(std::make_pair(lastChar, counter));
@@ -216,7 +221,7 @@ namespace orange {
 
 			int score = populateMatrix(matrix, query, target, match , mismatch, gap, type, target_cell_row, target_cell_column);
 
-			cigar = constructCIGAR(matrix, target_cell_row, target_cell_column);
+			cigar = constructCIGAR(matrix, target_cell_row, target_cell_column, target_begin);
 
 			return score;
                        }
