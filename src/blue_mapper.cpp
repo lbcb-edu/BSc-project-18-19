@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <getopt.h>
 #include "bioparser/bioparser.hpp"
-//#include "blue_alignment.h"
+#include "blue_alignment.hpp"
 
 class InputFile {
     public:
@@ -111,7 +111,7 @@ int main (int argc, char* argv[]) {
             }
         }
 
-
+        std::string type (align_type);
 
         if (argc != (optind + 2)) {
             std::cout << "You should've entered two files to work with. Please try again or ask for --help." << std::endl;
@@ -142,9 +142,9 @@ int main (int argc, char* argv[]) {
             exit(0);
         }
 
+        std::vector<std::unique_ptr<InputFile>> first_object;
         if (first.find("fastq")>first.length() && first.find("fq")>first.length()){
 
-            std::vector<std::unique_ptr<InputFile>> first_object;
             auto fasta_parser = bioparser::createParser<bioparser::FastaParser, InputFile>(first);
             fasta_parser->parse_objects(first_object, -1);
 
@@ -152,9 +152,7 @@ int main (int argc, char* argv[]) {
             fastaq_stat(first_object);
 
         } else {
-            std::vector<std::unique_ptr<InputFile>> first_object;
             auto fastq_parser = bioparser::createParser<bioparser::FastqParser, InputFile>(first);
-
             uint64_t size_in_bytes = 500 * 1024 * 1024; // 500 MB
                 while (true) {
                     auto status = fastq_parser->parse_objects(first_object, size_in_bytes);
@@ -173,8 +171,21 @@ int main (int argc, char* argv[]) {
         fasta_parser->parse_objects(second_object, -1);
 
         std::cout << "We've parsed second file." << std::endl;
-
         fastaq_stat(second_object);
+
+        srand(time(NULL));
+        int random_1 = rand() % first_object.size();
+        int random_2 = rand() % first_object.size();
+
+        std::string query = first_object.at(random_1)->sequence;
+        std::string target = first_object.at(random_2)->sequence;
+        unsigned int query_length = first_object.at(random_1)->sequence.length();
+        unsigned int target_length = first_object.at(random_2)->sequence.length();
+        std::string cigar;
+        unsigned int target_begin;
+
+        std::cout << blue::pairwise_alignment(query.c_str(), query_length, target.c_str(), target_length, blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
+        std::cout << cigar;
 
     return 0;
 }
