@@ -17,9 +17,16 @@ const std::set<std::string> fasta_formats = {".fasta", ".fa", ".fasta.gz", ".fa.
 const std::set<std::string> fastq_formats = {".fastq", ".fq", ".fastq.gz", ".fq.gz"};
 
 static struct option long_options[] = {
-  {"help",    no_argument, NULL, 'h'},
+  {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'v'},
-  {NULL,      no_argument, NULL,  0 }
+  {"match", required_argument, NULL, 'M'},
+  {"mismatch", required_argument, NULL, 'm'},
+  {"gap", required_argument, NULL, 'g'},
+  {"local", no_argument, NULL, 'L'},
+  {"global", no_argument, NULL, 'G'},
+  {"semi_global", no_argument, NULL, 'S'},
+  {NULL, no_argument, NULL, 0}
+  
 };
 
 class FastAQ {
@@ -99,6 +106,19 @@ void help(void) {
          "OPTIONS:\n"
          "  -h  or  --help         print help (displayed now) and exit\n"
          "  -v  or  --version      print version info and exit\n"
+         "  -M or --match          <int>\n"
+         "                            default: 4\n"
+         "                            match number\n"
+         "  -m or --mismatch       <int>\n"
+         "                            default: -1\n"
+         "                            mismatch number\n"
+         "  -g or --gap            <int>\n"
+         "                            default: -2\n"
+         "                            gap number\n"
+         "  -G or --global         global alignment\n"
+         "  -L or --local          local alignment\n"
+         "  -S or --semi_global    semi_global alignment\n"
+
   );
 }
 
@@ -123,7 +143,13 @@ bool contains_extension(const std::string file, const std::set<std::string> &ext
 int main (int argc, char **argv) {
   int optchr;
 
-  while ((optchr = getopt_long(argc, argv, "hv", long_options, NULL)) != -1) {
+  int match = 4;
+  int mismatch = -1;
+  int gap = -2;
+  brown::AlignmentType alignment = brown::AlignmentType::global;
+  std::string alignmentType = "global";
+
+  while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLS", long_options, NULL)) != -1) {
     switch (optchr) {
       case 'h': {
         help();
@@ -133,12 +159,42 @@ int main (int argc, char **argv) {
         version();
         exit(0);
       }
+      case 'M': {
+        match = atoi(optarg);
+        break;
+      }
+      case 'm': {
+        mismatch = atoi(optarg);
+        break;
+      }
+      case 'g': {
+        gap = atoi(optarg);
+        break;
+      }
+      case 'G': {
+        alignment = brown::AlignmentType::global;
+        alignmentType = "global";
+        break;
+      }
+      case 'L': {
+        alignment = brown::AlignmentType::local;
+        alignmentType = "local";
+        break;
+      }
+      case 'S': {
+        alignment = brown::AlignmentType::semi_global;
+        alignmentType = "semi_global";
+        break;
+      }
       default: {
         printf("Unknown option. Type %s --help for usage.\n", argv[0]);
         exit(1);
       }
     }
   }
+
+  printf("match = %d \nmismatch = %d\ngap = %d\n", match, mismatch, gap);
+  std::cout << "Alignment = " << alignmentType <<std::endl;
 
   if (argc - optind != 2) {
     printf("Expected 2 mapping arguments! Use --help for usage.\n");
@@ -177,40 +233,40 @@ int main (int argc, char **argv) {
   int i1 = rand() % fastaq_objects1.size();
   int i2 = rand() % fastaq_objects1.size();
 
-  // std::string cigar;
-  // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
-  //                                       fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
-  //                                       brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
-  // std::cout << value << std::endl;
-  // std::cout << target_begin << std::endl;
-  // std::ofstream out("CIGAR.txt");
-  // out << cigar;
-  // out.close();
+  std::string cigar;
+  unsigned int target_begin = 0;
+  int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
+                                        fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
+                                        alignment, match, mismatch, gap, cigar, target_begin);
+  std::cout << value << std::endl;
+  std::cout << target_begin << std::endl;
+  std::ofstream out("CIGAR.txt");
+  out << cigar;
+  out.close();
 
   // std::string q = {"TCCG"};
   // std::string t = {"ACTCCGAT"};
   // std::string cigar;
   // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, 4, -1, -2, cigar, target_begin);
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
   // std::cout << value << std::endl;
   // std::cout << target_begin << std::endl;
   // std::cout << cigar << std::endl;
 
-  std::string q = {"TTCCGCCAA"};
-  std::string t = {"AACCCCTT"};
-  std::string cigar;
-  unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, 2, -1, -2, cigar, target_begin);
-  std::cout << value << std::endl;
-  std::cout << target_begin << std::endl;
-  std::cout << cigar << std::endl;
+  // std::string q = {"TTCCGCCAA"};
+  // std::string t = {"AACCCCTT"};
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::local, match, mismatch, gap, cigar, target_begin);
+  // std::cout << value << std::endl;
+  // std::cout << target_begin << std::endl;
+  // std::cout << cigar << std::endl;
 
   // std::string q = {"TGCATAT"};
   // std::string t = {"ATCCGAT"};
   // std::string cigar;
   // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::global, 4, -1, -2, cigar, target_begin);
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
   // std::cout << value << std::endl;
   // std::cout << target_begin << std::endl;
   // std::cout << cigar << std::endl;
