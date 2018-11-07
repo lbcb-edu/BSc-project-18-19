@@ -105,13 +105,13 @@ int string_compare(cell** matrix, AlignmentType type,
         }
     }
     
-    std::cout << "\n~FINAL MATRIX~" << std::endl;
-    for (unsigned i = 0; i < rows; i++) {
-        for (unsigned j = 0; j < columns; j++) {
-            std::cout << matrix[i][j].cost << " ";
-        }
-        std::cout << std::endl;
-    }
+//    std::cout << "\n~FINAL MATRIX~" << std::endl;
+//    for (unsigned i = 0; i < rows; i++) {
+//        for (unsigned j = 0; j < columns; j++) {
+//            std::cout << matrix[i][j].cost << " ";
+//        }
+//        std::cout << std::endl;
+//    }
     
     if (type == global) {
         return matrix[rows - 1][columns - 1].cost;
@@ -189,13 +189,13 @@ int pairwise_alignment(const char* query, unsigned int query_length,
     
     matrix_init(matrix, type, rows, columns, gap);
     
-    std::cout << "\n~INITIAL MATRIX~" << std::endl;
-    for (unsigned i = 0; i < rows; i++) {
-        for (unsigned j = 0; j < columns; j++) {
-            std::cout << matrix[i][j].cost << " ";
-        }
-        std::cout << std::endl;
-    }
+//    std::cout << "\n~INITIAL MATRIX~" << std::endl;
+//    for (unsigned i = 0; i < rows; i++) {
+//        for (unsigned j = 0; j < columns; j++) {
+//            std::cout << matrix[i][j].cost << " ";
+//        }
+//        std::cout << std::endl;
+//    }
     
     unsigned row;
     unsigned col;

@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <getopt.h>
 #include <cstring>
+#include <stdlib.h>
+#include <time.h>
 #include <bioparser/bioparser.hpp>
 #include "pink_alignment.hpp"
 
@@ -61,16 +63,17 @@ void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     std::cerr << "Maximal length: "      << max      << std::endl;  
 }
 
-void parseFasta (std::string fastaFile) {
+std::vector<std::unique_ptr<Fast>>  parseFasta (std::string fastaFile) {
     std::vector<std::unique_ptr<Fast>> fasta_objects;
         
     auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fast>(fastaFile);
     fasta_parser->parse_objects(fasta_objects, -1);
         
     printStats(fasta_objects);
+    return fasta_objects;
 }
 
-void parseFastq (std::string fastqFile) {
+std::vector<std::unique_ptr<Fast>> parseFastq (std::string fastqFile) {
     std::vector<std::unique_ptr<Fast>> fastq_objects;
         
     auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fast>(fastqFile);
@@ -84,6 +87,7 @@ void parseFastq (std::string fastqFile) {
     }
         
     printStats(fastq_objects);
+    return fastq_objects;
 }
 
 bool correctExtension(std::string arg, std::vector<std::string> ext) {
@@ -126,25 +130,12 @@ void version() {
 }
 
 int main(int argc, char* argv[]) {
-    const char* query =  "TTACGATTAAGG";
-    const char* target = "GCCA";
-    
-    std::string cigar;
-    unsigned int target_begin = 0;
-    
-    //pick global, semi_global or local
-    int cost = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::semi_global, 2, -1, -2);
-    int cost_cigar = pink::pairwise_alignment(query, strlen(query), target, strlen(target), pink::semi_global ,2, -1, -2, cigar, target_begin);
-    
-    cigar = std::string(cigar.rbegin(), cigar.rend());
-    
-    std::cout << "\nFinal cost: " << cost << std::endl;
-    std::cout << "\nFinal cost_cigar: " << cost_cigar << std::endl;
-    std::cout << "\nCigar: " << cigar << "\n\n";
-    
-    
+//    const char* query =  "TTACGATTAAGG";
+//    const char* target = "GCCA";
     
     std::string helpMessage = "Wrong input. Use \"-h\" or \"--help\" for help.";
+    
+    srand (time(NULL));
     
     if (argc - optind == 1) {
         char optchr;
@@ -173,16 +164,37 @@ int main(int argc, char* argv[]) {
 
     if ((correctExtension(arg1, fastaExtensions) || correctExtension(arg1, fastaExtensions)) 
             && correctExtension(arg2, fastaExtensions)) {
-            
+        
+        std::vector<std::unique_ptr<Fast>> fast_objects1;
+        std::vector<std::unique_ptr<Fast>> fast_objects2;
+        
         std::cerr << "~FIRST FILE~" << std::endl;
         if (correctExtension(arg1, fastaExtensions)) {
-            parseFasta(arg1);
+            fast_objects1 = parseFasta(arg1);
         } else {
-            parseFastq(arg1);
+           fast_objects1 = parseFastq(arg1);
         }
             
         std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-        parseFasta(arg2);
+        fast_objects2 = parseFasta(arg2);
+       
+        std::string cigar;
+        unsigned int target_begin = 0;
+        
+        //pick global, semi_global or local
+        int query = rand() % fast_objects1.size() + 1;
+        int target = rand() % fast_objects1.size() + 1;
+        const char* q = (fast_objects1[query] -> sequence).c_str();
+        const char* t = (fast_objects1[target] -> sequence).c_str();
+        
+        int cost = pink::pairwise_alignment(q, (fast_objects1[query] -> sequence).length(), t, (fast_objects1[target] -> sequence).length(), pink::semi_global, 2, -1, -2);
+        pink::pairwise_alignment(q, (fast_objects1[query] -> sequence).length(), t, (fast_objects1[target] -> sequence).length(), pink::semi_global ,2, -1, -2, cigar, target_begin);
+        
+        cigar = std::string(cigar.rbegin(), cigar.rend());
+        
+        std::cout << "\nFinal cost: " << cost << std::endl;
+        std::cout << "\nCigar: " << cigar << "\n\n";
+        
             
     } else {
         std::cout << helpMessage << std::endl;
