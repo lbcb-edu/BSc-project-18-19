@@ -10,7 +10,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
+add_library(blue_alignment STATIC src/blue_alignment.cpp)
+
 
 add_executable(blue_mapper src/blue_mapper.cpp)
 
-target_link_libraries(blue_mapper bioparser)
+target_link_libraries(blue_mapper bioparser blue_alignment)
