@@ -4,7 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <ctime> 
+#include <ctime>
+#include <string.h>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
@@ -19,13 +20,17 @@ struct option options[] = {
 		{"global", no_argument, 0, 'g'},
 		{"semi-global", no_argument, 0, 's'},
 		{"local", no_argument, 0, 'l'},
+		{"match", required_argument, 0, 0},
+		{"mismatch", required_argument, 0, 0},
+		{"gap", required_argument, 0, 0},
+		{0, 0, 0, 0}
 	};
 
 struct alignmentStruct {
 	orange::AlignmentType type = orange::AlignmentType::no_alignment;
-	int match;
-	int mismatch;
-	int gap;
+	int match = 1;
+	int mismatch = -1;
+	int gap = -1;
 };
 typedef struct alignmentStruct alignment;
 
@@ -141,11 +146,17 @@ void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *file
 	if(alignment.type != orange::AlignmentType::no_alignment) {
 		auto const &query = entities[rand()%entities.size()];
 		auto const &target = entities[rand()%entities.size()];
+
 		std::string cigar;
 		unsigned int target_begin;
+
 		orange::pairwise_alignment(query->sequence.c_str(), query->sequence.length(), target->sequence.c_str(), target->sequence.length(), 
 		alignment.type, alignment.match, alignment.mismatch, alignment.gap, cigar, target_begin);
-		printf("\n\n%s\n\n", cigar.c_str());
+
+		printf("START POSITION: %d\n", target_begin);
+
+		printf("--CIGAR:--\n");
+		printf("%s\n\n", cigar.c_str());
 	}
 
 }
@@ -195,9 +206,20 @@ int main(int argc, char** argv) {
 
 	char optchr;
 
-	while((optchr = getopt_long(argc, argv, "hvgsl", options, NULL)) != -1) {
+	int option_index = 0;
+	while((optchr = getopt_long(argc, argv, "hvgsl", options, &option_index)) != -1) {
 		switch(optchr) {
 			case 0:
+				if(options[option_index].flag != 0)
+					break;
+
+				if(strcmp(options[option_index].name, "match") == 0)
+					alignment.match = atoi(optarg);
+				else if(strcmp(options[option_index].name, "mismatch") == 0)
+					alignment.mismatch = atoi(optarg);
+				else if(strcmp(options[option_index].name, "gap") == 0)
+					alignment.gap = atoi(optarg);
+
 				break;
 			case 'h':
 				help();
@@ -221,22 +243,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if(alignment.type!=orange::AlignmentType::no_alignment && argc-optind < 5) {
-		fprintf(stderr, "Missing parameters for alignment.\n");
-		fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
-		return 0;
-	} else {
-		alignment.match = strtol(argv[optind+2], NULL, 10);
-		alignment.mismatch = strtol(argv[optind+2], NULL, 10);
-		alignment.gap = strtol(argv[optind+2], NULL, 10);
-	}
-
-	if (argc  == optind){
-		if (argc==1) {
-			fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
-		}
-		return 0;
-	} else if(argc - optind < 2) {
+	if(argc - optind < 2) {
 		fprintf(stderr, "Program requires more than one argument!\n");
 		fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
 		return 1;
