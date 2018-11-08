@@ -106,8 +106,14 @@ void help() {
         "usage: orange_mapper <file_name> <file_name>\n"
         "\n"
         "options: \n"
-        "      -h, --help  -  prints help menu (currently displaying)\n"
-        "      -v, --version  -  prints help menu (currently displaying)\n");
+        "	-h, --help  -  prints help menu (currently displaying)\n"
+        "	-v, --version  -  prints program version\n"
+	"	-g, --global - alongside statistics, prints CIGAR string gotten as result of global alignment of 2 random sequences in the first file\n"
+	"	-l, --local - alongside statistics, prints CIGAR string gotten as result of local alignment of 2 random sequences in the first file\n"
+	"	-s, --semi-global - alongside statistics, prints CIGAR string gotten as result of semi-global alignment of 2 random sequences in the first file\n"
+	"	--match (arg) - sets match score parameter that is used in alignments(default value is 1)\n"
+	"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
+	"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n");
 }
 
 void version() {
