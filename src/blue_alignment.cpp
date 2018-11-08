@@ -7,15 +7,37 @@
 #include <stdio.h>
 #include <map>
 
-std::string overloaded = "not_overloaded";
-
 namespace blue
-{
+{  
+    typedef struct {
+        int value;
+        std::pair<int, int> trace;
+    } Cell;
+    
+    void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int i, int j, std::string &cigar, unsigned int &target_begin);
+
+    void initialize_matrix(const char* query, unsigned int query_length,
+                           const char* target, unsigned int target_length,
+                           int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix);
+
+    int semi_global_alignment(const char* query, unsigned int query_length,
+                                    const char* target, unsigned int target_length,
+                                    int match, int mismatch, int gap, std::string &cigar, unsigned int &target_begin);
+
+    int local_alignment(const char* query, unsigned int query_length,
+                                 const char* target, unsigned int target_length,
+                                 int match, int mismatch, int gap, std::string &cigar, unsigned int &target_begin);
+
+    int global_alignment(const char* query, unsigned int query_length,
+                                 const char* target, unsigned int target_length,
+                                 int match, int mismatch, int gap, std::string &cigar, unsigned int &target_begin);
+
     int pairwise_alignment(const char* query, unsigned int query_length,
                            const char* target, unsigned int target_length,
                            AlignmentType type,
                            int match, int mismatch, int gap) {
 
+                           std::string overloaded;
                            unsigned int broj;
                     return pairwise_alignment(query, query_length, target, target_length, type, match, mismatch, gap, overloaded, broj);
     }
@@ -136,8 +158,7 @@ namespace blue
             }
         }
 
-        if(cigar.compare(overloaded) != 0)
-            create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
+        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
         return max_val;
     }
 
@@ -165,8 +186,7 @@ namespace blue
         }
 
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix);
-        if(cigar.compare(overloaded) != 0)
-            create_cigar_string(matrix, query_length, target_length, cigar, target_begin);
+        create_cigar_string(matrix, query_length, target_length, cigar, target_begin);
         return matrix[query_length][target_length].value;
     }
 
@@ -217,8 +237,7 @@ namespace blue
             }
         }
 
-        if(cigar.compare(overloaded) != 0)
-            create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
+        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
         return max_val;
     }
     //************************************************************************************************************************

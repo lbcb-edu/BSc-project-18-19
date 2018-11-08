@@ -74,21 +74,33 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
 int main (int argc, char* argv[]) {
 
         int c;
-        int match = 1;
-        int mismatch = 1;
+        int match = 0;
+        int mismatch = -1;
         int gap = -1;
         char* align_type = "global";
 
         while ((c = getopt_long (argc, argv, "hvm:s:g:t:", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
-                    std::cout << "You've asked for help. " << std::endl << "This program accepts two files as floating arguments." << std::endl
-                    << "It prints out the statistics such as number of sequnces, maximum, minimun and average length." << std::endl
-                    << "It supports formats: \".fasta\", \".fa\", \".fastq\", \".fq\", \".fasta.gz\", \".fa.gz\", \".fastq.gz\", \".fq.gz\"" << std::endl
-                    << "correct usage: blue_mapper <fileame> <filename>" << std::endl
-                    << "It also supports options:" << std::endl
-                    << "    -h --help for help menu" << std::endl
-                    << "    -v --version for current version" << std::endl;
+                    std::cout << "You've asked for help.\n\nThis program implements 3 algorithms for pairwise alignment:" << std::endl
+                              << "\t- Needleman-Wunsch algorithm for global alignment" << std::endl
+                              << "\t- Smith-Waterman algorithm for local alignment" << std::endl
+                              << "\t- semi-global algorithm used for suffix-prefix and prefix-suffix alignment\n" << std::endl
+                              << "It prints out the statistics of two given files such as a number of sequences, maximum, minimum and average length." << std::endl
+                              << "Besides that, two random sequences from the first input file are aligned and" << std::endl
+                              << "the resulting alignment score and CIGAR string are printed.\n" << std::endl
+                              << "The program accepts files as floating arguments." << std::endl
+                              << "It supports formats: \".fasta\", \".fa\", \".fastq\", \".fq\", \".fasta.gz\", \".fa.gz\", \".fastq.gz\", \".fq.gz\"\n" << std::endl
+                              << "Correct usage: blue_mapper [-m matchValue] [-s mismatchValue] [-g gapValue] [-t alignmentType] <fileame> <filename>" << std::endl
+                              << "Alignment type determines which algorithm will be used. Accepted values are: \"global\", \"local\" or \"semi_global\".\n" << std::endl
+                              << "It also supports options:" << std::endl
+                              << "    -h --help for help menu" << std::endl
+                              << "    -v --version for current version\n" << std::endl
+                              << "If not provided, default values are used:" << std::endl
+                              << "\t- Needleman-Wunsch algorithm" << std::endl
+                              << "\t- match: 0" << std::endl
+                              << "\t- mismatch: -1" << std::endl
+                              << "\t- gap: -1\n" << std::endl;
                     return(0);
                 case 'v':
                     std::cout << "v0.1.0" << std::endl ;
@@ -177,15 +189,13 @@ int main (int argc, char* argv[]) {
         int random_1 = rand() % first_object.size();
         int random_2 = rand() % first_object.size();
 
-        std::string query = first_object.at(random_1)->sequence;
-        std::string target = first_object.at(random_2)->sequence;
-        unsigned int query_length = first_object.at(random_1)->sequence.length();
-        unsigned int target_length = first_object.at(random_2)->sequence.length();
+        std::string& query = first_object.at(random_1)->sequence;
+        std::string& target = first_object.at(random_2)->sequence;
         std::string cigar;
         unsigned int target_begin;
 
-        std::cout << blue::pairwise_alignment(query.c_str(), query_length, target.c_str(), target_length, blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
-        std::cout << cigar;
+        std::cout << blue::pairwise_alignment(query.c_str(), query.size(), target.c_str(), target.size(), blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
+        std::cout << cigar << std::endl;
 
     return 0;
 }
