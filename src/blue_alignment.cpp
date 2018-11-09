@@ -8,17 +8,17 @@
 #include <map>
 
 namespace blue
-{  
+{
     typedef struct {
         int value;
         std::pair<int, int> trace;
     } Cell;
-    
-    void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int i, int j, std::string &cigar, unsigned int &target_begin);
+
+    void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int i, int j, std::string &cigar, unsigned int &target_begin, const char* query, unsigned int query_length, const char* target);
 
     void initialize_matrix(const char* query, unsigned int query_length,
                            const char* target, unsigned int target_length,
-                           int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix);
+                           int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix, AlignmentType type);
 
     int semi_global_alignment(const char* query, unsigned int query_length,
                                     const char* target, unsigned int target_length,
@@ -72,93 +72,27 @@ namespace blue
         std::vector<std::vector<Cell> > matrix;
         matrix.resize(query_length+1, std::vector<Cell>(target_length+1));
 
-        matrix[0][0].value = 0;
-        matrix[0][0].trace.first = -1;
-        matrix[0][0].trace.second = -1;
-
-        for (int i=1; i < query_length + 1; i++){
-            matrix[i][0].value = 0;
-            matrix[i][0].trace.first = -1;
-            matrix[i][0].trace.second = -1;
-        }
-
-        for (int i=1; i < target_length + 1; i++){
-            matrix[0][i].value = 0;
-            matrix[0][i].trace.first = -1;
-            matrix[0][i].trace.second = -1;
-        }
-
         std::pair<int, int> max_cell;
         max_cell.first = 0;
         max_cell.second = 0;
         int max_val = 0;
 
+        AlignmentType type = local;
+
+        initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
+
+
         for(int i = 1; i < query_length+1; i++) {
             for(int j = 1; j<target_length+1; j++ ) {
-                int match_mismatch = query[i-1] == target[j-1] ?
-                                        matrix[i-1][j-1].value + match : matrix[i-1][j-1].value + mismatch;
-                int insertion = matrix[i][j-1].value + gap;
-                int deletion = matrix[i-1][j].value + gap;
-
-                if ( match_mismatch < 0 && insertion < 0 && deletion < 0) {
-                    matrix[i][j].value = 0;
-                    matrix[i][j].trace.first = -1;
-                    matrix[i][j].trace.second = -1;
-                } else {
-                    if(insertion > deletion) {
-                        if(match_mismatch > insertion) {
-                            matrix[i][j].value = match_mismatch;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j-1;
-
-                        } else if (match_mismatch == insertion) {
-                            if (matrix[i-1][j-1].value > matrix[i][j-1].value) {
-                                matrix[i][j].trace.first = i-1;
-                                matrix[i][j].trace.second = j-1;
-                            } else {
-                                matrix[i][j].trace.first = i;
-                                matrix[i][j].trace.second = j-1;
-                            }
-                            matrix[i][j].value = match_mismatch;
-
-                        } else {
-                            matrix[i][j].value = insertion;
-                            matrix[i][j].trace.first = i;
-                            matrix[i][j].trace.second = j-1;
-                        }
-
-    //***********************************************************************************
-                    } else {
-                        if(match_mismatch > deletion) {
-                            matrix[i][j].value = match_mismatch;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j-1;
-
-                        } else if (match_mismatch == deletion) {
-                            if (matrix[i-1][j-1].value > matrix[i-1][j].value) {
-                                matrix[i][j].trace.first = i-1;
-                                matrix[i][j].trace.second = j-1;
-                            } else {
-                                matrix[i][j].trace.first = i-1;
-                                matrix[i][j].trace.second = j;
-                            }
-                            matrix[i][j].value = match_mismatch;
-                        } else {
-                            matrix[i][j].value = deletion;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j;
-                        }
-                    }
-                    if (matrix[i][j].value > max_val) {
-                        max_val = matrix[i][j].value;
-                        max_cell.first = i;
-                        max_cell.second = j;
-                    }
+                if (matrix[i][j].value > max_val) {
+                max_val = matrix[i][j].value;
+                max_cell.first = i;
+                max_cell.second = j;
                 }
             }
         }
 
-        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
+        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin, query, query_length, target);
         return max_val;
     }
 
@@ -169,24 +103,10 @@ namespace blue
         std::vector<std::vector<Cell> > matrix;
         matrix.resize(query_length+1, std::vector<Cell>(target_length+1));
 
-        matrix[0][0].value = 0;
-        matrix[0][0].trace.first = -1;
-        matrix[0][0].trace.second = -1;
+        AlignmentType type = global;
 
-        for(int i = 1; i < query_length+1; i++) {
-            matrix[i][0].value = gap*i;
-            matrix[i][0].trace.first = i-1;
-            matrix[i][0].trace.second = 0;
-        }
-
-        for(int i = 1; i<target_length + 1; i++) {
-            matrix[0][i].value = gap*i;
-            matrix[0][i].trace.first = 0;
-            matrix[0][i].trace.second = i-1;
-        }
-
-        initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix);
-        create_cigar_string(matrix, query_length, target_length, cigar, target_begin);
+        initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
+        create_cigar_string(matrix, query_length, target_length, cigar, target_begin, query, query_length, target);
         return matrix[query_length][target_length].value;
     }
 
@@ -198,23 +118,9 @@ namespace blue
         std::vector<std::vector<Cell> > matrix;
         matrix.resize(query_length+1, std::vector<Cell>(target_length+1));
 
-        matrix[0][0].value = 0;
-        matrix[0][0].trace.first = -1;
-        matrix[0][0].trace.second = -1;
+        AlignmentType type = semi_global;
 
-        for (int i=1; i < query_length + 1; i++){
-            matrix[i][0].value = 0;
-            matrix[i][0].trace.first = -1;
-            matrix[i][0].trace.second = -1;
-        }
-
-        for (int i=1; i < target_length + 1; i++){
-            matrix[0][i].value = 0;
-            matrix[0][i].trace.first = -1;
-            matrix[0][i].trace.second = -1;
-        }
-
-        initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix);
+        initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
 
         std::pair<int, int> max_cell;
         max_cell.first = 0;
@@ -237,14 +143,44 @@ namespace blue
             }
         }
 
-        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin);
+        create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin, query, query_length, target);
         return max_val;
     }
     //************************************************************************************************************************
 
     void initialize_matrix(const char* query, unsigned int query_length,
                            const char* target, unsigned int target_length,
-                           int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix) {
+                           int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix, AlignmentType type) {
+
+        matrix[0][0].value = 0;
+        matrix[0][0].trace.first = -1;
+        matrix[0][0].trace.second = -1;
+
+        if (type == global) {
+            for(int i = 1; i < query_length+1; i++) {
+                matrix[i][0].value = gap*i;
+                matrix[i][0].trace.first = i-1;
+                matrix[i][0].trace.second = 0;
+            }
+
+            for(int i = 1; i<target_length + 1; i++) {
+                matrix[0][i].value = gap*i;
+                matrix[0][i].trace.first = 0;
+                matrix[0][i].trace.second = i-1;
+            }
+        } else {
+            for (int i=1; i < query_length + 1; i++){
+                matrix[i][0].value = 0;
+                matrix[i][0].trace.first = -1;
+                matrix[i][0].trace.second = -1;
+            }
+
+            for (int i=1; i < target_length + 1; i++){
+                matrix[0][i].value = 0;
+                matrix[0][i].trace.first = -1;
+                matrix[0][i].trace.second = -1;
+            }
+        }
 
         for(int i = 1; i < query_length+1; i++) {
             for(int j = 1; j<target_length+1; j++ ) {
@@ -253,8 +189,12 @@ namespace blue
                 int insertion = matrix[i][j-1].value + gap;
                 int deletion = matrix[i-1][j].value + gap;
 
-
-                if(insertion > deletion) {
+                if (match_mismatch < 0 && insertion < 0 && deletion < 0 && type == local) {
+                    matrix[i][j].value = 0;
+                    matrix[i][j].trace.first = -1;
+                    matrix[i][j].trace.second = -1;
+                } else {
+                    if(insertion > deletion) {
                     if(match_mismatch > insertion) {
                         matrix[i][j].value = match_mismatch;
                         matrix[i][j].trace.first = i-1;
@@ -277,46 +217,56 @@ namespace blue
                     }
 
     //***********************************************************************************
-                } else {  //deletion > insertion
-                    if(match_mismatch > deletion) {
-                        matrix[i][j].value = match_mismatch;
-                        matrix[i][j].trace.first = i-1;
-                        matrix[i][j].trace.second = j-1;
-
-                    } else if (match_mismatch == deletion) {
-                        if (matrix[i-1][j-1].value > matrix[i-1][j].value) {
+                    } else {  //deletion > insertion
+                        if(match_mismatch > deletion) {
+                            matrix[i][j].value = match_mismatch;
                             matrix[i][j].trace.first = i-1;
                             matrix[i][j].trace.second = j-1;
+
+                        } else if (match_mismatch == deletion) {
+                            if (matrix[i-1][j-1].value > matrix[i-1][j].value) {
+                                matrix[i][j].trace.first = i-1;
+                                matrix[i][j].trace.second = j-1;
+                            } else {
+                                matrix[i][j].trace.first = i-1;
+                                matrix[i][j].trace.second = j;
+                            }
+                            matrix[i][j].value = match_mismatch;
+
                         } else {
+                            matrix[i][j].value = deletion;
                             matrix[i][j].trace.first = i-1;
                             matrix[i][j].trace.second = j;
                         }
-                        matrix[i][j].value = match_mismatch;
-
-                    } else {
-                        matrix[i][j].value = deletion;
-                        matrix[i][j].trace.first = i-1;
-                        matrix[i][j].trace.second = j;
                     }
+
                 }
+
+
+
             }
         }
     }
 
     void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int start_row, int start_column,
-                                    std::string &adress, unsigned int &target_begin) {
-        int mis_counter, del_counter, ins_counter;
-        mis_counter = del_counter = ins_counter = 0;
+                                    std::string &adress, unsigned int &target_begin, const char* query, unsigned int query_length, const char* target) {
+        int mism_counter, mis_counter, del_counter, ins_counter;
+        mism_counter = mis_counter = del_counter = ins_counter = 0;
 
         std::string cigar_reverse;
         Cell current = matrix[start_row][start_column];
+
+        if (start_row-1 < query_length) {
+            cigar_reverse+='S';
+            cigar_reverse+= std::to_string(query_length-start_row);
+        }
 
         std::pair<int, int> pos;
         pos.first = start_row;
         pos.second = start_column;
 
         while( current.trace.first != -1 && current.trace.second != -1) {
-            //provjera za match
+            //provjera za match/mismatch
             if(current.trace.first == pos.first-1 && current.trace.second == pos.second-1) {
                 if(del_counter != 0) {
                     cigar_reverse+=std::to_string(del_counter);
@@ -325,10 +275,26 @@ namespace blue
                     cigar_reverse +=std::to_string(ins_counter);
                     ins_counter = 0;
                 }
-                if(mis_counter == 0) {
-                    cigar_reverse+='M';
+                if(query[pos.first-1] == target[pos.second-1]){
+                    if(mism_counter != 0) {
+                        cigar_reverse+=std::to_string(mism_counter);
+                        mism_counter = 0;
+                    }
+                    if(mis_counter == 0) {
+                    cigar_reverse+='=';
+                    }
+                    ++mis_counter;
+                } else {
+                    if(mis_counter != 0) {
+                        cigar_reverse+=std::to_string(mis_counter);
+                        mis_counter = 0;
+                    }
+                    if(mism_counter == 0) {
+                    cigar_reverse+='X';
+                    }
+                    ++mism_counter;
                 }
-                ++mis_counter;
+
 
                 // provjera za insertion
             } else if(current.trace.first == pos.first && current.trace.second == pos.second-1) {
@@ -338,6 +304,9 @@ namespace blue
                 } else if (mis_counter != 0) {
                     cigar_reverse +=std::to_string(mis_counter);
                     mis_counter = 0;
+                } else if (mism_counter != 0) {
+                    cigar_reverse +=std::to_string(mism_counter);
+                    mism_counter = 0;
                 }
                 if(ins_counter == 0) {
                     cigar_reverse+='I';
@@ -352,6 +321,9 @@ namespace blue
                 } else if (mis_counter != 0) {
                     cigar_reverse +=std::to_string(mis_counter);
                     mis_counter = 0;
+                } else if (mism_counter != 0) {
+                    cigar_reverse +=std::to_string(mism_counter);
+                    mism_counter = 0;
                 }
                 if(del_counter == 0) {
                     cigar_reverse+='D';
@@ -366,10 +338,17 @@ namespace blue
 
         if(mis_counter != 0) {
             cigar_reverse+=std::to_string(mis_counter);
+        } else if(mism_counter != 0){
+            cigar_reverse+=std::to_string(mism_counter);
         } else if(ins_counter != 0){
             cigar_reverse+=std::to_string(ins_counter);
         } else {
             cigar_reverse+=std::to_string(del_counter);
+        }
+
+        if (pos.first != 0) {
+            cigar_reverse+='S';
+            cigar_reverse+=std::to_string(pos.first);
         }
 
         std::string number = "";
