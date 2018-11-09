@@ -6,6 +6,7 @@
 #include<set>
 #include<string>
 
+#include "white_alignment.h"
 #include "white_mapper.h"
 #include "bioparser/bioparser.hpp"
 
@@ -76,13 +77,17 @@ void statistics (std::vector<std::unique_ptr<SequenceFormat>> &v, std::string fi
 
 void help() {
 	std::cout << 		"--Help:"
-				"\n	This program is a mapper that requires two files. First one containing a set		\n"
-                     		"	of fragments in FASTA or FASTQ format and the second one containing corresponding	\n"
-                                "	reference genome in FASTA format. The mapper parses the files and stores them in	\n"
+				"\n	This program is a mapper that requires two files and three values. First file should	\n"
+				"	contain a set of fragments in FASTA or FASTQ format and the second one a corresponding	\n"
+                                "	reference genome in FASTA format. Values are used for the alignment. Values are match, 	\n"
+				"	mismatch and gap cost respectively. The mapper parses the files and stores them in	\n"
                                 "	memory while also providing statistics of given files:					\n"
                                 "	-> number of sequences									\n"
                                 "	-> average length									\n"
                                 "	-> minimal and maximal length.								\n\n"
+
+				"	Afterwords two random sequences from the first file are selected and aligned using	\n"
+				"	global, semi-global and local alignment. The resulting cigar string is printed.		\n"
 
                                 "	File extensions accepted:								\n"
                                 "	-> .fasta             -> .fastq							\n"
@@ -90,7 +95,7 @@ void help() {
                                 "	-> .fasta.gz          -> .fastq.gz							\n"
                                 "	-> .fa.gz             -> .fq.gz							\n\n"
 
-				"	Usage: white_mapper [OPTIONS] sequences_file reference_genome_file			\n\n"
+				"	Usage: white_mapper [OPTIONS] sequences_file reference_genome_file match mismatch gap	\n\n"
 
                                 "	There are two options:									\n"
                                 "	-> \"-h\" or \"--help\" for help							\n"
@@ -111,18 +116,22 @@ bool check_format (std::string file, std::set<std::string> list_of_formats) {
 }
 
 template < template<class> class T>
-void parse_file (std::string file_path)
+std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 {
 	std::vector<std::unique_ptr<SequenceFormat>> objects;
 	auto parser = bioparser::createParser<T, SequenceFormat> (file_path);
 	parser -> parse_objects (objects, -1);
 
 	statistics (objects, file_path);
+
+	return objects;
 }
 
 int main (int argc, char* argv[])
 {
 	int option = 0;
+	std::vector<std::unique_ptr<SequenceFormat>> sequences;
+	std::vector<std::unique_ptr<SequenceFormat>> reference_genome;
 
         while ((option = getopt_long(argc, argv, "hv", long_options, NULL)) != -1) {
                 switch (option) {
@@ -135,18 +144,18 @@ int main (int argc, char* argv[])
                                 exit(0);
 
                         default:
-                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] sequence_file reference_genome_file\n\n", argv[0]);
+                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
                                 exit(0);
                 }
 	}
 
-	if (argc - optind == 2)
+	if (argc - optind == 5)
 	{
 		if (check_format (argv[optind], fasta_formats))
-			parse_file<bioparser::FastaParser> (std::string (argv[optind]));
+			sequences = parse_file<bioparser::FastaParser> (std::string (argv[optind]));
 
 		else if (check_format (argv[optind], fastq_formats))
-                        parse_file<bioparser::FastqParser> (std::string (argv[optind]));
+                        sequences = parse_file<bioparser::FastqParser> (std::string (argv[optind]));
 
 		else
 			fprintf (stderr, "\nError:													\n"
@@ -157,8 +166,7 @@ int main (int argc, char* argv[])
                                      	 "	-> .fa.gz             -> .fq.gz										\n\n");
 
 		if (check_format (argv[++optind], fasta_formats))
-                        parse_file<bioparser::FastaParser> (std::string (argv[optind]));
-
+                        reference_genome = parse_file<bioparser::FastaParser> (std::string (argv[optind]));
 		else
 
 			fprintf (stderr, "\n --Error:														\n"
@@ -171,11 +179,97 @@ int main (int argc, char* argv[])
 
 	 else
                         fprintf (stderr, "\n--Error:\n"
-					 "	Usage: white_mapper [OPTIONS] sequence_file reference_genome_file	\n\n"
+					 "	Usage: white_mapper [OPTIONS] sequence_file reference_genome_file match mismatch gap	\n\n"
 
-					 "	Number of nonoption arguments must be 2:				\n"
-                                         "		1st file contains sequences in FASTA or FASTQ format		\n"
-                                         "		2nd file contains a reference genome in FASTA fromat		\n\n");
+					 "	Number of nonoption arguments must be 5:						\n"
+                                         "		1st file contains sequences in FASTA or FASTQ format				\n"
+                                         "		2nd file contains a reference genome in FASTA fromat				\n"
+					 "		3rd match cost									\n"
+					 "		4th mismatch cost								\n"
+					 "		5th gap cost									\n\n");
 
+	//alignment of 2 random selected sequences
+	srand (time (NULL));
+
+	int i1 = rand() % sequences.size();
+	int i2 = rand() % sequences.size();
+
+	//printf("Sequences used:\n%d_%d", i1, i2);
+	int match = atoi (argv[++optind]);
+	int mismatch = -atoi (argv[++optind]);
+	int gap = -atoi (argv[++optind]);
+
+	int values[3];
+
+	std::string cigar;
+	unsigned int target_begin = 0;
+	printf("\nFirst sequence (Length: %lu):\n%s\n\nSecond sequence (Length: %lu):\n%s\n\n", sequences[i1] -> sequence.size(), sequences[i1] -> sequence.c_str(),
+						sequences[i2] -> sequence.size(), sequences[i2] -> sequence.c_str());
+
+	int value = white::pairwise_alignment(	sequences[i1] -> sequence.c_str(), sequences[i1] -> sequence.size(),
+  	                                   	sequences[i2] -> sequence.c_str(), sequences[i2] -> sequence.size(),
+ 	                                  	white::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+
+	values[0] = value;
+
+	std::cout << "\nGlobal alignment:\n";
+	//std::cout << value << std::endl;
+	//std::cout << target_begin << std::endl;
+	printf ("%s\n", cigar.c_str());
+
+	value = white::pairwise_alignment(  sequences[i1] -> sequence.c_str(), sequences[i1] -> sequence.size(),
+                                            sequences[i2] -> sequence.c_str(), sequences[i2] -> sequence.size(),
+                                            white::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
+
+	values[1] = value;
+
+        std::cout << "\nSemi-global alignment:\n";
+        //std::cout << value << std::endl;
+        //std::cout << target_begin << std::endl;
+	printf ("%s\n", cigar.c_str());
+
+	value = white::pairwise_alignment(  sequences[i1] -> sequence.c_str(), sequences[i1] -> sequence.size(),
+                                            sequences[i2] -> sequence.c_str(), sequences[i2] -> sequence.size(),
+                                            white::AlignmentType::local, match, mismatch, gap, cigar, target_begin);
+
+	values[2] = value;
+
+        std::cout << "\nLocal alignment:\n";
+        //std::cout << value << std::endl;
+        //std::cout << target_begin << std::endl;
+	printf ("%s\n", cigar.c_str());
+
+
+/*	std::string q = {"AGCGGCAT"};
+	std::string t = {"CATCCGT"};
+	std::string cigar;
+	unsigned int target_begin = 0;
+	int value = white::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), white::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
+	std::cout << value << std::endl;
+	std::cout << target_begin << std::endl;
+	std::cout << cigar << std::endl;
+	std::cout <<std::endl;
+*/
+/*	std::string q = {"TTCCGCCAA"};
+	std::string t = {"AACCCCTT"};
+	std::string cigar;
+	unsigned int target_begin = 0;
+	int value = white::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), white::AlignmentType::local, match, mismatch, gap, cigar, target_begin);
+	std::cout << value << std::endl;
+	std::cout << target_begin << std::endl;
+	std::cout << cigar << std::endl;
+	std::cout <<std::endl;
+*/
+
+/*	std::string q = {"TGCATAT"};
+	std::string t = {"ATCCGAT"};
+	std::string cigar;
+	unsigned int target_begin = 0;
+	int value = white::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), white::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+	std::cout << value << std::endl;
+	std::cout << target_begin << std::endl;
+	std::cout << cigar << std::endl;
+	std::cout <<std::endl;
+*/
 	return 0;
 }

@@ -13,9 +13,11 @@ configure_file(
 	"${PROJECT_BINARY_DIR}/white_mapper.h"
 )
 
+add_library(white_alignment STATIC src/white_alignment.cxx)
+
 include_directories("${PROJECT_BINARY_DIR}")
 
 add_subdirectory (vendor/bioparser EXCLUDE_FROM_ALL)
 
 add_executable (white_mapper src/white_mapper.cxx)
-target_link_libraries (white_mapper bioparser)
+target_link_libraries (white_mapper bioparser white_alignment)

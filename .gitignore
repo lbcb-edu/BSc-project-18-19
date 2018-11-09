@@ -7,3 +7,4 @@ CMakeCache.txt
 1.fasta
 2.fa.gz
 src/white_mapper1.cxx
+libwhite_alignment.a
