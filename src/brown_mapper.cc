@@ -242,25 +242,27 @@ int main (int argc, char **argv) {
   int i1 = rand() % fastaq_objects1.size();
   int i2 = rand() % fastaq_objects1.size();
 
-  // std::string cigar;
-  // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
-  //                                       fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
-  //                                       alignment, match, mismatch, gap, cigar, target_begin);
-  // std::cout << "Alignment score: " << value << std::endl;
-  // std::cout << "Pos: " << target_begin << std::endl;
-  // std::cout << "CIGAR: " << cigar << std::endl;
+  std::string cigar;
+  unsigned int target_begin = 0;
+  int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
+                                        fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
+                                        alignment, match, mismatch, gap, cigar, target_begin);
+  std::cout << "Alignment score: " << value << std::endl;
+  std::cout << "Pos: " << target_begin << std::endl;
+  std::cout << "CIGAR: " << cigar << std::endl;
 
   fprintf(stderr, " Done!\nFinished!\n");
   
-  std::string q = {"TTTTTGGGG"};
-  std::string t = {"CCCACTTTTT"};
-  std::string cigar;
-  unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
-  std::cout << value << std::endl;
-  std::cout << target_begin << std::endl;
-  std::cout << cigar << std::endl;
+  // Small test examples
+
+  // std::string q = {"ATTGGAA"};
+  // std::string t = {"CCCACTTTTTGG"};
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
+  // std::cout << value << std::endl;
+  // std::cout << target_begin << std::endl;
+  // std::cout << cigar << std::endl;
 
   // std::string q = {"TTCCGCCAA"};
   // std::string t = {"AACCCCTT"};

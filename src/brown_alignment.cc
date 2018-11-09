@@ -20,43 +20,43 @@ typedef struct {
 } cell;
 
 void print_val_matrix(cell** m, int rows, int cols, const char* s, const char* t) {
-  printf("%3c", ' ');
-  printf("%3c", ' ');
+  fprintf(stderr, "%3c", ' ');
+  fprintf(stderr, "%3c", ' ');
   for (int i = 0; i < cols; i++) {
-    printf("%3c", t[i]);
+    fprintf(stderr, "%3c", t[i]);
   }
-  printf("\n");
+  fprintf(stderr, "\n");
   for (int i = 0; i < rows; ++i) {
     if (i > 0) {
-      printf("%3c", s[i-1]);
+      fprintf(stderr, "%3c", s[i-1]);
     } else {
-      printf("%3c", ' ');
+      fprintf(stderr, "%3c", ' ');
     }
     for (int j = 0; j < cols; ++j) {
-      printf("%3d", m[i][j].val);
+      fprintf(stderr, "%3d", m[i][j].val);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
   }
 }
 
 void print_char_matrix(cell** m, int rows, int cols, const char* s, const char* t) {
-  printf("\n");
-  printf("%3c", ' ');
-  printf("%3c", ' ');
+  fprintf(stderr, "\n");
+  fprintf(stderr, "%3c", ' ');
+  fprintf(stderr, "%3c", ' ');
   for (int i = 0; i < cols; i++) {
-    printf("%3c", t[i]);
+    fprintf(stderr, "%3c", t[i]);
   }
-  printf("\n");
+  fprintf(stderr, "\n");
   for (int i = 0; i < rows; ++i) {
     if (i > 0) {
-      printf("%3c", s[i-1]);
+      fprintf(stderr, "%3c", s[i-1]);
     } else {
-      printf("%3c", ' ');
+      fprintf(stderr, "%3c", ' ');
     }
     for (int j = 0; j < cols; ++j) {
-      printf("  %c", m[i][j].parent);
+      fprintf(stderr, "  %c", m[i][j].parent);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
   }
 }
 
