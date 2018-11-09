@@ -10,6 +10,10 @@
 #include "white_mapper.h"
 #include "bioparser/bioparser.hpp"
 
+#define MATCH 2;
+#define MISMATCH -1;
+#define GAP -2;
+
 class SequenceFormat
 {
 	 public:
@@ -77,29 +81,33 @@ void statistics (std::vector<std::unique_ptr<SequenceFormat>> &v, std::string fi
 
 void help() {
 	std::cout << 		"--Help:"
-				"\n	This program is a mapper that requires two files and three values. First file should	\n"
-				"	contain a set of fragments in FASTA or FASTQ format and the second one a corresponding	\n"
-                                "	reference genome in FASTA format. Values are used for the alignment. Values are match, 	\n"
-				"	mismatch and gap cost respectively. The mapper parses the files and stores them in	\n"
-                                "	memory while also providing statistics of given files:					\n"
+				"\n	This program is a mapper that requires two files. First file should contain a set of	\n"
+				"	fragments in FASTA or FASTQ format and the second one a corresponding reference genome	\n"
+                                "	in FASTA format. The mapper parses the files and stores them in	memory while also	\n"
+				"	providing statistics of given files:							\n"
                                 "	-> number of sequences									\n"
                                 "	-> average length									\n"
                                 "	-> minimal and maximal length.								\n\n"
 
-				"	Afterwords two random sequences from the first file are selected and aligned using	\n"
+				"	Afterwards, two random sequences from the first file are selected and aligned using	\n"
 				"	global, semi-global and local alignment. The resulting cigar string is printed.		\n"
+				"	Default for match, mismatch ang gap values is 2, -1, -2 respectively. The default	\n"
+				"	values can be changed using appropriate options.					\n\n"
 
                                 "	File extensions accepted:								\n"
-                                "	-> .fasta             -> .fastq							\n"
+                                "	-> .fasta             -> .fastq								\n"
                                 "	-> .fa                -> .fq								\n"
                                 "	-> .fasta.gz          -> .fastq.gz							\n"
-                                "	-> .fa.gz             -> .fq.gz							\n\n"
+                                "	-> .fa.gz             -> .fq.gz								\n\n"
 
 				"	Usage: white_mapper [OPTIONS] sequences_file reference_genome_file match mismatch gap	\n\n"
 
-                                "	There are two options:									\n"
+                                "	There are five options:									\n"
                                 "	-> \"-h\" or \"--help\" for help							\n"
-                                "	-> \"-v\" or \"--version\" for displaying the current version.				\n\n";
+                                "	-> \"-v\" or \"--version\" for displaying the current version.				\n"
+				"	-> \"-m ARG\" sets match value to ARG							\n"
+				"       -> \"-s ARG\" sets mismatch value to ARG                                                \n"
+				"       -> \"-g ARG\" sets gap value to ARG                                                   \n\n";
 }
 
 void version() {
@@ -133,7 +141,11 @@ int main (int argc, char* argv[])
 	std::vector<std::unique_ptr<SequenceFormat>> sequences;
 	std::vector<std::unique_ptr<SequenceFormat>> reference_genome;
 
-        while ((option = getopt_long(argc, argv, "hv", long_options, NULL)) != -1) {
+	int match = MATCH;
+        int mismatch = MISMATCH;
+        int gap = GAP;
+
+        while ((option = getopt_long(argc, argv, "hvm:s:g:", long_options, NULL)) != -1) {
                 switch (option) {
                         case 'h':
 				help();
@@ -143,13 +155,26 @@ int main (int argc, char* argv[])
 				version();
                                 exit(0);
 
+			case 'm':
+				match = atoi (optarg);
+				break;
+
+			case 's':
+                                mismatch = atoi (optarg);
+				break;
+
+			case 'g':
+                                gap = atoi (optarg);
+				break;
+
                         default:
-                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
+                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] [-m ARG] [-s ARG] [-g ARG] sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
                                 exit(0);
+
                 }
 	}
 
-	if (argc - optind == 5)
+	if (argc - optind <= 5)
 	{
 		if (check_format (argv[optind], fasta_formats))
 			sequences = parse_file<bioparser::FastaParser> (std::string (argv[optind]));
@@ -183,10 +208,7 @@ int main (int argc, char* argv[])
 
 					 "	Number of nonoption arguments must be 5:						\n"
                                          "		1st file contains sequences in FASTA or FASTQ format				\n"
-                                         "		2nd file contains a reference genome in FASTA fromat				\n"
-					 "		3rd match cost									\n"
-					 "		4th mismatch cost								\n"
-					 "		5th gap cost									\n\n");
+                                         "		2nd file contains a reference genome in FASTA fromat				\n\n");
 
 	//alignment of 2 random selected sequences
 	srand (time (NULL));
@@ -195,16 +217,13 @@ int main (int argc, char* argv[])
 	int i2 = rand() % sequences.size();
 
 	//printf("Sequences used:\n%d_%d", i1, i2);
-	int match = atoi (argv[++optind]);
-	int mismatch = -atoi (argv[++optind]);
-	int gap = -atoi (argv[++optind]);
 
 	int values[3];
 
 	std::string cigar;
 	unsigned int target_begin = 0;
-	printf("\nFirst sequence (Length: %lu):\n%s\n\nSecond sequence (Length: %lu):\n%s\n\n", sequences[i1] -> sequence.size(), sequences[i1] -> sequence.c_str(),
-						sequences[i2] -> sequence.size(), sequences[i2] -> sequence.c_str());
+//	printf("\nFirst sequence (Length: %lu):\n%s\n\nSecond sequence (Length: %lu):\n%s\n\n", sequences[i1] -> sequence.size(), sequences[i1] -> sequence.c_str(),
+//						sequences[i2] -> sequence.size(), sequences[i2] -> sequence.c_str());
 
 	int value = white::pairwise_alignment(	sequences[i1] -> sequence.c_str(), sequences[i1] -> sequence.size(),
   	                                   	sequences[i2] -> sequence.c_str(), sequences[i2] -> sequence.size(),
@@ -240,8 +259,8 @@ int main (int argc, char* argv[])
 	printf ("%s\n", cigar.c_str());
 
 
-/*	std::string q = {"AGCGGCAT"};
-	std::string t = {"CATCCGT"};
+/*	std::string q = {"TCCG"};
+	std::string t = {"ACTCCGAT"};
 	std::string cigar;
 	unsigned int target_begin = 0;
 	int value = white::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), white::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
