@@ -195,8 +195,9 @@ int main (int argc, char* argv[]) {
         unsigned int target_begin;
 
         std::cout << blue::pairwise_alignment(query.c_str(), query.size(), target.c_str(), target.size(), blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
-        //std::cout << blue::pairwise_alignment("GGCTCAG", 7, "AACTC", 5, blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
+        //std::cout << blue::pairwise_alignment("GGCTC", 5, "AACTC", 5, blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
         std::cout << cigar << std::endl;
+        //std::cout << target_begin << std::endl;
 
     return 0;
 }

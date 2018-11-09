@@ -239,11 +239,7 @@ namespace blue
                             matrix[i][j].trace.second = j;
                         }
                     }
-
                 }
-
-
-
             }
         }
     }
@@ -256,7 +252,7 @@ namespace blue
         std::string cigar_reverse;
         Cell current = matrix[start_row][start_column];
 
-        if (start_row-1 < query_length) {
+        if (start_row < query_length) {
             cigar_reverse+='S';
             cigar_reverse+= std::to_string(query_length-start_row);
         }
