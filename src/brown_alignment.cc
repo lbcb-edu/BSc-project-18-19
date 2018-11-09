@@ -181,11 +181,19 @@ int find_alignment_score(cell** m, int rows, int cols,
 
 // CIGAR string finder
 void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
-                int row, int col, std::function<bool(cell**, int&, int)> condition) {
+                int row, int col, int rows, int cols,
+                std::function<bool(cell**, int, int)> condition) {
 
   int counter = 0;
   char current = m[row][col].parent;
   target_begin = 0;
+
+  if (row < rows - 1) {
+    cigar.push_back('S');
+    std::string num = std::to_string(rows - 1 - row);
+    std::reverse(num.begin(), num.end());
+    cigar.append(num);
+  }
 
   while (condition(m, row, col)) {
     if (current != m[row][col].parent) {
@@ -211,6 +219,14 @@ void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
   std::string num = std::to_string(counter);
   std::reverse(num.begin(), num.end());
   cigar.append(num);
+
+  if (row > 0) {
+    cigar.push_back('S');
+    std::string num = std::to_string(row);
+    std::reverse(num.begin(), num.end());
+    cigar.append(num);
+  }
+
   std::reverse(cigar.begin(), cigar.end());
 
   if(col != 0){
@@ -250,7 +266,7 @@ int needleman_wunsch(const char* query, int rows,
   // print_val_matrix(m, rows, cols, query, target);
   // print_char_matrix(m, rows, cols, query, target);
 
-  find_cigar(m, cigar, target_begin, rows-1, cols-1, [](cell** m, int& row, int col)
+  find_cigar(m, cigar, target_begin, rows-1, cols-1, rows, cols, [](cell** m, int row, int col)
     { return row > 0 || col > 0; });
 
   return alignment_score;
@@ -291,8 +307,8 @@ int prefix_suffix(const char* query, int rows,
   // print_val_matrix(m, rows, cols, query, target);
   // print_char_matrix(m, rows, cols, query, target);
 
-  find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
-    { return row > 0; });
+  find_cigar(m, cigar, target_begin, row, col, rows, cols, [](cell** m, int row, int col)
+    { return row > 0 && col > 0; });
   return alignment_score;
 }
 
@@ -331,12 +347,8 @@ int smith_waterman(const char* query, int rows,
   // print_val_matrix(m, rows, cols, query, target);
   // print_char_matrix(m, rows, cols, query, target);
 
-  find_cigar(m, cigar, target_begin, row, col, [](cell** m, int& row, int col)
-    { if (m[row][col].parent == EMPTY) {
-        row = 0;
-      }
-      return row > 0 && col > 0;
-    });
+  find_cigar(m, cigar, target_begin, row, col, rows, cols, [](cell** m, int row, int col)
+    { return (row > 0 && col > 0) && (m[row][col].parent != EMPTY); });
   return alignment_score;
 }
 

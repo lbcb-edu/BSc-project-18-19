@@ -91,7 +91,7 @@ void help(void) {
          "               generation of sequencing technologies to a reference\n"
          "               genome, which has various use cases in bioinformatics.\n\n"
 
-         "Usage: brown_mapper [OPTIONS] [file1 file2]   start mapping files\n"
+         "Usage: brown_mapper [OPTIONS] [file1 file2]   start mapper\n"
          "file1 - FASTA/FASTQ file containing a set of fragments\n"
          "file2 - FASTA file containing reference genome\n\n"
 
@@ -104,20 +104,20 @@ void help(void) {
          "                           .fastq.gz\n"
          "                           .fq.gz\n\n"
          "OPTIONS:\n"
-         "  -h  or  --help         print help (displayed now) and exit\n"
-         "  -v  or  --version      print version info and exit\n"
-         "  -M or --match          <int>\n"
-         "                            default: 4\n"
-         "                            match number\n"
-         "  -m or --mismatch       <int>\n"
-         "                            default: -1\n"
-         "                            mismatch number\n"
-         "  -g or --gap            <int>\n"
-         "                            default: -2\n"
-         "                            gap number\n"
-         "  -G or --global         global alignment\n"
-         "  -L or --local          local alignment\n"
-         "  -S or --semi_global    semi_global alignment\n"
+         "  -h  or  --help           print help (displayed now) and exit\n"
+         "  -v  or  --version        print version info and exit\n"
+         "  -M  or  --match          <int>\n"
+         "                             default: 4\n"
+         "                             match number\n"
+         "  -m  or  --mismatch       <int>\n"
+         "                             default: -1\n"
+         "                             mismatch number\n"
+         "  -g  or  --gap            <int>\n"
+         "                             default: -2\n"
+         "                             gap number\n"
+         "  -G  or  --global         global alignment\n"
+         "  -L  or  --local          local alignment\n"
+         "  -S  or  --semi_global    semi_global alignment\n"
 
   );
 }
@@ -187,19 +187,18 @@ int main (int argc, char **argv) {
         break;
       }
       default: {
-        printf("Unknown option. Type %s --help for usage.\n", argv[0]);
+        fprintf(stderr, "Unknown option. Type %s --help for usage.\n", argv[0]);
         exit(1);
       }
     }
   }
 
-  printf("match = %d \nmismatch = %d\ngap = %d\n", match, mismatch, gap);
-  std::cout << "Alignment = " << alignmentType <<std::endl;
-
   if (argc - optind != 2) {
     printf("Expected 2 mapping arguments! Use --help for usage.\n");
     exit(1);
   }
+
+  fprintf(stderr, "Loading files...");
 
   std::string file1 (argv[optind]);
   std::string file2 (argv[optind+1]);
@@ -220,38 +219,48 @@ int main (int argc, char **argv) {
     exit(1);
   }
 
+  fprintf(stderr, " Done!\n");
+  fprintf(stderr, "Parsing files...");
+
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects1;
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects2;
 
   FastAQ::parse(fastaq_objects1, file1, file1_format);
   FastAQ::parse(fastaq_objects2, file2, file2_format);
 
-  //FastAQ::print_statistics(fastaq_objects1, file1);
-  //FastAQ::print_statistics(fastaq_objects2, file2);
+  fprintf(stderr, " Done!\n");
+
+  FastAQ::print_statistics(fastaq_objects1, file1);
+  FastAQ::print_statistics(fastaq_objects2, file2);
+
+  fprintf(stderr, "Starting alignment with parameters:\n");
+  fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
+  std::cerr << "  Alignment type = " << alignmentType <<std::endl;
+  fprintf(stderr, "Aligning...");
 
   srand(time(NULL));
   int i1 = rand() % fastaq_objects1.size();
   int i2 = rand() % fastaq_objects1.size();
 
-  std::string cigar;
-  unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
-                                        fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
-                                        alignment, match, mismatch, gap, cigar, target_begin);
-  std::cout << value << std::endl;
-  std::cout << target_begin << std::endl;
-  std::ofstream out("CIGAR.txt");
-  out << cigar;
-  out.close();
-
-  // std::string q = {"TCCG"};
-  // std::string t = {"ACTCCGAT"};
   // std::string cigar;
   // unsigned int target_begin = 0;
-  // int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
-  // std::cout << value << std::endl;
-  // std::cout << target_begin << std::endl;
-  // std::cout << cigar << std::endl;
+  // int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
+  //                                       fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
+  //                                       alignment, match, mismatch, gap, cigar, target_begin);
+  // std::cout << "Alignment score: " << value << std::endl;
+  // std::cout << "Pos: " << target_begin << std::endl;
+  // std::cout << "CIGAR: " << cigar << std::endl;
+
+  fprintf(stderr, " Done!\nFinished!\n");
+  
+  std::string q = {"TTTTTGGGG"};
+  std::string t = {"CCCACTTTTT"};
+  std::string cigar;
+  unsigned int target_begin = 0;
+  int value = brown::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), brown::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
+  std::cout << value << std::endl;
+  std::cout << target_begin << std::endl;
+  std::cout << cigar << std::endl;
 
   // std::string q = {"TTCCGCCAA"};
   // std::string t = {"AACCCCTT"};
@@ -270,7 +279,6 @@ int main (int argc, char **argv) {
   // std::cout << value << std::endl;
   // std::cout << target_begin << std::endl;
   // std::cout << cigar << std::endl;
-
 
   return 0;
 }
