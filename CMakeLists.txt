@@ -19,9 +19,10 @@ configure_file (
 
 
 include_directories("${PROJECT_BINARY_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/vendor/orange_alignment")
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
-add_subdirectory(vendor/orange_alignment EXCLUDE_FROM_ALL)
+
 add_executable(orange_mapper ${PROJECT_SOURCE_DIR}/src/orange_mapper.cpp)
+add_library(orange_alignment ${PROJECT_SOURCE_DIR}/src/orange_alignment.cpp)
+
 target_link_libraries(orange_mapper bioparser orange_alignment)
