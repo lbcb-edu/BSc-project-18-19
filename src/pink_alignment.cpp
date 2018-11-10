@@ -164,7 +164,7 @@ void makeCigar(cell** matrix, AlignmentType type, unsigned row, unsigned col,
         }
 
     } else if (type == local) {
-        while (matrix[i][j].cost != 0){
+        while (matrix[i][j].cost != 0) {
              cigar.push_back(switch_cell(&i, &j, matrix));
         }
     }
@@ -202,7 +202,6 @@ int pairwise_alignment(const char* query, unsigned int query_length,
     
     return string_compare(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
 }
-    
 
 int pairwise_alignment(const char* query, unsigned int query_length,
                         const char* target, unsigned int target_length,
