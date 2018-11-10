@@ -205,11 +205,11 @@ int main(int argc, char* argv[]) {
         int query  = rand() % fast_objects1.size();
         int target = rand() % fast_objects1.size();
         
-        /*const char* q = "TTACGATTAAGG";
-        const char* t = "GCCA";
-        unsigned q_len = 12;
-        unsigned t_len = 4;*/
-        
+//        const char* q = "ATCCGAT";
+//        const char* t = "TGCATAT";
+//        unsigned q_len = 7;
+//        unsigned t_len = 7;
+//
         const char* q  = (fast_objects1[query]  -> sequence).c_str();
         const char* t  = (fast_objects1[target] -> sequence).c_str();
         unsigned q_len = (fast_objects1[query]  -> sequence).length();

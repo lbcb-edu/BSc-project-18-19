@@ -64,6 +64,8 @@ int string_compare(cell** matrix, AlignmentType type,
     unsigned i, j, k;  
     int options[3];  
     int max_cost = 0;
+    *row = 0;
+    *col = 0;
     
     if (type == semi_global) {
 		*row = 0;
@@ -114,6 +116,8 @@ int string_compare(cell** matrix, AlignmentType type,
 //    }
     
     if (type == global) {
+        *row = rows - 1;
+        *col = columns - 1;
         return matrix[rows - 1][columns - 1].cost;
 
     } else {
