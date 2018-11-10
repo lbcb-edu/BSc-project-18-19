@@ -94,7 +94,7 @@ bool correctExtension(std::string arg, char ext_flag) {
     
     std::vector<std::string> ext;
     if (ext_flag == 'a') {
-        ext = {".fa", ".fasta", ".fa.gz", ".fasta.gz"} ;
+        ext = {".fa", ".fasta", ".fa.gz", ".fasta.gz"};
     } else {
         ext = {".fq", ".fastq", ".fq.gz", ".fastq.gz"};
     }
@@ -171,8 +171,8 @@ int main(int argc, char* argv[]) {
                           return 0;
                 case 'v': version();
                           return 0;
-                default: std::cerr << helpMessage << std::endl;
-                         return 1;
+                default:  std::cerr << helpMessage << std::endl;
+                          return 1;
             }
         }
     }
@@ -205,7 +205,7 @@ int main(int argc, char* argv[]) {
         int query  = rand() % fast_objects1.size();
         int target = rand() % fast_objects1.size();
         
-        /*const char* q =  "TTACGATTAAGG";
+        /*const char* q = "TTACGATTAAGG";
         const char* t = "GCCA";
         unsigned q_len = 12;
         unsigned t_len = 4;*/
