@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <stdio.h>
-#include <map>
 
 namespace blue
 {
@@ -81,7 +80,6 @@ namespace blue
 
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
 
-
         for(int i = 1; i < query_length+1; i++) {
             for(int j = 1; j<target_length+1; j++ ) {
                 if (matrix[i][j].value > max_val) {
@@ -106,6 +104,7 @@ namespace blue
         AlignmentType type = global;
 
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
+
         create_cigar_string(matrix, query_length, target_length, cigar, target_begin, query, query_length, target);
         return matrix[query_length][target_length].value;
     }
@@ -142,7 +141,6 @@ namespace blue
                 max_cell.second = i;
             }
         }
-
         create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin, query, query_length, target);
         return max_val;
     }
@@ -195,10 +193,10 @@ namespace blue
                     matrix[i][j].trace.second = -1;
                 } else {
                     if(insertion > deletion) {
-                    if(match_mismatch > insertion) {
-                        matrix[i][j].value = match_mismatch;
-                        matrix[i][j].trace.first = i-1;
-                        matrix[i][j].trace.second = j-1;
+                        if(match_mismatch > insertion) {
+                            matrix[i][j].value = match_mismatch;
+                            matrix[i][j].trace.first = i-1;
+                            matrix[i][j].trace.second = j-1;
 
                     } else if (match_mismatch == insertion) {
                         if (matrix[i-1][j-1].value > matrix[i][j-1].value) {
@@ -245,23 +243,25 @@ namespace blue
     }
 
     void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int start_row, int start_column,
-                                    std::string &adress, unsigned int &target_begin, const char* query, unsigned int query_length, const char* target) {
+                             std::string &adress, unsigned int &target_begin, 
+                               const char* query, unsigned int query_length, const char* target) {
+
         int mism_counter, mis_counter, del_counter, ins_counter;
         mism_counter = mis_counter = del_counter = ins_counter = 0;
 
-        std::string cigar_reverse;
+        std::string cigar_reverse = "";
         Cell current = matrix[start_row][start_column];
 
         if (start_row < query_length) {
             cigar_reverse+='S';
-            cigar_reverse+= std::to_string(query_length-start_row);
+            cigar_reverse+= std::to_string(query_length - start_row);
         }
 
         std::pair<int, int> pos;
         pos.first = start_row;
         pos.second = start_column;
 
-        while( current.trace.first != -1 && current.trace.second != -1) {
+        while(current.trace.first != -1 && current.trace.second != -1) {
             //provjera za match/mismatch
             if(current.trace.first == pos.first-1 && current.trace.second == pos.second-1) {
                 if(del_counter != 0) {
@@ -271,13 +271,14 @@ namespace blue
                     cigar_reverse +=std::to_string(ins_counter);
                     ins_counter = 0;
                 }
+                
                 if(query[pos.first-1] == target[pos.second-1]){
                     if(mism_counter != 0) {
                         cigar_reverse+=std::to_string(mism_counter);
                         mism_counter = 0;
                     }
                     if(mis_counter == 0) {
-                    cigar_reverse+='=';
+                        cigar_reverse+='=';
                     }
                     ++mis_counter;
                 } else {
@@ -286,11 +287,10 @@ namespace blue
                         mis_counter = 0;
                     }
                     if(mism_counter == 0) {
-                    cigar_reverse+='X';
+                        cigar_reverse+='X';
                     }
                     ++mism_counter;
                 }
-
 
                 // provjera za insertion
             } else if(current.trace.first == pos.first && current.trace.second == pos.second-1) {
@@ -338,7 +338,7 @@ namespace blue
             cigar_reverse+=std::to_string(mism_counter);
         } else if(ins_counter != 0){
             cigar_reverse+=std::to_string(ins_counter);
-        } else {
+        } else if(del_counter != 0) {
             cigar_reverse+=std::to_string(del_counter);
         }
 
@@ -349,7 +349,7 @@ namespace blue
 
         std::string number = "";
         std::string cigar = "";
-        for(int i=cigar_reverse.length()-1; i>=0; i-- ) {
+        for(int i=cigar_reverse.length()-1; i>=0; i--) {
             char c = cigar_reverse.at(i);
             if(isdigit(c)) {
                 number.insert(0, 1, c);

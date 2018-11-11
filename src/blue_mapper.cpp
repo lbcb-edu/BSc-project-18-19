@@ -68,7 +68,7 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
     std::cout << "Maximum length of a sequence is: " << max << std::endl;
     std::cout << "Minimum length of a sequence is: " << min << std::endl;
     std::cout << "Average length of a sequence is: " << sum/(double)fq_objects.size() << std::endl;
-    std::cout << "Number of sequences is: "<< fq_objects.size() << std::endl;
+    std::cout << "Number of sequences is: "<< fq_objects.size() << '\n' << std::endl;
 };
 
 int main (int argc, char* argv[]) {
@@ -194,10 +194,10 @@ int main (int argc, char* argv[]) {
         std::string cigar;
         unsigned int target_begin;
 
-        std::cout << blue::pairwise_alignment(query.c_str(), query.size(), target.c_str(), target.size(), blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
-        //std::cout << blue::pairwise_alignment("GGCTC", 5, "AACTC", 5, blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
-        std::cout << cigar << std::endl;
-        //std::cout << target_begin << std::endl;
+        std::cout << "Alignment score: " 
+                  << blue::pairwise_alignment(query.c_str(), query.size(), target.c_str(), target.size(), blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
+        std::cout << "Cigar string: " << cigar << std::endl;
+        std::cout << "Target begin: " << target_begin << std::endl;
 
     return 0;
 }
