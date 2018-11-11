@@ -84,9 +84,6 @@ namespace orange {
 		}
 
 		target_begin=j;
-		if(target_begin){
-			target_begin--;
-		}
 
 		temp_list.push_front(std::make_pair(lastChar, counter));
 
