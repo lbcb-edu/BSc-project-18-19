@@ -150,8 +150,15 @@ void calculateStats(std::vector<std::unique_ptr<T>> const &entities, stats *file
 	}
 
 	if(alignment.type != orange::AlignmentType::no_alignment) {
-		auto const &query = entities[rand()%entities.size()];
-		auto const &target = entities[rand()%entities.size()];
+		int firstRand = rand()%entities.size();
+		int secondRand = rand()%entities.size();		
+
+		while(secondRand == firstRand) {
+			secondRand = rand()%entities.size();
+		}
+
+		auto const &query = entities[firstRand];
+		auto const &target = entities[secondRand];
 
 		std::string cigar;
 		unsigned int target_begin;
