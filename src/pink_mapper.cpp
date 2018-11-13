@@ -114,6 +114,7 @@ bool check_extension(std::string arg, char ext_flag) {
 }
 
 pink::AlignmentType check_type(std::string type) {
+
     if (type.compare("global") == 0) {
         return pink::global;
     
