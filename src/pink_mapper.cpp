@@ -39,7 +39,7 @@ public:
         {}
 };
 
-std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
+std::vector<std::unique_ptr<Fast>> parse_fasta (std::string fastaFile) {
     std::vector<std::unique_ptr<Fast>> fasta_objects;
         
     auto fasta_parser = bioparser::createParser<bioparser::FastaParser, Fast>(fastaFile);
@@ -48,7 +48,7 @@ std::vector<std::unique_ptr<Fast>> parseFasta (std::string fastaFile) {
     return fasta_objects;
 }
 
-std::vector<std::unique_ptr<Fast>> parseFastq (std::string fastqFile) {
+std::vector<std::unique_ptr<Fast>> parse_fastq (std::string fastqFile) {
     std::vector<std::unique_ptr<Fast>> fastq_objects;
         
     auto fastq_parser = bioparser::createParser<bioparser::FastqParser, Fast>(fastqFile);
@@ -64,7 +64,7 @@ std::vector<std::unique_ptr<Fast>> parseFastq (std::string fastqFile) {
     return fastq_objects;
 }
 
-void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
+void print_stats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     unsigned numOfSeq = fast_objects.size();
     unsigned sum = 0;
     float average;
@@ -89,7 +89,7 @@ void printStats(const std::vector<std::unique_ptr<Fast>> &fast_objects) {
     std::cerr << "Maximal length: "      << max      << std::endl;  
 }
 
-bool correctExtension(std::string arg, char ext_flag) {
+bool check_extension(std::string arg, char ext_flag) {
     std::transform(arg.begin(), arg.end(), arg.begin(), ::tolower);
     
     std::vector<std::string> ext;
@@ -113,7 +113,7 @@ bool correctExtension(std::string arg, char ext_flag) {
     return false;
 }
 
-pink::AlignmentType alignmentType(std::string type) {
+pink::AlignmentType check_type(std::string type) {
     if (type.compare("global") == 0) {
         return pink::global;
     
@@ -182,33 +182,28 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    if ((correctExtension(argv[1], 'a') || correctExtension(argv[1], 'q')) && correctExtension(argv[2], 'a')) {
+    if ((check_extension(argv[1], 'a') || check_extension(argv[1], 'q')) && check_extension(argv[2], 'a')) {
         std::vector<std::unique_ptr<Fast>> fast_objects1;
         std::vector<std::unique_ptr<Fast>> fast_objects2;
         
-        if (correctExtension(argv[1], 'a')) {
-            fast_objects1 = parseFasta(argv[1]);
+        if (check_extension(argv[1], 'a')) {
+            fast_objects1 = parse_fasta(argv[1]);
         } else {
-            fast_objects1 = parseFastq(argv[1]);
+            fast_objects1 = parse_fastq(argv[1]);
         }
         
-        fast_objects2 = parseFasta(argv[2]);
+        fast_objects2 = parse_fasta(argv[2]);
        
         if(argc - optind == 2) {
             std::cerr << "~FIRST FILE~" << std::endl;
-            printStats(fast_objects1);
+            print_stats(fast_objects1);
             std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-            printStats(fast_objects2);
+            print_stats(fast_objects2);
             return 0;
         }
         
         int query  = rand() % fast_objects1.size();
         int target = rand() % fast_objects1.size();
-        
-        /*const char* q = "TTACGATTAAGG";
-        const char* t = "GCCA";
-        unsigned q_len = 12;
-        unsigned t_len = 4;*/
         
         const char* q  = (fast_objects1[query]  -> sequence).c_str();
         const char* t  = (fast_objects1[target] -> sequence).c_str();
@@ -223,7 +218,7 @@ int main(int argc, char* argv[]) {
         unsigned int target_begin = 0;
         
         try {
-            type     = alignmentType(argv[3]);
+            type     = check_type(argv[3]);
             match    = std::stoi(argv[4]);
             mismatch = std::stoi(argv[5]);
             gap      = std::stoi(argv[6]);
