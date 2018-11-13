@@ -7,10 +7,13 @@
 
 #include "brown_alignment.hpp"
 
-#define UP      'I'       // UP
-#define LEFT    'D'       // LEFT
-#define UPLEFT  'M'       // UP-LEFT
-#define EMPTY   '0'       // EMPTY (LOCAL ALIGNMENT)
+#define UP        'I'       // UP
+#define LEFT      'D'       // LEFT
+#define EMPTY     '0'       // EMPTY (LOCAL ALIGNMENT)
+#define MISMATCH  'X'       // UP-LEFT
+#define MATCH     '='       // UP-LEFT
+
+//#define UPLEFT  'M'      UP-LEFT
 
 namespace brown {
 
@@ -60,11 +63,6 @@ void print_char_matrix(cell** m, int rows, int cols, const char* s, const char* 
   }
 }
 
-// Matching function
-int w(char q, char t, int match, int mismatch) {
-  return (q == t) ? match : mismatch;
-}
-
 int maximum(int a, int b, int c, int d) {
   return std::max(std::max(a, b), std::max(c, d));
 }
@@ -98,14 +96,27 @@ void align_global(cell** m, int rows, int cols,
 
   for (int i = 1; i < rows; ++i) {
     for (int j = 1; j < cols; ++j) {
-      int matched = m[i-1][j-1].val + w(query[i-1], target[j-1], match, mismatch);
+      int w;
+      bool is_match = true;
+      if(query[i-1] == target[j-1]){
+        w = match;
+      }else{
+        is_match = false;
+        w = mismatch;
+      }
+
+      int matched = m[i-1][j-1].val + w;
       int insertion = m[i][j-1].val + gap;
       int deletion = m[i-1][j].val + gap;
 
       m[i][j].val = maximum(matched, insertion, deletion, std::numeric_limits<int>::min());
 
       if (m[i][j].val == matched) {
-        m[i][j].parent = UPLEFT;
+        if(is_match){
+          m[i][j].parent = MATCH;
+        }else{
+          m[i][j].parent = MISMATCH;
+        }
       } else if (m[i][j].val == insertion) {
         m[i][j].parent = LEFT;
       } else {
@@ -126,7 +137,16 @@ int align_local(cell** m, int rows, int cols,
 
   for (int i = 1; i < rows; ++i) {
     for (int j = 1; j < cols; ++j) {
-      int matched = m[i-1][j-1].val + w(query[i-1], target[j-1], match, mismatch);
+      int w;
+      bool is_match = true;
+      if(query[i-1] == target[j-1]){
+        w = match;
+      }else{
+        is_match = false;
+        w = mismatch;
+      }
+
+      int matched = m[i-1][j-1].val + w;
       int insertion = m[i][j-1].val + gap;
       int deletion = m[i-1][j].val + gap;
 
@@ -141,7 +161,11 @@ int align_local(cell** m, int rows, int cols,
       if (m[i][j].val == 0) {
         m[i][j].parent = EMPTY;
       } else if (m[i][j].val == matched) {
-        m[i][j].parent = UPLEFT;
+        if(is_match){
+          m[i][j].parent = MATCH;
+        }else{
+          m[i][j].parent = MISMATCH;
+        }
       } else if (m[i][j].val == insertion) {
         m[i][j].parent = LEFT;
       } else {
@@ -206,7 +230,7 @@ void find_cigar(cell** m, std::string& cigar, unsigned int& target_begin,
     } else {
       counter++;
     }
-    if (m[row][col].parent == UPLEFT) {
+    if (m[row][col].parent == MATCH || m[row][col].parent == MISMATCH) {
       row--;
       col--;
     } else if (m[row][col].parent == UP) {

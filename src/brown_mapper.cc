@@ -236,7 +236,7 @@ int main (int argc, char **argv) {
   fprintf(stderr, "Starting alignment with parameters:\n");
   fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
   std::cerr << "  Alignment type = " << alignmentType <<std::endl;
-  fprintf(stderr, "Aligning...");
+  fprintf(stderr, "Aligning...\n");
 
   srand(time(NULL));
   int i1 = rand() % fastaq_objects1.size();
