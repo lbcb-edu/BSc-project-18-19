@@ -2,5 +2,5 @@
 	path = vendor/bioparser
 	url = https://github.com/rvaser/bioparser.git
 [submodule "test"]
-	path = test/googletest
+	path = test/googletests
 	url = https://github.com/google/googletest.git
