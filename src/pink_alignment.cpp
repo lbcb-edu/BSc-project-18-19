@@ -3,10 +3,11 @@
 
 namespace pink {
     
-#define MATCH   0  
-#define INSERT  1  
-#define DELETE  2  
-#define HEAD   -1  
+#define MATCH    0  
+#define INSERT   1  
+#define DELETE   2  
+#define MISMATCH 3
+#define HEAD    -1  
     
 typedef struct {
     int cost;  
@@ -51,15 +52,6 @@ void init_matrix(AlignmentType type, int rows, int columns, int gap) {
     }
 }
 
-int match_letter(char s, char t, int match, int mismatch) {
-    if (s == t) {
-        return match;
-        
-    } else {
-        return mismatch;
-    }
-}
-
 int compare_string(AlignmentType type,
                    const char *s, const char *t,
                    unsigned rows, unsigned columns,
@@ -77,12 +69,14 @@ int compare_string(AlignmentType type,
     
     for (i = 1; i < rows; i++) {
         for (j = 1; j < columns; j++) {
-            options[MATCH] = matrix[i-1][j-1].cost + match_letter(s[i - 1], t[j - 1], match, mismatch);
+            int m = (s[i-1] == t[j-1]) ? match : mismatch;
+
+            options[MATCH] = matrix[i-1][j-1].cost + m;
             options[INSERT] = matrix[i][j-1].cost + gap;
             options[DELETE] = matrix[i-1][j].cost + gap;
              
             matrix[i][j].cost = options[MATCH];
-            matrix[i][j].parent = MATCH;
+            matrix[i][j].parent = (m == match) ? MATCH : MISMATCH;
             
             for (k = 1; k <= 2; k++) {
                 if (options[k] > matrix[i][j].cost) {
@@ -128,22 +122,23 @@ int compare_string(AlignmentType type,
     
 char get_letter () { 
     switch (matrix[row][col].parent) {
-        case MATCH:  return 'M';
-        case INSERT: return 'I';
-        case DELETE: return 'D';
-        default: return ' ';
+        case MATCH:    return '=';
+        case MISMATCH: return 'X';
+        case INSERT:   return 'I';
+        case DELETE:   return 'D';
+        default:       return ' ';
     }
 }
     
 void switch_cell(char letter) {
     switch(letter) {
-        case 'M': row--;
-                        col--;
-                        break;
         case 'I': row--;
-                    break;
+                  break;
         case 'D': col--;
-                    break;
+                  break;
+        default: row--;
+                 col--;
+                 break;
     }
 } 
     
@@ -151,29 +146,31 @@ void make_cigar(AlignmentType type,
 			   std::string& cigar, unsigned int& target_begin) {
     
     switch(type) {
-        case local : while (matrix[row][col].cost != 0) {
-            char letter = get_letter();
-            cigar.push_back(letter);
-            switch_cell(letter);
-        }
-        break;
+        case local: 
+			while (matrix[row][col].cost != 0) {
+            	char letter = get_letter();
+            	cigar.push_back(letter);
+            	switch_cell(letter);
+        	}
+			break;
         
-        default: while (matrix[row][col].parent != HEAD) {
-            char letter = get_letter();
-            cigar.push_back(letter);
-            switch_cell(letter);
-        }
+        default: 
+			while (matrix[row][col].parent != HEAD) {
+	            char letter = get_letter();
+	            cigar.push_back(letter);
+	            switch_cell(letter);
+	        }
         
-        while (row != 0) {
-            row--;
-            cigar.push_back('D');
-        }
+	        while (row != 0) {
+	            row--;
+	            cigar.push_back('D');
+	        }
 
-        while (col != 0) {
-            col--;
-            cigar.push_back('I');
-        }
-    }
+	        while (col != 0) {
+	            col--;
+	            cigar.push_back('I');
+	        }
+	}
 }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
