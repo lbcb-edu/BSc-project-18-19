@@ -1,0 +1,16 @@
+language: cpp
+
+compiler:
+  -gcc
+  -clang
+  
+os:
+  -ubuntu
+  -macOS
+
+script:
+    - mkdir build
+    - cd build
+    - cmake -DCMAKE_BUILD_TYPE=Release -Dgoogletest_build_statistics=ON ..
+    - make
+    
