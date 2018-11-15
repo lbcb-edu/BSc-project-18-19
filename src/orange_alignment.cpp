@@ -61,6 +61,10 @@ namespace orange {
 		bool firstIdentified = false;
 		unsigned int counter;
 		char lastChar, c;
+		std::string prefix, suffix;
+
+		if(i!=strlen(query)) 
+			suffix = std::to_string(strlen(query)-i) + 'S';
 	
 		std::list<std::pair<char, unsigned int>> temp_list;	
 
@@ -91,11 +95,14 @@ namespace orange {
 			updatePosition(i, j, matrix[i][j].parent);
 		}
 
+		if(i!=0)
+			prefix = std::to_string(i) + 'S';
+
 		target_begin=j;
 
 		temp_list.push_front(std::make_pair(lastChar, counter));
 
-		return convertListToCIGARString(temp_list);
+		return prefix + convertListToCIGARString(temp_list) + suffix;
 	}
 
         void initMatrix (std::vector<std::vector<cell>> &matrix, int query_length, int target_length, int cost, AlignmentType type) {
@@ -119,11 +126,11 @@ namespace orange {
             int i;
             for (i=1; i<=target_length; i++){
                 matrix[0][i].cost = i*startRowMultiplyFactor;
-		matrix[0][i].parent = (type != AlignmentType::local) ? INSERT : STOP;
+		matrix[0][i].parent = (type == AlignmentType::global) ? INSERT : STOP;
             }
             for (i=1; i<=query_length; i++){
                 matrix[i][0].cost = i*startColumnMultiplyFactor;
-		matrix[i][0].parent = (type != AlignmentType::local) ? DELETE : STOP;
+		matrix[i][0].parent = (type == AlignmentType::global) ? DELETE : STOP;
             }
         }
 
@@ -162,20 +169,20 @@ namespace orange {
                         }
                     }
 
-		    if(type == AlignmentType::local) {
-			if(matrix[i][j].cost < 0) {
-			    matrix[i][j].cost = 0;
-			} else {
-			    max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
-			}
+					if(type == AlignmentType::local) {
+					if(matrix[i][j].cost < 0) {
+						matrix[i][j].cost = 0;
+					} else {
+						max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
+					} 
 
-			if(matrix[i][j].cost == 0) {
-			    matrix[i][j].parent = STOP;
-			}
+					if(matrix[i][j].cost == 0) {
+						matrix[i][j].parent = STOP;
+					}
 
-		    } else if(type == AlignmentType::semi_global && j == strlen(target)) {
-			max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
-		    }
+					} else if(type == AlignmentType::semi_global && j == strlen(target)) {
+					max = checkIfMaxAndUpdatePosition(max, matrix, i, j, target_cell_row, target_cell_column);
+					}
                 }
             }
 
