@@ -14,3 +14,4 @@ add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 add_library(pink_alignment src/pink_alignment.cpp)
 
 target_link_libraries(pink_mapper bioparser)
+

@@ -5,7 +5,7 @@ compiler:
     - gcc
 
 os:
-	-Ubuntu
+    -Ubuntu
 	-macOS
 
 script:
