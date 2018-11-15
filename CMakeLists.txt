@@ -16,7 +16,7 @@ add_library(pink_alignment src/pink_alignment.cpp)
 if (pink_mapper_build_tests)
    include_directories(${PROJECT_SOURCE_DIR}/src)
 
-   add_executable(pink_mapper_test test/test1.cpp)
+   add_executable(pink_mapper_test test/pink_mapper_test.cpp)
 
    add_subdirectory(vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
