@@ -12,6 +12,7 @@ script:
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -Dgoogletest_build_statistics=ON ..
+    - cpp test/test1.cpp
     - make
 
 
