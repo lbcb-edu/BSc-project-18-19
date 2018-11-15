@@ -13,6 +13,8 @@ add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
 add_library(pink_alignment src/pink_alignment.cpp)
 
+include_directories("${PROJECT_BINARY_DIR}/lib")
+
 if (pink_mapper_build_tests)
    include_directories(${PROJECT_SOURCE_DIR}/src)
 
@@ -24,7 +26,7 @@ if (pink_mapper_build_tests)
 else ()
    add_executable (pink_mapper ${source_files})
 
-   target_link_libraries(pink_mapper bioparser)
+   target_link_libraries(pink_mapper bioparser pink_alignment)
 endif (pink_mapper_build_tests)
    
 
