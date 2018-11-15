@@ -54,18 +54,26 @@ namespace orange {
 		return CIGAR;
 	}
 
-	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column, unsigned int &target_begin) {
+	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column, unsigned int &target_begin, const char *query, const char *target) {
 		unsigned int i = target_cell_row;
 		unsigned int j = target_cell_column;
 
 		bool firstIdentified = false;
 		unsigned int counter;
-		char lastChar;
+		char lastChar, c;
 	
 		std::list<std::pair<char, unsigned int>> temp_list;	
 
 		while(matrix[i][j].parent != STOP) {
-			char c = CIGAR_map.at(matrix[i][j].parent);
+			if(matrix[i][j].parent==MATCH) {
+				if(target[j-1]==query[i-1]) {
+					c='=';
+				}
+				else {
+					c='X';
+				}
+			} else 
+				c = CIGAR_map.at(matrix[i][j].parent);
 
 			if(firstIdentified && c == lastChar) {
 				counter++;
@@ -218,7 +226,7 @@ namespace orange {
 
 			int score = populateMatrix(matrix, query, target, match , mismatch, gap, type, target_cell_row, target_cell_column);
 
-			cigar = constructCIGAR(matrix, target_cell_row, target_cell_column, target_begin);
+			cigar = constructCIGAR(matrix, target_cell_row, target_cell_column, target_begin, query, target);
 
 			return score;
                        }
