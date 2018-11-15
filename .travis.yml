@@ -1,1 +1,12 @@
 language: cpp
+
+compiler:
+	-gcc
+	-clang
+  
+os:
+	-ubuntu
+	-macOS
+
+script:
+	

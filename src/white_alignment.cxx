@@ -11,7 +11,7 @@
 
 namespace white {
 
-enum Direction { K_M, K_I, K_D, K_U }; //match, insertion, deletion, unknown
+enum Direction { K_M, K_X, K_I, K_D, K_U }; //match, mismatch insertion, deletion, unknown
 
 struct element {
 	int score;
@@ -29,10 +29,10 @@ int max (int a, int b, int c)
 	return c > (rez = a > b ? a : b) ? c : rez;
 }
 
-void max_MID (int match, int insertion, int deletion, element& e)
+void max_MID (int match, int insertion, int deletion, element& e, Direction m_x) //m_x = match_mismatch
 {
 	int max = match;
-	e.d = K_M;
+	e.d = m_x;
 
 	if (insertion > max)
 	{
@@ -109,12 +109,13 @@ void matrix_calculation (	const char* query, unsigned int query_length,
                 for (unsigned int j = 1; j < target_length + 1; j++)
                 {
                         int  mm = query[i-1] == target[j-1] ? match : mismatch;
+			Direction what = query[i-1] == target[j-1] ? K_M : K_X;
 
                         int match = matrix[(i-1) * (target_length + 1) + (j-1)].score + mm;
                         int insertion = matrix[(i) * (target_length + 1) + (j-1)].score + gap;
                         int deletion = matrix[(i-1) * (target_length + 1) + (j)].score + gap;
 
-                        max_MID (match, insertion, deletion, matrix[i * (target_length + 1) + j]);
+                        max_MID (match, insertion, deletion, matrix[i * (target_length + 1) + j], what);
                 }
 
 //	print_matrix (matrix, query_length + 1, target_length + 1);
@@ -136,6 +137,7 @@ void matrix_calculation_local ( const char* query, unsigned int query_length,
                 for (unsigned int j = 1; j < target_length + 1; j++)
                 {
                         int  mm = query[i-1] == target[j-1] ? match : mismatch;
+			Direction what = query[i-1] == target[j-1] ? K_M : K_X;
 
                         int match = matrix[(i-1) * (target_length + 1) + (j-1)].score + mm;
                         int insertion = matrix[(i) * (target_length + 1) + (j-1)].score + gap;
@@ -147,7 +149,7 @@ void matrix_calculation_local ( const char* query, unsigned int query_length,
                 		matrix[i * (target_length + 1) + j].d = K_U;
         		}
 
-        		else max_MID (match, insertion, deletion, matrix[i * (target_length + 1) + j]);
+        		else max_MID (match, insertion, deletion, matrix[i * (target_length + 1) + j], what);
 
 			if (max < matrix[i * (target_length + 1)+ j].score)
 			{
@@ -236,6 +238,35 @@ void cigar_string (int query_length, int target_length, AlignmentType type, elem
                         j--;
 
 		}
+
+		else if (matrix[i * (target_length + 1) + j].d == K_X)
+                {
+                        if (last == ' ')
+                        {
+                                last = 'X';
+                                counter++;
+                        }
+
+                        else if (last == 'X')
+                        {
+                                counter++;
+                        }
+                        else
+                        {
+                                r_cigar[k++] = last;
+
+                                write_int_into_char_array_reversed (counter, r_cigar, k);
+
+                                last = 'X';
+                                counter = 1;
+                        }
+
+                        b.i = i;
+                        b.j = j;
+                        i--;
+                        j--;
+
+                }
 
 		else if (matrix[i * (target_length + 1) + j].d == K_I)
                 {
