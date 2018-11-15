@@ -13,5 +13,6 @@ script:
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -Dpink_mapper_build_tests=ON ..
     - make
+    - ./pink_mapper_test
 
 
