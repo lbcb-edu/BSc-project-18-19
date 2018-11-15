@@ -6,7 +6,7 @@ compiler:
 
 os:
     -Ubuntu
-	-macOS
+    -macOS
 
 script:
     - mkdir build
