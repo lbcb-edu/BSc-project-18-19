@@ -13,6 +13,6 @@ script:
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -Dgoogletest_build_statistics=ON ..
     - make
-    - ./test1.cpp
+    - ./pink_mapper_test
 
 
