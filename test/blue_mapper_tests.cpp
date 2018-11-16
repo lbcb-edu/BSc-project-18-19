@@ -7,7 +7,7 @@ namespace {
         char * query = "CTCTGTTCG";
         char * target = "CGTATCTTGA";
 
-        EXPECT_EQ(-5, blue::pairwise_alignment(query, 9, target, 10, global, 0, -1, -1));
+        EXPECT_EQ(-5, blue::pairwise_alignment(query, 9, target, 10, blue::global, 0, -1, -1));
     }
 
     TEST(BlueAlignmentTest, SemiGlobalAlignmentTest){
@@ -17,7 +17,7 @@ namespace {
         std::string cigar;
         unsigned int target_begin = 0;
 
-        EXPECT_EQ(2, blue::pairwise_alignment(query, 9, target, 10, semi_global, 0, -1, -2, cigar, target_begin));
+        EXPECT_EQ(2, blue::pairwise_alignment(query, 9, target, 10, blue::semi_global, 0, -1, -2, cigar, target_begin));
         EXPECT_EQ(target_begin, 2);
     }
 
@@ -28,7 +28,7 @@ namespace {
         std::string cigar;
         unsigned int target_begin = 0;
 
-        EXPECT_EQ(6, blue::pairwise_alignment(query, 8, target, 10, local, 2, -1, -2, cigar, target_begin));
+        EXPECT_EQ(6, blue::pairwise_alignment(query, 8, target, 10, blue::local, 2, -1, -2, cigar, target_begin));
         EXPECT_EQ(target_begin, 2);
     }
 
