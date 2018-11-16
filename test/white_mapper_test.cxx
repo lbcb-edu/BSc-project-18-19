@@ -27,7 +27,7 @@ namespace {
 
   		int value = white::pairwise_alignment(q.c_str(), q.size(), t.c_str(), t.size(), white::AlignmentType::semi_global, match, mismatch, gap, cigar, target_begin);
 
-		EXPECT_EQ(cigar, "1X4M2S");
+		EXPECT_EQ(cigar, "1X4=2S");
 		EXPECT_EQ(target_begin, 8);
 	}
 

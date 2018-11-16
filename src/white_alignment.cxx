@@ -214,11 +214,11 @@ void cigar_string (int query_length, int target_length, AlignmentType type, elem
                 {
                         if (last == ' ')
 			{
-				last = 'M';
+				last = '=';
 	                 	counter++;
                         }
 
-			else if (last == 'M')
+			else if (last == '=')
 			{
 				counter++;
 			}
@@ -228,7 +228,7 @@ void cigar_string (int query_length, int target_length, AlignmentType type, elem
 
 				write_int_into_char_array_reversed (counter, r_cigar, k);
 
-				last = 'M';
+				last = '=';
                                 counter = 1;
                         }
 
