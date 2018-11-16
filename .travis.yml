@@ -1,12 +1,12 @@
 language: cpp
 
 compiler:
-  -gcc
-  -clang
+  - clang
+  - gcc
   
 os:
-  -ubuntu
-  -macOS
+  - ubuntu
+  - macOS
 
 script:
     - mkdir build
