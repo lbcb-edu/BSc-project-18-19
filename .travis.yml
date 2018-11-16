@@ -12,6 +12,6 @@ script:
     - mkdir build
     - cd build
     - cmake -DCMAKE_BUILD_TYPE=Release -Dblue_mapper_build_tests=ON ..
-    - make
+    - make VERBOSE=1
     - ./bin/blue_mapper_tests
     
