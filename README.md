@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/lbcb-edu/BSc-project-18-19.svg?branch=blue)](https://travis-ci.org/lbcb-edu/BSc-project-18-19)
+
 # BSc project (computer science - 2018/2019)
 
 Software Design Project is a course held at University of Zagreb, Faculty of Electrical Engineering and Computing in the fifth semester of the undergraduate study. The main focus is to promote cooperation between students while solving specific problems. Under the supervision of prof. Mile Šikić, students will get familiar with C++, basics of compilation methods, version control, unit tests and continuous integration, and will be introduced to algorithms used in bioinformatics. This project will be executed in several steps, each with defined outcomes which are required for succeeding steps. Instructions and guidelines for the project will be written in this README file which will be updated through the semester.
@@ -84,5 +86,3 @@ The alignment library, and all other code components to follow, should have a se
 ## Disclaimer
 
 Laboratory for Bioinformatics and Computational Biology cannot be held responsible for any copyright infringement caused by actions of students contributing to any of its repositories. Any case of copyright infringement will be promptly removed from the affected repositories and reported to appropriate faculty organs.
-
-[![Build Status](https://travis-ci.org/lbcb-edu/BSc-project-18-19.svg?branch=blue)](https://travis-ci.org/lbcb-edu/BSc-project-18-19)
