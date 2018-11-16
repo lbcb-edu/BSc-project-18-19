@@ -1,0 +1,17 @@
+language: cpp
+
+compiler:
+    - clang
+    - gcc
+
+os:
+  - linux
+  - osx
+
+  script:
+    - mkdir build
+    - cd build
+    - cmake -Dmapper_build_tests=ON -DCMAKE_BUILD_TYPE=Release ..
+    - make
+    - cd bin
+    - ./orange_mapper_unittest
