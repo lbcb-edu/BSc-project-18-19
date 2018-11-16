@@ -22,6 +22,6 @@ TEST (Pairwise_alignment, semi_global) {
 	std::string cigar;
 	unsigned int target_start = 0;
 
-	EXPECT_EQ (orange::pairwise_alignment ("ACCCAAGGG", 9, "GGCTCCATTA", 10, orange::AlignmentType::semi_global, 1, -1, -1, cigar, target_start), 3);
+	EXPECT_EQ (orange::pairwise_alignment ("ACCCAAGGG", 9, "GGCTCCATTA", 10, orange::AlignmentType::semi_global, 1, -1, -1, cigar, target_start), 1);
 	EXPECT_EQ (target_start, 1);
 }
