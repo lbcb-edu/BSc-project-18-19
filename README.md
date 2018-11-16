@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/lbcb-edu/BSc-project-18-19.svg?branch=pink)](https://travis-ci.com/lbcb-edu/BSc-project-18-19)
+[![Build Status](https://travis-ci.org/lbcb-edu/BSc-project-18-19.svg?branch=pink)](https://travis-ci.org/lbcb-edu/BSc-project-18-19)
 
 # BSc project (computer science - 2018/2019)
 
