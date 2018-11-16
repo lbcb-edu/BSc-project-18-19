@@ -17,7 +17,7 @@ namespace {
         std::string cigar;
         unsigned int target_begin = 0;
 
-        EXPECT_EQ(2, blue::pairwise_alignment(query, 9, target, 10, blue::semi_global, 1, -2, -1, cigar, target_begin));
+        EXPECT_EQ(2, blue::pairwise_alignment(query, 4, target, 8, blue::semi_global, 1, -2, -1, cigar, target_begin));
         EXPECT_EQ(target_begin, 2);
     }
 
