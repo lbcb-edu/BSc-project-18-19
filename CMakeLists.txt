@@ -21,7 +21,7 @@ target_link_libraries(blue_mapper bioparser blue_alignment)
 if(blue_mapper_build_tests)
 	include_directories(${PROJECT_SOURCE_DIR}/src)
 	
-	add_executable(blue_mapper_tests test/blue_mapper_test.cpp)
+	add_executable(blue_mapper_tests test/blue_mapper_tests.cpp)
 	
 	add_subdirectory(test/googletests EXCLUDE_FROM_ALL)
 	
