@@ -23,10 +23,12 @@ if (pink_mapper_build_tests)
    add_subdirectory(vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
    target_link_libraries(pink_mapper_test pink_alignment gtest_main)
+
 else ()
    add_executable (pink_mapper ${source_files})
 
    target_link_libraries(pink_mapper bioparser pink_alignment)
+
 endif (pink_mapper_build_tests)
    
 
