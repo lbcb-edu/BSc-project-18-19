@@ -1,16 +1,16 @@
 language: cpp
 
 compiler:
-	-gcc
-	-clang
+  -gcc
+  -clang
   
 os:
-	-ubuntu
-	-macOS
+  -ubuntu
+  -macOS
 
 script:
-	- mkdir build
-	- cd build
-	- cmake -Dwhite_mapper_build_tests=ON -DCMAKE_BUILD_TYPE=Release ..
-	- make
-	- ./bin/white_mapper_test	
+  - mkdir build
+  - cd build
+  - cmake -Dwhite_mapper_build_tests=ON -DCMAKE_BUILD_TYPE=Release ..
+  - make
+  - ./bin/white_mapper_test	
