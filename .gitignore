@@ -1,10 +1,4 @@
-white_mapper.h
-white_mapper
-CMakeFiles/
-cmake_install.cmake
-Makefile
-CMakeCache.txt
 1.fasta
 2.fa.gz
-src/white_mapper1.cxx
-libwhite_alignment.a
+/build
+

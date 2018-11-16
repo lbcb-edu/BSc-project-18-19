@@ -9,4 +9,8 @@ os:
 	-macOS
 
 script:
-	
+	- mkdir build
+	- cd build
+	- cmake -Dwhite_mapper_build_tests=ON -DCMAKE_BUILD_TYPE=Release ..
+	- make
+	- ./bin/white_mapper_test	

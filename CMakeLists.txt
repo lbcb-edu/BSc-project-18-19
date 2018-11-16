@@ -21,7 +21,7 @@ configure_file (
 
 add_library(white_alignment STATIC src/white_alignment.cxx)
 
-include_directories("${PROJECT_BINARY_DIR}/lib")
+include_directories("${PROJECT_BINARY_DIR}/bin")
 
 add_subdirectory (vendor/bioparser EXCLUDE_FROM_ALL)
 
@@ -29,9 +29,11 @@ add_executable (white_mapper src/white_mapper.cxx)
 target_link_libraries (white_mapper bioparser white_alignment)
 
 if (white_mapper_build_tests)
+	include_directories(${PROJECT_SOURCE_DIR}/src)
+
 	add_executable (white_mapper_test test/white_mapper_test.cxx)
 
-	add_subdirectiory (vendor/googletest/googletest EXCLUDE_FROM_ALL)
+	add_subdirectory (vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
 	target_link_libraries (white_mapper_test white_alignment gtest_main)
 endif (white_mapper_build_tests)
