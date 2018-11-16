@@ -34,7 +34,3 @@ else()
     add_executable(orange_mapper src/orange_mapper.cpp)
     target_link_libraries(orange_mapper bioparser orange_alignment)
 endif (mapper_build_tests)
-
-add_executable(orange_mapper ${PROJECT_SOURCE_DIR}/src/orange_mapper.cpp)
-
-target_link_libraries(orange_mapper bioparser orange_alignment)
