@@ -84,3 +84,5 @@ The alignment library, and all other code components to follow, should have a se
 ## Disclaimer
 
 Laboratory for Bioinformatics and Computational Biology cannot be held responsible for any copyright infringement caused by actions of students contributing to any of its repositories. Any case of copyright infringement will be promptly removed from the affected repositories and reported to appropriate faculty organs.
+
+[![Build Status](https://travis-ci.org/lbcb-edu/BSc-project-18-19.svg?branch=blue)](https://travis-ci.org/lbcb-edu/BSc-project-18-19)
