@@ -1,4 +1,4 @@
-#include "blue_alignment.h"
+#include "blue_alignment.hpp"
 #include "gtest/gtest.h"
 #include <string>
 
