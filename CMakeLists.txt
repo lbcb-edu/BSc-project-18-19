@@ -8,7 +8,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-option(blue_mapper_build_tests "Build unit tests" OFF)
+option(blue_mapper_build_tests "Build unit tests" ON)
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
