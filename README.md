@@ -83,9 +83,9 @@ The alignment library, and all other code components to follow, should have a se
 
 ## Minimizers
 
-The next step is to implement a library that for any DNA/RNA sequence returns its set of minimizers, which are specifically picked small substrings of defined length *k* (often called *k*-mers). As alignment algorithms have quadratic complexity, *k*-mer indexing is often used for fast detection of similar regions between two sequences prior the alignment. Although, collecting all *k*-mers can have big impact on computational resources (both memory and execution time), especially picking those that are quite frequent in a set of sequences. Considering only a subset of *k*-mers can alleviate the whole process while keeping reasonable levels of sensitivity. Neccessary literature on minimizers can be found [here](https://academic.oup.com/bioinformatics/article/20/18/3363/202143). 
+The next step is to implement a library that for any DNA/RNA sequence returns its set of minimizers, which are specifica small substrings of defined length *k* (often called *k*-mers). As alignment algorithms have quadratic complexity, *k*-mer indexing is often used for fast detection of similar regions between two sequences prior the exact alignment. However, collecting all *k*-mers can have a big impact on computational resources (both memory and execution time), especially choosing those that are quite frequent in a set of sequences. Considering only a subset of *k*-mers can alleviate the whole process while keeping reasonable levels of sensitivity. Paper on minimizers can be found [here](https://academic.oup.com/bioinformatics/article/20/18/3363/202143). 
 
-The library should be named in form of `<team name>_minimizers` (e.g. `blue_minimizers`) and should share its namespace with the alignment library (e.g. `blue`). Other constraints apply as well, it has to be created with the same `CMakeLists.txt`, it has to be linked to the mapper, and have its own unit tests which are run via TravisCI. The implementation has no requirements (it can be just one function or through a class) but the function for finding minimizers should have the following prototype:
+The library should be named in a form of `<team name>_minimizers` (e.g. `blue_minimizers`) and should share its namespace with the alignment library (e.g. `blue`). Other constraints apply as well, it has to be created with the same `CMakeLists.txt`, it has to be linked to the mapper, and have its own unit tests which are run via TravisCI. The implementation has no requirements (it can be just one function or through a class) but the function for finding minimizers should have the following prototype:
 
 ```cpp
 std::vector<unsigned int> minimizers(const char* sequence, unsigned int sequence_length,
@@ -93,9 +93,9 @@ std::vector<unsigned int> minimizers(const char* sequence, unsigned int sequence
                                      unsigned int window_length);
 ```
 
-where the return value is the list of found minimizers while parameters `k` and `window_length` are self explanatory. 
+where the return value is the list of found minimizers while parameters `k` and `window_length` are self explanatory (check minimizer paper).
 
-Once the library is finished, it has to be used to find minimizers of all sequences in the first input file and the mapper has to print the histogram of minimizer occurences into a separate CSV file (adding optional arguments for `k` and `w` to the mapper is implied). The histogram for values `(k, w) = (5, 15)` can then be drawn in either `R` or `Python`, and must be added to this README on each teams branch (bellow this paragraph).
+Once the library is finished, it has to be used to find minimizers of all sequences in the first input file and the mapper has to print the histogram of minimizer occurences into a separate CSV file (add optional arguments for setting `k` and `w` to the mapper). The histogram for values `(k, w) = (5, 15)` can then be drawn in either `R` or `Python`, and must be added to this README on each teams branch (bellow this paragraph).
 
 ## Disclaimer
 
