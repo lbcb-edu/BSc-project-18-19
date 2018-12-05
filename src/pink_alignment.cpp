@@ -120,7 +120,7 @@ int compare_string(AlignmentType type,
     }
 }
     
-char get_letter () { 
+char get_letter() { 
     switch (matrix[row][col].parent) {
         case MATCH:    return '=';
         case MISMATCH: return 'X';
@@ -143,7 +143,7 @@ void switch_cell(char letter) {
 } 
     
 void make_cigar(AlignmentType type, 
-			   std::string& cigar, unsigned int& target_begin) {
+			    std::string& cigar, unsigned int& target_begin) {
     
     switch(type) {
         case local: 
@@ -192,10 +192,10 @@ int pairwise_alignment(const char* query, unsigned int query_length,
 }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
-                        const char* target, unsigned int target_length,
-                        AlignmentType type,
-                        int match, int mismatch, int gap,
-                        std::string& cigar, unsigned int& target_begin) {
+                       const char* target, unsigned int target_length,
+                       AlignmentType type,
+                       int match, int mismatch, int gap,
+                       std::string& cigar, unsigned int& target_begin) {
     
     
     int cost = pairwise_alignment(query, query_length, target, target_length, type, match, mismatch, gap);

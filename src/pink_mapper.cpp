@@ -11,9 +11,15 @@
 #include "pink_alignment.hpp"
 
 static struct option options[] = {
-    {"help",    no_argument, 0, 'h'},
-    {"version", no_argument, 0, 'v'},
-    {NULL,      no_argument, 0,  0 }
+    {"help",        no_argument,       0, 'h'},
+    {"version",     no_argument,       0, 'v'},
+    {"global",      no_argument,       0, 'G'},
+    {"semi_global", no_argument,       0, 'S'},
+    {"local",       no_argument,       0, 'L'},
+    {"match",       required_argument, 0, 'm'},
+    {"mismatch",    required_argument, 0, 's'},
+    {"gap",         required_argument, 0, 'g'},
+    {NULL,          no_argument,       0,  0 }
 };
 
 class Fast {
@@ -113,25 +119,9 @@ bool check_extension(std::string arg, char ext_flag) {
     return false;
 }
 
-pink::AlignmentType check_type(std::string type) {
-
-    if (type.compare("global") == 0) {
-        return pink::global;
-    
-    } else if (type.compare("semi_global") == 0) {
-        return pink::semi_global;
-        
-    } else if (type.compare("local") == 0) {
-        return pink::local;
-    
-    } else {
-        throw -1;
-    }
-}
-
 void help() {
     printf(
-        "usage: pink_mapper [options ...] <fragments> <genome> <alignment> <match> <mismatch> <cost>\n"
+        "usage: pink_mapper [options ...] <fragments> <genome> \n"
         "\n"
         "   <fragments>\n"
         "       input file in FASTA/FASTQ format (can be compressed with gzip)\n"
@@ -139,20 +129,25 @@ void help() {
         "   <genome>\n"
         "       input file in FASTA format (can be compressed with gzip)\n"
         "       containing corresponding reference genome\n"
-        "   <alignment>\n"
-        "        input type of alignment: global, semi_global or local\n"
-        "   <match>\n"
-        "       input match cost\n"
-        "   <mismatch>\n"
-        "       input mismatch cost\n"
-        "   <gap>\n"
-        "       input insertion/deletion cost\n"
         "\n"
         "   options:\n"
         "       -v, --version\n"
         "           prints the version number\n"
         "       -h, --help\n"
-        "           prints the usage\n");
+        "           prints the usage\n"
+        "       -G, --global\n"
+        "           set to global alignment, default alignment\n"
+        "       -S, --semi_global\n"
+        "           set to semi-global alignment\n"
+        "       -L, --local\n"
+        "           set to local alignment\n"
+        "       -m, --match\n"
+        "           input match cost, default: 2\n"
+        "       -s, --mismatch\n"
+        "           input mismatch cost, default: -1\n"
+        "       -g, --gap\n"
+        "           input insertion/deletion cost, default: -2\n"
+        );
 }
 
 void version() {
@@ -160,48 +155,70 @@ void version() {
 }
 
 int main(int argc, char* argv[]) {
+    char optchr;
     std::string helpMessage = "Wrong input. Use \"-h\" or \"--help\" for help.";
     srand (time(NULL));
     
-    if (argc - optind == 1) {
-        char optchr;
-        
-        while((optchr = getopt_long(argc, argv, "hv", options, NULL)) != -1) {
-            switch(optchr) {
-                case 'h': help();
-                          return 0;
-                case 'v': version();
-                          return 0;
-                default:  std::cerr << helpMessage << std::endl;
-                          return 1;
-            }
+    pink::AlignmentType type = pink::global;
+    int match = 2;
+    int mismatch = -1;
+    int gap = -2;
+    std::string cigar;
+    unsigned int target_begin = 0;
+    
+    while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:", options, NULL)) != -1) {
+        switch(optchr) {
+            case 'h': 
+                help();
+                return 0;
+            case 'v': 
+                version();
+                return 0;
+            case 'G':
+                type = pink::global;
+                break;
+            case 'S':
+                type = pink::semi_global;
+                break;
+            case 'L':
+                type = pink::local;
+                break;
+            case 'm':
+                match = atoi(optarg);
+                break;
+            case 's':
+                mismatch = atoi(optarg);
+                break;
+            case 'g':
+                gap = atoi(optarg);
+                break;
+            default:  
+                std::cerr << helpMessage << std::endl;
+                return 1;
         }
     }
-
-    if (argc - optind != 2 && argc - optind != 6) {
+    
+    if (argc - optind != 2) {
         std::cout << helpMessage << std::endl;
         return 1;
     }
-
-    if ((check_extension(argv[1], 'a') || check_extension(argv[1], 'q')) && check_extension(argv[2], 'a')) {
+    
+    if ((check_extension(argv[optind], 'a') || check_extension(argv[optind], 'q')) && check_extension(argv[optind+1], 'a')) {
         std::vector<std::unique_ptr<Fast>> fast_objects1;
         std::vector<std::unique_ptr<Fast>> fast_objects2;
         
-        if (check_extension(argv[1], 'a')) {
-            fast_objects1 = parse_fasta(argv[1]);
+        if (check_extension(argv[optind], 'a')) {
+            fast_objects1 = parse_fasta(argv[optind]);
         } else {
-            fast_objects1 = parse_fastq(argv[1]);
+            fast_objects1 = parse_fastq(argv[optind]);
         }
         
-        fast_objects2 = parse_fasta(argv[2]);
+        fast_objects2 = parse_fasta(argv[optind+1]);
        
-        if(argc - optind == 2) {
-            std::cerr << "~FIRST FILE~" << std::endl;
-            print_stats(fast_objects1);
-            std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-            print_stats(fast_objects2);
-            return 0;
-        }
+        std::cerr << "~FIRST FILE~" << std::endl;
+        print_stats(fast_objects1);
+        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
+        print_stats(fast_objects2);
         
         int query  = rand() % fast_objects1.size();
         int target = rand() % fast_objects1.size();
@@ -210,24 +227,6 @@ int main(int argc, char* argv[]) {
         const char* t  = (fast_objects1[target] -> sequence).c_str();
         unsigned q_len = (fast_objects1[query]  -> sequence).length();
         unsigned t_len = (fast_objects1[target] -> sequence).length();
-
-        pink::AlignmentType type;
-        int match;
-        int mismatch;
-        int gap;
-        std::string cigar;
-        unsigned int target_begin = 0;
-        
-        try {
-            type     = check_type(argv[3]);
-            match    = std::stoi(argv[4]);
-            mismatch = std::stoi(argv[5]);
-            gap      = std::stoi(argv[6]);
-        
-        } catch (int e) {
-            std::cout << helpMessage << std::endl;
-            return 1;
-        }
         
         int cost = pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap);
         std::cout << "\nFinal cost: " << cost << std::endl;
@@ -235,7 +234,7 @@ int main(int argc, char* argv[]) {
         pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
         cigar = std::string(cigar.rbegin(), cigar.rend());
         std::cout << "\nCigar: " << cigar << "\n\n";
-            
+        
     } else {
         std::cout << helpMessage << std::endl;
         return 1;
