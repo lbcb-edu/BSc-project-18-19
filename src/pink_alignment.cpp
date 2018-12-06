@@ -14,57 +14,53 @@ typedef struct {
     int parent;  
 } cell;
 
-cell** matrix;
-unsigned row;
-unsigned col;
-
-void init_row(int columns, int gap) {
+void init_row(cell** matrix, int columns, int gap) {
     for (int j = 1; j < columns; j++) {
         matrix[0][j].cost = j * gap;
         matrix[0][j].parent = HEAD;
     }
 }
 
-void init_column(int rows, int gap) {
+void init_column(cell** matrix, int rows, int gap) {
     for (int i = 0; i < rows; i++) {
         matrix[i][0].cost = i * gap;
         matrix[i][0].parent = HEAD;
     }
 }
 
-void init_matrix(AlignmentType type, int rows, int columns, int gap) {
+void init_matrix(cell** matrix, AlignmentType type, int rows, int columns, int gap) {
     matrix[0][0].cost = 0;
     matrix[0][0].parent = HEAD;
     
     switch(type) {
-        case global: init_row(columns, gap);
-                     init_column(rows, gap);
+        case global: init_row(matrix, columns, gap);
+                     init_column(matrix, rows, gap);
                      break;
         
         //prefix-suffix
-        case semi_global: init_row(columns, 0);
-                          init_column(rows, gap);
+        case semi_global: init_row(matrix, columns, 0);
+                          init_column(matrix, rows, gap);
                           break;
         
-        case local: init_row(columns, 0);
-                    init_column(rows, 0);
+        case local: init_row(matrix, columns, 0);
+                    init_column(matrix, rows, 0);
                     break;
     }
 }
 
-int compare_string(AlignmentType type,
+int compare_string(cell** matrix, AlignmentType type,
                    const char *s, const char *t,
                    unsigned rows, unsigned columns,
-                   int match, int mismatch, int gap) {
+                   int match, int mismatch, int gap, unsigned* row, unsigned* col) {
     unsigned i, j, k;  
     int options[3];  
     int max_cost = 0;
-    row = 0;
-    col = 0;
+    *row = 0;
+    *col = 0;
     
     if (type == semi_global) {
-		row = 0;
-        col = columns - 1;
+		*row = 0;
+        *col = columns - 1;
     }
     
     for (i = 1; i < rows; i++) {
@@ -92,16 +88,16 @@ int compare_string(AlignmentType type,
                     } 
                     if (max_cost < matrix[i][j].cost) {   
                         max_cost = matrix[i][j].cost;
-                        row = i;
-                        col = j;
+                        *row = i;
+                        *col = j;
                     }
                     break;
                 
                 case semi_global:
                     if (j == columns - 1 && max_cost <= matrix[i][j].cost) {
                         max_cost = matrix[i][j].cost;
-                        row = i;
-                        col = j;
+                        *row = i;
+                        *col = j;
                     }
                     break;
                 
@@ -111,8 +107,8 @@ int compare_string(AlignmentType type,
     }
     
     if (type == global) {
-        row = rows - 1;
-        col = columns - 1;
+        *row = rows - 1;
+        *col = columns - 1;
         return matrix[rows - 1][columns - 1].cost;
 
     } else {
@@ -120,7 +116,7 @@ int compare_string(AlignmentType type,
     }
 }
     
-char get_letter() { 
+char get_letter(unsigned row, unsigned col, cell** matrix) {
     switch (matrix[row][col].parent) {
         case MATCH:    return '=';
         case MISMATCH: return 'X';
@@ -130,35 +126,35 @@ char get_letter() {
     }
 }
     
-void switch_cell(char letter) {
+void switch_cell(char letter, unsigned* row, unsigned* col) {
     switch(letter) {
-        case 'I': row--;
+        case 'I': (*row)--;
                   break;
-        case 'D': col--;
+        case 'D': (*col)--;
                   break;
-        default: row--;
-                 col--;
+        default: (*row)--;
+                 (*col)--;
                  break;
     }
 } 
     
-void make_cigar(AlignmentType type, 
+void make_cigar(cell** matrix, unsigned row, unsigned col, AlignmentType type,
 			    std::string& cigar, unsigned int& target_begin) {
     
     switch(type) {
         case local: 
 			while (matrix[row][col].cost != 0) {
-            	char letter = get_letter();
+            	char letter = get_letter(row, col, matrix);
             	cigar.push_back(letter);
-            	switch_cell(letter);
+            	switch_cell(letter, &row, &col);
         	}
 			break;
         
         default: 
 			while (matrix[row][col].parent != HEAD) {
-	            char letter = get_letter();
+	            char letter = get_letter(row, col, matrix);
 	            cigar.push_back(letter);
-	            switch_cell(letter);
+	            switch_cell(letter, &row, &col);
 	        }
         
 	        while (row != 0) {
@@ -172,23 +168,43 @@ void make_cigar(AlignmentType type,
 	        }
 	}
 }
+    
+    int pairwise_alignment_connect(const char* query, unsigned int query_length,
+                                   const char* target, unsigned int target_length,
+                                   AlignmentType type,
+                                   int match, int mismatch, int gap,
+                                   std::string& cigar, unsigned int& target_begin, bool ifCigar) {
+        
+        unsigned rows = query_length + 1;
+        unsigned columns = target_length +1;
+        
+        cell** matrix = new cell*[rows];
+        for (unsigned i = 0; i < rows; i++) {
+            matrix[i] = new cell[columns];
+        }
+        
+        init_matrix(matrix, type, rows, columns, gap);
+        
+        unsigned row;
+        unsigned col;
+        
+        int cost = compare_string(matrix, type, query, target, rows, columns, match, mismatch, gap, &row, &col);
+        
+        if (ifCigar){
+            make_cigar(matrix, row, col, type, cigar, target_begin);
+        }
+        return cost;
+    }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
                        const char* target, unsigned int target_length,
                        AlignmentType type,
                        int match, int mismatch, int gap) {
 
-    unsigned rows = query_length + 1;
-    unsigned columns = target_length +1;
-    
-    matrix = new cell*[rows];
-    for (unsigned i = 0; i < rows; i++) {
-        matrix[i] = new cell[columns];
-    }
-    
-    init_matrix(type, rows, columns, gap);
-    
-    return compare_string(type, query, target, rows, columns, match, mismatch, gap);
+    std::string cigar;
+    unsigned int target_begin = 0;
+
+    return pairwise_alignment_connect(query, query_length, target, target_length, type, match, mismatch, gap, cigar, target_begin, false);
 }
 
 int pairwise_alignment(const char* query, unsigned int query_length,
@@ -197,11 +213,7 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                        int match, int mismatch, int gap,
                        std::string& cigar, unsigned int& target_begin) {
     
-    
-    int cost = pairwise_alignment(query, query_length, target, target_length, type, match, mismatch, gap);
-    
-    make_cigar(type, cigar, target_begin);
-    
-    return cost;
+    return pairwise_alignment_connect(query, query_length, target, target_length, type, match, mismatch, gap, cigar, target_begin, true);
 }
+
 }
