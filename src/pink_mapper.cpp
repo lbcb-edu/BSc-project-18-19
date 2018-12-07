@@ -119,6 +119,18 @@ bool check_extension(std::string arg, char ext_flag) {
     return false;
 }
 
+void printError() {
+	std::cerr << "Wrong input. Use \"-h\" or \"--help\" for help." << std::endl;
+	exit(1);
+}
+
+int checkInput(char* optarg) {
+	if(atoi(optarg) == 0 && strcmp(optarg, "0") != 0) {
+		printError();
+	}
+	return atoi(optarg);
+}
+
 void help() {
     printf(
         "usage: pink_mapper [options ...] <fragments> <genome> \n"
@@ -156,7 +168,6 @@ void version() {
 
 int main(int argc, char* argv[]) {
     char optchr;
-    std::string helpMessage = "Wrong input. Use \"-h\" or \"--help\" for help.";
     srand (time(NULL));
     
     pink::AlignmentType type = pink::global;
@@ -184,23 +195,21 @@ int main(int argc, char* argv[]) {
                 type = pink::local;
                 break;
             case 'm':
-                match = atoi(optarg);
+				match = checkInput(optarg);
                 break;
             case 's':
-                mismatch = atoi(optarg);
+                mismatch = checkInput(optarg);
                 break;
             case 'g':
-                gap = atoi(optarg);
+                gap = checkInput(optarg);
                 break;
             default:  
-                std::cerr << helpMessage << std::endl;
-                return 1;
+                printError();
         }
     }
     
     if (argc - optind != 2) {
-        std::cout << helpMessage << std::endl;
-        return 1;
+        printError();
     }
     
     if ((check_extension(argv[optind], 'a') || check_extension(argv[optind], 'q')) && check_extension(argv[optind+1], 'a')) {
@@ -236,8 +245,7 @@ int main(int argc, char* argv[]) {
         std::cout << "\nCigar: " << cigar << "\n\n";
         
     } else {
-        std::cout << helpMessage << std::endl;
-        return 1;
+        printError();
     }
     
     return 0;
