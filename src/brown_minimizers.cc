@@ -5,6 +5,8 @@
 #include <set>
 #include <tuple>
 
+#include "brown_minimizers.hpp"
+
 namespace brown {
 
 // C, A, T/U, G = 0, 1, 2, 3 for odd based
