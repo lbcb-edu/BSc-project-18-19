@@ -88,12 +88,12 @@ The next step is to implement a library that for any DNA/RNA sequence returns it
 The library should be named in a form of `<team name>_minimizers` (e.g. `blue_minimizers`) and should share its namespace with the alignment library (e.g. `blue`). Other constraints apply as well, it has to be created with the same `CMakeLists.txt`, it has to be linked to the mapper, and have its own unit tests which are run via TravisCI. The implementation has no requirements (it can be just one function or through a class) but the function for finding minimizers should have the following prototype:
 
 ```cpp
-std::vector<std::pair<unsigned int, unsigned int>> minimizers(const char* sequence, unsigned int sequence_length,
-                                                              unsigned int k,
-                                                              unsigned int window_length);
+std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length,
+                                                                     unsigned int k,
+                                                                     unsigned int window_length);
 ```
 
-where the return value is the list of found minimizers and their positions in the sequence, while parameters `k` and `window_length` are self explanatory (check minimizer paper).
+where the return value is the list of found minimizers, their positions in the sequence and their origin (whether they are located on the original strand or the reverse complement), while parameters `k` and `window_length` are self explanatory (check minimizer paper).
 
 Once the library is finished, it has to be used to find minimizers of all sequences in the first input file and the mapper has to print the histogram of minimizer occurences into a separate CSV file (add optional arguments for setting `k` and `w` to the mapper). The histogram for values `(k, w) = (5, 15)` can then be drawn in either `R` or `Python`, and must be added to this README on each teams branch (bellow this paragraph).
 
