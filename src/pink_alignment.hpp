@@ -17,5 +17,6 @@ int pairwise_alignment(const char* query, unsigned int query_length,
                        int gap,
                        std::string& cigar,
                        unsigned int& target_begin);
+
 }
 

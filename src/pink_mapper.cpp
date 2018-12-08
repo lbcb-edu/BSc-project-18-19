@@ -9,6 +9,7 @@
 
 #include <bioparser/bioparser.hpp>
 #include "pink_alignment.hpp"
+#include "pink_minimizers.hpp"
 
 static struct option options[] = {
     {"help",        no_argument,       0, 'h'},
