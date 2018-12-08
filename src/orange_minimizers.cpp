@@ -38,7 +38,7 @@ namespace orange {
 			unsigned int min_pos = position_of_last_found_min_mer;
 			bool first_found = false;
 
-			for(int j = position_of_last_found_min_mer - i; j + k < temp_seg.length(); j++) {
+			for(int j = position_of_last_found_min_mer - i; j + k <= temp_seg.length(); j++) {
 				if(j < 0) j = 0;
 
 				std::string temp_mer_not_complement = seq.substr(j, k);
