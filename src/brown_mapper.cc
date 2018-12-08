@@ -8,10 +8,12 @@
 #include <string>
 #include <limits>
 #include <ctime>
+#include <map>
 
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
 #include "brown_alignment.hpp"
+#include "brown_minimizers.hpp"
 
 const std::set<std::string> fasta_formats = {".fasta", ".fa", ".fasta.gz", ".fa.gz"};
 const std::set<std::string> fastq_formats = {".fastq", ".fq", ".fastq.gz", ".fq.gz"};
@@ -25,8 +27,9 @@ static struct option long_options[] = {
   {"local", no_argument, NULL, 'L'},
   {"global", no_argument, NULL, 'G'},
   {"semi_global", no_argument, NULL, 'S'},
+  {"window_length", required_argument, NULL, 'w'},
+  {"kmers", required_argument, NULL, 'k'},
   {NULL, no_argument, NULL, 0}
-  
 };
 
 class FastAQ {
@@ -118,7 +121,12 @@ void help(void) {
          "  -G  or  --global         global alignment\n"
          "  -L  or  --local          local alignment\n"
          "  -S  or  --semi_global    semi_global alignment\n"
-
+         "	-w or 	--window_length	 <int>\n"
+         "                             default: 15\n"
+         "                             length of window\n"
+         "	-k or 	--kmers	 		 <int>\n"
+         "                             default: 5\n"
+         "                             number of letter in substrings\n"
   );
 }
 
@@ -148,6 +156,9 @@ int main (int argc, char **argv) {
   int gap = -2;
   brown::AlignmentType alignment = brown::AlignmentType::global;
   std::string alignmentType = "global";
+
+  int window_length = 15;
+  int k = 5;
 
   while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLS", long_options, NULL)) != -1) {
     switch (optchr) {
@@ -184,6 +195,14 @@ int main (int argc, char **argv) {
       case 'S': {
         alignment = brown::AlignmentType::semi_global;
         alignmentType = "semi_global";
+        break;
+      }
+      case 'w': {
+        window_length = atoi(optarg);
+        break;
+      }
+      case 'k': {
+        k = atoi(optarg);
         break;
       }
       default: {
@@ -232,6 +251,33 @@ int main (int argc, char **argv) {
 
   FastAQ::print_statistics(fastaq_objects1, file1);
   FastAQ::print_statistics(fastaq_objects2, file2);
+
+  fprintf(stderr, "Finding minimizers\n");
+
+  int counter = 0;
+  std::map<unsigned int, unsigned int> frequency_map;
+  for(unsigned int i = 0; i < fastaq_objects1.size(); i++){
+
+  	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers(fastaq_objects1[i]->sequence.c_str(),
+  																				fastaq_objects1[i]->sequence.size(),k , window_length);
+  	for(auto const& minimizer: minimizers){
+  		frequency_map[std::get<0>(minimizer)]++;
+  	}
+  	if(counter % 200 == 0){
+  		fprintf(stderr, "%d \n", counter);
+  	}
+  	counter++;
+  }
+
+  fprintf(stderr, "Creating CSV file\n");
+
+  std::ofstream csv_file ("frequency.csv");
+
+  for(auto const& entry : frequency_map){
+  	csv_file << entry.first << ", " << entry.second << std::endl;
+  }
+
+  csv_file.close();
 
   fprintf(stderr, "Starting alignment with parameters:\n");
   fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
