@@ -3,6 +3,8 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include <tuple>
+#include <algorithm>
 
 namespace orange {
 
@@ -39,31 +41,31 @@ namespace orange {
 		return constructStringWithMap(mer, values_map);
 	}
 
-	std::map<unsigned int, std::pair<std::string, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
 		std::string seq;
 		seq.assign(sequence, sequence_length);
 		
-		std::map<unsigned int, std::pair<std::string, bool>> minimizers_map;
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vec;
 		unsigned int position_of_last_found_min_mer = -1;
-		std::string last_min_mer;
+		unsigned int last_min_mer;
 
 		for(unsigned int i = 0; window_length + k + i - 1 <= seq.length(); i++) {
 			std::string temp_seg = seq.substr(i, window_length + k - 1);
 
-			std::string min_mer = last_min_mer;
+			unsigned int min_mer = last_min_mer;
 			bool is_min_complement;
 			unsigned int min_pos = position_of_last_found_min_mer;
 			bool first_found = (position_of_last_found_min_mer >= i && position_of_last_found_min_mer <= window_length + k + i - 1);
 
 			for(int j = first_found ? temp_seg.length() - k : 0; j + k <= temp_seg.length(); j++) {
 
-				std::string temp_mer_not_complement = temp_seg.substr(j, k);
-				std::string temp_mer_complement = constructComplementMer(temp_mer_not_complement);
+				unsigned int temp_mer_not_complement = strtol(constructValueString(temp_seg.substr(j, k)).c_str(), NULL, 4);
+				unsigned int temp_mer_complement = strtol(constructValueString(constructComplementMer(temp_seg.substr(j, k))).c_str(), NULL, 4);
 
-				bool is_complement = constructValueString(temp_mer_complement).compare(constructValueString(temp_mer_not_complement)) < 0;
-				std::string temp_mer = is_complement ? temp_mer_complement : temp_mer_not_complement;
+				bool is_complement = temp_mer_complement < temp_mer_not_complement;
+				unsigned int temp_mer = is_complement ? temp_mer_complement : temp_mer_not_complement;
 
-				if(!first_found || constructValueString(min_mer).compare(constructValueString(temp_mer)) > 0) {
+				if(!first_found || min_mer > temp_mer) {
 					if(!first_found) first_found = true;
 
 					min_mer = temp_mer;
@@ -72,13 +74,15 @@ namespace orange {
 				}
 			}
 
-			if(minimizers_map.count(min_pos) == 0) {
-				minimizers_map.insert(std::pair<unsigned int, std::pair<std::string, bool>>(min_pos, std::pair<std::string, bool>(min_mer, is_min_complement)));
+			std::tuple<unsigned int, unsigned int, bool> temp_tuple = std::make_tuple (min_mer, min_pos, is_min_complement);
+
+			if(std::find(minimizers_vec.begin(), minimizers_vec.end(), temp_tuple) == minimizers_vec.end()) {
+				minimizers_vec.push_back(temp_tuple);
 				position_of_last_found_min_mer = min_pos;
 				last_min_mer = min_mer;
 			}
 		}
 
-		return minimizers_map;
+		return minimizers_vec;
 	}
 }
