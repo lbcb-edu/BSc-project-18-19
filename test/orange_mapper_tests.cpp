@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "orange_alignment.h"
+#include "orange_minimizers.h"
 
 TEST (Pairwise_alignment, global) {
 	
@@ -24,4 +25,26 @@ TEST (Pairwise_alignment, semi_global) {
 
 	EXPECT_EQ (orange::pairwise_alignment ("ACCCAAGGG", 9, "GGCTCCATTA", 10, orange::AlignmentType::semi_global, 1, -1, -1, cigar, target_start), 1);
 	EXPECT_EQ (target_start, 1);
+}
+
+TEST (Minimizers, 3mer_windowLenght3) {
+	std::tuple<unsigned int, unsigned int, bool> temp_tuple;
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizer_vec;
+
+	temp_tuple = std::make_tuple (11,1,1);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (6,4,1);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (6,7,1);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (2,10,1);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (18,0,1);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (17,12,0);
+	minimizer_vec.push_back(temp_tuple);
+	temp_tuple = std::make_tuple (11,11,1);
+	minimizer_vec.push_back(temp_tuple);
+
+	EXPECT_EQ (orange::minimizers("TGACGTACATGGACA", 15, 3, 3), minimizer_vec);
 }
