@@ -11,20 +11,20 @@ namespace orange {
 		{'T', 'A'},
 		{'G', 'C'},
 		{'C', 'G'}
-	}
+	};
 
 	std::map<char, char> values_map = {
 		{'C', '0'},
 		{'A', '1'},
 		{'T', '2'},
 		{'G', '3'}
-	}
+	};
 
 	
 	std::string constructStringWithMap(std::string const base_string, std::map<char, char> const map) {
-		std:string result;
+		std::string result;
 
-		for(int i = 0; i < mer.length(); i++) {
+		for(int i = 0; i < base_string.length(); i++) {
 			result += map.at(base_string.at(i));
 		}
 
