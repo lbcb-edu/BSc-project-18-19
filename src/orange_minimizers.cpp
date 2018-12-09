@@ -41,11 +41,8 @@ namespace orange {
 		return constructStringWithMap(mer, values_map);
 	}
 
-	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
-		std::string seq;
-		seq.assign(sequence, sequence_length);
-		
-		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vec;
+	void middleMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length) { 
+
 		unsigned int position_of_last_found_min_mer = -1;
 		unsigned int last_min_mer;
 
@@ -82,6 +79,56 @@ namespace orange {
 				last_min_mer = min_mer;
 			}
 		}
+
+	}
+
+	void endMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, bool isStart) {
+		int start;
+		for(unsigned int i = 1; i < window_length; i++) {
+
+			unsigned int min_mer;
+			bool is_min_complement;
+			unsigned int min_pos = 0;
+			bool first_found = false;
+
+			for(int j = 0; j < i; j++) {
+
+				start = isStart ? j : seq.length()-k-j; 
+
+				unsigned int temp_mer_not_complement = strtol(constructValueString(seq.substr(start, k)).c_str(), NULL, 4);
+				unsigned int temp_mer_complement = strtol(constructValueString(constructComplementMer(seq.substr(start, k))).c_str(), NULL, 4);
+
+				bool is_complement = temp_mer_complement < temp_mer_not_complement;
+				unsigned int temp_mer = is_complement ? temp_mer_complement : temp_mer_not_complement;
+
+				if(!first_found || min_mer > temp_mer) {
+					if(!first_found) first_found = true;
+
+					min_mer = temp_mer;
+					is_min_complement = is_complement;
+					min_pos = start;
+				}
+			}
+
+			std::tuple<unsigned int, unsigned int, bool> temp_tuple = std::make_tuple (min_mer, min_pos, is_min_complement);
+
+			if(std::find(minimizers_vec.begin(), minimizers_vec.end(), temp_tuple) == minimizers_vec.end()) {
+				minimizers_vec.push_back(temp_tuple);
+			}
+		}
+	}
+
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
+		std::string seq;
+		seq.assign(sequence, sequence_length);
+		
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vec;
+
+		middleMinimizers(seq, minimizers_vec, k, window_length);
+
+		endMinimizers(seq, minimizers_vec, k, window_length, true);
+
+		endMinimizers(seq, minimizers_vec, k, window_length, false);
 
 		return minimizers_vec;
 	}
