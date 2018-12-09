@@ -35,7 +35,7 @@ TEST (Minimizers, 3mer_windowLenght3) {
 	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (6,4,1);
 	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (6,7,1);
+	temp_tuple = std::make_tuple (6,7,0);
 	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (2,10,1);
 	minimizer_vec.push_back(temp_tuple);
