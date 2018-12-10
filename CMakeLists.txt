@@ -38,4 +38,3 @@ else()
 endif (mapper_build_tests)
 
   #install(TARGETS brown_mapper DESTINATION bin)
-  #install(FILES "${PROJECT_BINARY_DIR}/brown_mapper.hpp" DESTINATION include)

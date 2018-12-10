@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include <string>
 #include "brown_alignment.hpp"
+#include "brown_minimizers.hpp"
 
 namespace {
 
@@ -35,6 +36,33 @@ namespace {
 
 		EXPECT_EQ(cigar, "1D1=1I1=2X2=");
 		EXPECT_EQ(target_begin, 0);
+	}
+
+		TEST(MapperTest, TestCGAC){
+ 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGAC",4, 3 , 1);
+
+		EXPECT_EQ(std::get<0>(minimizers.at(0)), 1);
+		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
+		EXPECT_EQ(std::get<2>(minimizers.at(0)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(1)), 13);
+		EXPECT_EQ(std::get<1>(minimizers.at(1)), 1);
+		EXPECT_EQ(std::get<2>(minimizers.at(1)), 0);
+		EXPECT_EQ(minimizers.size(), 2);
+	}
+
+	TEST(MapperTest, TestCGACT){
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGACT", 5, 3, 1);
+
+		EXPECT_EQ(std::get<0>(minimizers.at(0)), 1);
+		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
+		EXPECT_EQ(std::get<2>(minimizers.at(0)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(1)), 13);
+		EXPECT_EQ(std::get<1>(minimizers.at(1)), 1);
+		EXPECT_EQ(std::get<2>(minimizers.at(1)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(2)), 102);
+		EXPECT_EQ(std::get<1>(minimizers.at(2)), 0);
+		EXPECT_EQ(std::get<2>(minimizers.at(2)), 1);
+		EXPECT_EQ(minimizers.size(), 3);
 	}
 }
 

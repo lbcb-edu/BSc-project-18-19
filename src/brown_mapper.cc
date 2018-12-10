@@ -126,6 +126,7 @@ void help(void) {
          "                             length of window\n"
          "	-k or 	--kmers	 		 <int>\n"
          "                             default: 5\n"
+         "                             maximum:  19\n"
          "                             number of letter in substrings\n"
   );
 }
@@ -160,7 +161,7 @@ int main (int argc, char **argv) {
   int window_length = 15;
   int k = 5;
 
-  while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLS", long_options, NULL)) != -1) {
+  while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLSk:w:", long_options, NULL)) != -1) {
     switch (optchr) {
       case 'h': {
         help();
@@ -253,6 +254,7 @@ int main (int argc, char **argv) {
   FastAQ::print_statistics(fastaq_objects2, file2);
 
   fprintf(stderr, "Finding minimizers\n");
+  fprintf(stderr, " Kmers: = %d\n Window length = %d\n", k, window_length);
 
   int counter = 0;
   std::map<unsigned int, unsigned int> frequency_map;
@@ -279,6 +281,8 @@ int main (int argc, char **argv) {
 
   csv_file.close();
 
+
+
   fprintf(stderr, "Starting alignment with parameters:\n");
   fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
   std::cerr << "  Alignment type = " << alignmentType <<std::endl;
@@ -300,6 +304,20 @@ int main (int argc, char **argv) {
   fprintf(stderr, " Done!\nFinished!\n");
   
   // Small test examples
+
+  // std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGAC",4, 3 , 1);
+  // for(auto const& minimizer : minimizers){
+  // 	   std::cout << "minimizer: " << std::get<0>(minimizer) << std::endl;
+  // 	   std::cout << "pozicija: " << std::get<1>(minimizer) << std::endl;
+  // 	   std::cout << "bool: " << std::get<2>(minimizer) << std::endl;
+  // }
+
+  // std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGACT", 5, 3, 1);
+  // for(auto const& minimizer : minimizers){
+  // 	   std::cout << "minimizer: " << std::get<0>(minimizer) << std::endl;
+  // 	   std::cout << "pozicija: " << std::get<1>(minimizer) << std::endl;
+  // 	   std::cout << "bool: " << std::get<2>(minimizer) << std::endl;
+  // }
 
   // std::string q = {"ATTGGAA"};
   // std::string t = {"CCCACTTTTTGG"};
