@@ -127,7 +127,7 @@ void help(void) {
          "  -k  or  --kmers          <int>\n"
          "                             default: 5\n"
          "                             maximum:  10\n"
-         "                             number of letter in substrings\n"
+         "                             number of letters in substrings\n"
   );
 }
 
@@ -270,12 +270,14 @@ int main (int argc, char **argv) {
   	}
   	counter++;
   }
+
   fprintf(stderr, "Minimizers found\n");
 
   fprintf(stderr, "Creating CSV file\n");
 
   std::ofstream csv_file ("frequency.csv");
 
+  csv_file << "Minimizer, Frequency" << std::endl;
   for(auto const& entry : frequency_map){
   	csv_file << entry.first << ", " << entry.second << std::endl;
   }
