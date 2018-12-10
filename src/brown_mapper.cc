@@ -121,12 +121,12 @@ void help(void) {
          "  -G  or  --global         global alignment\n"
          "  -L  or  --local          local alignment\n"
          "  -S  or  --semi_global    semi_global alignment\n"
-         "	-w or 	--window_length	 <int>\n"
+         "  -w  or  --window_length  <int>\n"
          "                             default: 15\n"
          "                             length of window\n"
-         "	-k or 	--kmers	 		 <int>\n"
+         "  -k  or  --kmers          <int>\n"
          "                             default: 5\n"
-         "                             maximum:  19\n"
+         "                             maximum:  10\n"
          "                             number of letter in substrings\n"
   );
 }
@@ -266,10 +266,11 @@ int main (int argc, char **argv) {
   		frequency_map[std::get<0>(minimizer)]++;
   	}
   	if(counter % 200 == 0){
-  		fprintf(stderr, "%d \n", counter);
+  		fprintf(stderr, "%3.2f%%\r", ((float)counter/fastaq_objects1.size()) * 100);
   	}
   	counter++;
   }
+  fprintf(stderr, "Minimizers found\n");
 
   fprintf(stderr, "Creating CSV file\n");
 

@@ -406,9 +406,9 @@ int pairwise_alignment(const char* query, unsigned int query_length,
   }
 
   for (int i = 0; i < rows; ++i) {
-    delete m[i];
+    delete[] m[i];
   }
-  delete m;
+  delete[] m;
 
   return alignment_score;
   }
@@ -444,9 +444,9 @@ int pairwise_alignment(const char* query, unsigned int query_length,
   }
 
   for (int i = 0; i < rows; ++i) {
-    delete m[i];
+    delete[] m[i];
   }
-  delete m;
+  delete[] m;
 
   return alignment_score;
 }
