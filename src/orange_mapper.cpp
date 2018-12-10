@@ -6,10 +6,12 @@
 #include <string>
 #include <ctime>
 #include <string.h>
+#include <fstream>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
 #include "orange_alignment.h"
+#include "orange_minimizers.h"
 
 std::vector<std::string> FASTAExtensionVector{".fasta", ".fa", ".fasta.gz", ".fa.gz"};
 std::vector<std::string> FASTQExtensionVector{".fastq", ".fq", ".fastq.gz", ".fq.gz"};
@@ -23,6 +25,8 @@ struct option options[] = {
 		{"match", required_argument, 0, 0},
 		{"mismatch", required_argument, 0, 0},
 		{"gap", required_argument, 0, 0},
+		{"kmer", required_argument, 0, 0},
+		{"window_lenght", required_argument,0 ,0},
 		{0, 0, 0, 0}
 	};
 
@@ -108,12 +112,14 @@ void help() {
         "options: \n"
         "	-h, --help  -  prints help menu (currently displaying)\n"
         "	-v, --version  -  prints program version\n"
-	"	-g, --global - alongside statistics, prints CIGAR string gotten as result of global alignment of 2 random sequences in the first file\n"
-	"	-l, --local - alongside statistics, prints CIGAR string gotten as result of local alignment of 2 random sequences in the first file\n"
-	"	-s, --semi-global - alongside statistics, prints CIGAR string gotten as result of semi-global alignment of 2 random sequences in the first file\n"
-	"	--match (arg) - sets match score parameter that is used in alignments(default value is 1)\n"
-	"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
-	"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n");
+		"	-g, --global - alongside statistics, prints CIGAR string gotten as result of global alignment of 2 random sequences in the first file\n"
+		"	-l, --local - alongside statistics, prints CIGAR string gotten as result of local alignment of 2 random sequences in the first file\n"
+		"	-s, --semi-global - alongside statistics, prints CIGAR string gotten as result of semi-global alignment of 2 random sequences in the first file\n"
+		"	--match (arg) - sets match score parameter that is used in alignments(default value is 1)\n"
+		"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
+		"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n"
+		"   -k (arg) - sets size of minimizer"
+		"   -w (arg) - sets window lenght for minimizers");
 }
 
 void version() {
@@ -212,15 +218,56 @@ void calculateAndPrintOutStatistics(std::string const &firstFilePath, std::strin
 	readFASTAFile(secondFilePath, alignment);
 }
 
+void createCSVfile(std::string const &filePath, int k, int window_lenght) {
+	std::vector<std::unique_ptr<FASTAEntity>> fasta_objects;
+	auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FASTAEntity>(filePath);
+	
+	fasta_parser->parse_objects(fasta_objects, -1);
+
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
+	std::map<unsigned int, unsigned int> csvMap;
+
+	unsigned int end=fasta_objects.size();
+	float counter = 0;
+	float b, temp;
+	float a=b=0.01;
+
+	for (auto const &x : fasta_objects) {
+		minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k, window_lenght);
+		counter++;
+		for(auto const &y : minimizers) {
+			csvMap[std::get<0>(y)]++;
+		}
+		if (counter/end>b) {
+			temp = b*100;
+			std::cout << "\b\b\b" << (int)temp << "%" << std::flush;
+			b+=a;
+		}
+	}
+
+	std::ofstream file;
+    file.open ("minimizers.csv");
+
+	for (auto const &m : csvMap) {
+		file << m.first << "," << m.second << "\n";
+	}
+
+	std::cout << "\b\b\b Done!" << std::flush;
+
+	file.close();
+
+}
+
 int main(int argc, char** argv) {
 
 	srand((unsigned)time(0)); 
 	alignment alignment;
+	int k=5, window_lenght=15;
 
 	char optchr;
 
 	int option_index = 0;
-	while((optchr = getopt_long(argc, argv, "hvgsl", options, &option_index)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hvgslkw", options, &option_index)) != -1) {
 		switch(optchr) {
 			case 0:
 				if(options[option_index].flag != 0)
@@ -249,6 +296,12 @@ int main(int argc, char** argv) {
 			case 'l':
 				alignment.type = orange::AlignmentType::local;
 				break;
+			case 'k':
+				k = atoi(optarg);
+				break;
+			case 'w':
+				window_lenght = atoi(optarg);
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
@@ -275,6 +328,8 @@ int main(int argc, char** argv) {
 	}
 
 	calculateAndPrintOutStatistics(firstFilePath, secondFilePath, isFirstFASTA, alignment);
+
+	createCSVfile(firstFilePath, k, window_lenght);
 
 	return 0;
 }
