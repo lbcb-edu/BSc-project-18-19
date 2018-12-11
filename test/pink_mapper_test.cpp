@@ -55,7 +55,7 @@ TEST (Pairwise_alignment, local) {
 //    EXPECT_EQ(std::get<2>(minimizers.at(12)), 0);
 //}
 TEST(MapperTest, TestCGACT){
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGACT", 5, 3, 1);
+    std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = pink::minimizers("CGACT", 5, 3, 1);
     
     EXPECT_EQ(std::get<0>(minimizers.at(0)), 100);
     EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
