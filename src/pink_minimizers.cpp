@@ -11,7 +11,7 @@ namespace pink {
     unsigned int get_value(const char* sequence, unsigned int position, unsigned int k, std::map<char, unsigned int> odd_position){
         unsigned int value = 0;
     
-        for (int i = position; i < position + k; i++){
+        for (unsigned i = position; i < position + k; i++){
             if (i % 2 == 0)
                 value = 10*value + (3 - odd_position[sequence[i]]);
             else
@@ -23,7 +23,7 @@ namespace pink {
     unsigned int get_value_reversed(const char* sequence, unsigned int sequence_length, unsigned int position, unsigned int k, std::map<char, unsigned int> odd_position){
         unsigned int value = 0;
         
-        for (int i = position + k; i > position; i--){
+        for (unsigned i = position + k; i > position; i--){
             if ((sequence_length + 1 - i - 1) % 2 == 0)
                 value = 10*value + odd_position[sequence[i - 1]];
             else
@@ -37,19 +37,17 @@ namespace pink {
         unsigned int temp_value = get_value(sequence, minimizer_beginning, k, odd_position);
         unsigned int temp_value_reversed = get_value_reversed(sequence, sequence_length, minimizer_beginning, k, odd_position);
         
-        
-        
-        if(temp_value < *min_value){
+        if (temp_value < *min_value){
             *min_value = temp_value;
             *min_position = minimizer_beginning;
             *min_direction = 0;
         }
+
         if (temp_value_reversed < *min_value){
             *min_value = temp_value_reversed;
             *min_position = minimizer_beginning;
             *min_direction = 1;
-        }
-        
+        }  
     }
     
     std::vector<std::tuple<unsigned int, unsigned int, bool>> get_interior_minimizers(const char* sequence, unsigned int sequence_length,
@@ -66,14 +64,14 @@ namespace pink {
         bool min_direction;
         unsigned int minimizer_beginning;
         
-        for (int beginning_position = 0; beginning_position <= last_beginning; beginning_position++){
+        for (unsigned beginning_position = 0; beginning_position <= last_beginning; beginning_position++){
             
             
             min_value = get_value(sequence, beginning_position, k, odd_position);
             min_position = beginning_position;
             min_direction = 0;
             
-            for (int i = 0; i < window_length; i++){
+            for (unsigned i = 0; i < window_length; i++){
                 
                 minimizer_beginning = beginning_position + i;
                 calculate_min_value(&min_value, &min_position, &min_direction, sequence, sequence_length, minimizer_beginning, k, odd_position);
@@ -94,19 +92,18 @@ namespace pink {
         std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
         std::tuple<unsigned int, unsigned int, bool> minimizers_tuple;
         
-        unsigned int last_beginning = sequence_length - k;
         unsigned int min_value;
         unsigned int min_position;
         bool min_direction;
         unsigned int minimizer_beginning;
         
-        for (int beginning_position = 1; beginning_position < window_length - 1; beginning_position++){
+        for (unsigned beginning_position = 1; beginning_position < window_length - 1; beginning_position++){
             
             min_value = get_value(sequence, 0, k ,odd_position);
             min_position = 0;
             min_direction = 0;
             
-            for (int i = 0; i < beginning_position; i++){
+            for (unsigned i = 0; i < beginning_position; i++){
                 
                 minimizer_beginning = beginning_position + i;
                 
@@ -141,7 +138,7 @@ namespace pink {
             min_position = last_beginning;
             min_direction = 0;
             
-            for (int i = beginning_position; i < last_beginning; i++){
+            for (unsigned i = beginning_position; i < last_beginning; i++){
                 
                 minimizer_beginning = beginning_position + i;
                 

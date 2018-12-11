@@ -262,9 +262,9 @@ int main(int argc, char* argv[]) {
 
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector = pink::minimizers(q, q_len, k, window_length);
 		
-		/*for (auto const& minimizer: minimizers_vector) {
+		for (auto const& minimizer: minimizers_vector) {
 			std::cout << std::get<0>(minimizer) << " " << std::get<1>(minimizer) << " " << std::get<2>(minimizer) << std::endl;
-    	}*/
+    	}
         
     } else {
         printError();
