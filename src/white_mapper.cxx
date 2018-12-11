@@ -1,11 +1,14 @@
-#include<iostream>
-#include<memory>
-#include<vector>
-#include<getopt.h>
-#include<stdlib.h>
-#include<set>
-#include<string>
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <getopt.h>
+#include <stdlib.h>
+#include <set>
+#include <string>
+#include <map>
+#include <fstream>
 
+#include "white_minimizers.h"
 #include "white_alignment.h"
 #include "white_mapper.h"
 #include "bioparser/bioparser.hpp"
@@ -13,6 +16,8 @@
 #define MATCH 2;
 #define MISMATCH -1;
 #define GAP -2;
+#define K_MER_LENGTH 5;
+#define WINDOW_SIZE 15;
 
 class SequenceFormat
 {
@@ -94,6 +99,14 @@ void help() {
 				"	Default for match, mismatch ang gap values is 2, -1, -2 respectively. The default	\n"
 				"	values can be changed using appropriate options.					\n\n"
 
+				"	Seed and extend:									\n"
+				"	In order to alleviate the alignment proces we use seed and extend approach. Among all	\n"
+				"	k-mers we choose a set of minimizers which will be used for fast detection of similar	\n"
+				"	regions between two sequences prior the exact alignment. The mapper will find minimizers\n"
+				"	for every sequence in the first file and print the histogram of minimizer occurences	\n"
+				"	into a separate CSV file. The proces of finding minimizers uses two variables: k-mer	\n"
+				"	length k and window size w. Their default values are 5 and 15 respecively.		\n\n"
+
                                 "	File extensions accepted:								\n"
                                 "	-> .fasta             -> .fastq								\n"
                                 "	-> .fa                -> .fq								\n"
@@ -107,7 +120,9 @@ void help() {
                                 "	-> \"-v\" or \"--version\" for displaying the current version.				\n"
 				"	-> \"-m ARG\" sets match value to ARG							\n"
 				"       -> \"-s ARG\" sets mismatch value to ARG                                                \n"
-				"       -> \"-g ARG\" sets gap value to ARG                                                   \n\n";
+				"       -> \"-g ARG\" sets gap value to ARG                                                     \n"
+				"       -> \"-k ARG\" sets length k of k-mers to ARG						\n"
+				"       -> \"-w ARG\" sets window size to ARG							\n\n";
 }
 
 void version() {
@@ -135,6 +150,38 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 	return objects;
 }
 
+void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size) {
+	std::map <unsigned int, unsigned int> minimizer_occurrences;
+	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
+	int counter = 0;
+	for (auto &ptr : sequences) {
+		current_minimizers = white::minimizers(ptr -> sequence.c_str(), ptr -> sequence.size(), k, window_size);
+		counter++;
+		std::cout << counter << std::endl;
+		for (auto minimizer_tuple : current_minimizers) {
+			minimizer_occurrences[std::get<0>(minimizer_tuple)]++;
+		}
+	}
+
+	std::ofstream fout;
+  	fout.open ("minimizer_occurrences.txt", std::ios::out);
+
+	if (!fout.is_open()){
+		std::cout << "Unable to open file.\n";
+		exit(1);
+	}
+
+  	fout << "Minimizer, Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
+
+	for (std::map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+	{
+  		fout << it->first << ", ";
+		fout << it->second << "\r\n";
+	}
+
+  	fout.close();
+}
+
 int main (int argc, char* argv[])
 {
 	int option = 0;
@@ -144,8 +191,10 @@ int main (int argc, char* argv[])
 	int match = MATCH;
         int mismatch = MISMATCH;
         int gap = GAP;
+	int k = K_MER_LENGTH;
+	int window_size = WINDOW_SIZE;
 
-        while ((option = getopt_long(argc, argv, "hvm:s:g:", long_options, NULL)) != -1) {
+        while ((option = getopt_long(argc, argv, "hvm:s:g:k:w:", long_options, NULL)) != -1) {
                 switch (option) {
                         case 'h':
 				help();
@@ -167,14 +216,23 @@ int main (int argc, char* argv[])
                                 gap = atoi (optarg);
 				break;
 
+			case 'k':
+				k = atoi (optarg);
+				break;
+
+			case 'w':
+				window_size = atoi (optarg);
+				break;
+
                         default:
-                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] [-m ARG] [-s ARG] [-g ARG] sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
+                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] [-m ARG] [-s ARG] [-g ARG] [-k ARG] [-w ARG] "
+						"sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
                                 exit(0);
 
                 }
 	}
 
-	if (argc - optind <= 5)
+	if (argc - optind == 2)
 	{
 		if (check_format (argv[optind], fasta_formats))
 			sequences = parse_file<bioparser::FastaParser> (std::string (argv[optind]));
@@ -206,9 +264,21 @@ int main (int argc, char* argv[])
                         fprintf (stderr, "\n--Error:\n"
 					 "	Usage: white_mapper [OPTIONS] sequence_file reference_genome_file match mismatch gap	\n\n"
 
-					 "	Number of nonoption arguments must be 5:						\n"
+					 "	Number of nonoption arguments must be 2:						\n"
                                          "		1st file contains sequences in FASTA or FASTQ format				\n"
                                          "		2nd file contains a reference genome in FASTA fromat				\n\n");
+
+	//to use these next few lines change constructor of SequenceFormat to public and minimizer_occurrences (sekvenceTest, k, window_size)
+	/*std::vector<std::unique_ptr<SequenceFormat>> sekvenceTest;
+	std::unique_ptr<SequenceFormat> p1 (new SequenceFormat ("S1", 2, "TCAGGAAGAAGCAGA", 15));
+	std::unique_ptr<SequenceFormat> p2 (new SequenceFormat ("S2", 2, "GTCATGCACGTTCAC", 15));
+	std::unique_ptr<SequenceFormat> p3 (new SequenceFormat ("S3", 2, "TCAGGAAGAAGCAGA", 15));
+	sekvenceTest.push_back(std::move(p1));
+	sekvenceTest.push_back(std::move(p2));
+	sekvenceTest.push_back(std::move(p3));*/
+
+	//finding minimizers and making a csv file of their occurrences
+	minimizer_occurrences (sequences, k, window_size);
 
 	//alignment of 2 random selected sequences
 	srand (time (NULL));

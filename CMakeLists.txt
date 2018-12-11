@@ -12,7 +12,7 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 set (CMAKE_CXX_STANDARD 11)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option (white_mapper_build_tests "Build white_mapper unit tests" OFF)
+option (white_mapper_build_tests "Build white_mapper unit tests" ON)
 
 configure_file (
 	"${PROJECT_SOURCE_DIR}/src/white_mapper.h.in"
@@ -20,13 +20,14 @@ configure_file (
 )
 
 add_library(white_alignment STATIC src/white_alignment.cxx)
+add_library(white_minimizers STATIC src/white_minimizers.cxx)
 
 include_directories("${PROJECT_BINARY_DIR}/bin")
 
 add_subdirectory (vendor/bioparser EXCLUDE_FROM_ALL)
 
 add_executable (white_mapper src/white_mapper.cxx)
-target_link_libraries (white_mapper bioparser white_alignment)
+target_link_libraries (white_mapper bioparser white_alignment white_minimizers)
 
 if (white_mapper_build_tests)
 	include_directories(${PROJECT_SOURCE_DIR}/src)
@@ -35,5 +36,5 @@ if (white_mapper_build_tests)
 
 	add_subdirectory (vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
-	target_link_libraries (white_mapper_test white_alignment gtest_main)
+	target_link_libraries (white_mapper_test white_alignment white_minimizers gtest_main)
 endif (white_mapper_build_tests)

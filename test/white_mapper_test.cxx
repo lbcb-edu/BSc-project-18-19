@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "white_alignment.h"
+#include "white_minimizers.h"
 
 namespace {
 
@@ -40,6 +41,46 @@ namespace {
       		int gap = -2;
 
         	EXPECT_EQ (40, white::pairwise_alignment (s1.c_str(), s1.size(), s2.c_str(), s2.size(), white::AlignmentType::local, match, mismatch, gap));
+	}
+
+	TEST (WhiteMinimizersTest, DeterminingMinimizersWorks) {
+	std::string s1 = "TCAGGAAGAAGCAGA";
+
+	int k = 3;
+	int window_length = 4;
+
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
+
+	minimizers.push_back(std::make_tuple(133, 2, true));
+	minimizers.push_back(std::make_tuple(113, 5, true));
+	minimizers.push_back(std::make_tuple(113, 8, true));
+	minimizers.push_back(std::make_tuple(131, 12, true));
+
+	EXPECT_EQ (minimizers, white::minimizers(s1.c_str(), s1.size(), k, window_length));
+
+	std::string s2 = "GTCATGCACGTTCAC";
+
+        k = 3;
+        window_length = 4;
+
+	minimizers.clear();
+        minimizers.push_back(std::make_tuple(112, 3, false));
+        minimizers.push_back(std::make_tuple(123, 7, true));
+        minimizers.push_back(std::make_tuple(143, 10, false));
+
+        EXPECT_EQ (minimizers, white::minimizers(s2.c_str(), s2.size(), k, window_length));
+
+	std::string s3 = "GTCATGCACGTTCAC";
+
+        k = 6;
+        window_length = 5;
+
+	minimizers.clear();
+        minimizers.push_back(std::make_tuple(112343, 3, false));
+        minimizers.push_back(std::make_tuple(123432, 4, false));
+	minimizers.push_back(std::make_tuple(123442, 7, true));
+
+        EXPECT_EQ (minimizers, white::minimizers(s3.c_str(), s3.size(), k, window_length));
 	}
 
 }
