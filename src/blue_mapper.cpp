@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include "bioparser/bioparser.hpp"
 #include "blue_alignment.hpp"
+#include "blue_minimizers.hpp"
 
 class InputFile {
     public:
@@ -43,6 +44,8 @@ static struct option long_options[] = {
     {"mismatch", required_argument, NULL, 's'},
     {"gap", required_argument, NULL, 'g'},
     {"type", required_argument, NULL, 't'},
+    {"k", required_argument, NULL, 'k'},
+    {"window_length", required_argument, NULL, 'w'},
     {NULL, no_argument, NULL, 0}
 };
 
@@ -79,7 +82,10 @@ int main (int argc, char* argv[]) {
         int gap = -1;
         char* align_type = "global";
 
-        while ((c = getopt_long (argc, argv, "hvm:s:g:t:", long_options, NULL)) != -1) {
+        unsigned int k = 5;
+        unsigned int window_length = 15;
+
+        while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
                     std::cout << "You've asked for help.\n\nThis program implements 3 algorithms for pairwise alignment:" << std::endl
@@ -116,6 +122,12 @@ int main (int argc, char* argv[]) {
                     break;
                 case 't':
                     align_type = optarg;
+                    break;
+                case 'k':
+                    k = atoi(optarg);
+                    break;
+                case 'w':
+                    window_length = atoi(optarg);
                     break;
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
@@ -194,10 +206,11 @@ int main (int argc, char* argv[]) {
         std::string cigar;
         unsigned int target_begin;
 
-        std::cout << "Alignment score: " 
+        std::cout << "Alignment score: "
                   << blue::pairwise_alignment(query.c_str(), query.size(), target.c_str(), target.size(), blue::getType(type), match, mismatch, gap, cigar, target_begin) << std::endl;
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
+
 
     return 0;
 }
