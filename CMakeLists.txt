@@ -12,6 +12,7 @@ file (GLOB source_files "${source_dir}/*.cpp")
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
 
 add_library(pink_alignment src/pink_alignment.cpp)
+add_library(pink_minimizers src/pink_minimizers.cpp)
 
 include_directories("${PROJECT_BINARY_DIR}/lib")
 
@@ -27,7 +28,7 @@ if (pink_mapper_build_tests)
 else ()
    add_executable (pink_mapper ${source_files})
 
-   target_link_libraries(pink_mapper bioparser pink_alignment)
+   target_link_libraries(pink_mapper bioparser pink_alignment pink_minimizers)
 
 endif (pink_mapper_build_tests)
    
