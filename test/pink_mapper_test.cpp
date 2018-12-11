@@ -14,7 +14,7 @@ TEST (Pairwise_alignment, local) {
 }
 
 TEST (Minimizers, TestAGTCCTTCTTCGTCT) {
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = minimizers("AGTCCTTCTTCGTCT", 15, 3, 3);
+    std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = pink::minimizers("AGTCCTTCTTCGTCT", 15, 3, 3);
     
     EXPECT_EQ(std::get<0>(minimizers.at(0)), 32);
     EXPECT_EQ(std::get<1>(minimizers.at(0)), 2);
