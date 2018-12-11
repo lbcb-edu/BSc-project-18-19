@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include <pink_alignment.hpp>
-#include <pink_minimazers.hpp>
+#include <pink_minimizers.hpp>
 
 TEST (Pairwise_alignment, global) {
     EXPECT_EQ (pink::pairwise_alignment ("TGCATAT", 7, "ATCCGAT", 7, pink::global, 1, -1, -1), 0);
