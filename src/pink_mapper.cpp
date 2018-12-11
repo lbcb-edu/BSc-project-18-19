@@ -9,17 +9,20 @@
 
 #include <bioparser/bioparser.hpp>
 #include "pink_alignment.hpp"
+#include "pink_minimizers.hpp"
 
 static struct option options[] = {
-    {"help",        no_argument,       0, 'h'},
-    {"version",     no_argument,       0, 'v'},
-    {"global",      no_argument,       0, 'G'},
-    {"semi_global", no_argument,       0, 'S'},
-    {"local",       no_argument,       0, 'L'},
-    {"match",       required_argument, 0, 'm'},
-    {"mismatch",    required_argument, 0, 's'},
-    {"gap",         required_argument, 0, 'g'},
-    {NULL,          no_argument,       0,  0 }
+    {"help",          no_argument,       0, 'h'},
+    {"version",       no_argument,       0, 'v'},
+    {"global",        no_argument,       0, 'G'},
+    {"semi_global",   no_argument,       0, 'S'},
+    {"local",         no_argument,       0, 'L'},
+    {"match",         required_argument, 0, 'm'},
+    {"mismatch",      required_argument, 0, 's'},
+    {"gap",           required_argument, 0, 'g'},
+	{"k",             required_argument, 0, 'k'},
+	{"window_length", required_argument, 0, 'w'},
+    {NULL,            no_argument,       0,  0 }
 };
 
 class Fast {
@@ -119,6 +122,18 @@ bool check_extension(std::string arg, char ext_flag) {
     return false;
 }
 
+void printError() {
+	std::cerr << "Wrong input. Use \"-h\" or \"--help\" for help." << std::endl;
+	exit(1);
+}
+
+int checkInput(char* optarg) {
+	if(atoi(optarg) == 0 && strcmp(optarg, "0") != 0) {
+		printError();
+	}
+	return atoi(optarg);
+}
+
 void help() {
     printf(
         "usage: pink_mapper [options ...] <fragments> <genome> \n"
@@ -147,6 +162,10 @@ void help() {
         "           input mismatch cost, default: -1\n"
         "       -g, --gap\n"
         "           input insertion/deletion cost, default: -2\n"
+		"       -k\n"
+		"           input k, default: 5\n"
+		"       -w\n"
+		"           input window length, default: 15\n"
         );
 }
 
@@ -156,7 +175,6 @@ void version() {
 
 int main(int argc, char* argv[]) {
     char optchr;
-    std::string helpMessage = "Wrong input. Use \"-h\" or \"--help\" for help.";
     srand (time(NULL));
     
     pink::AlignmentType type = pink::global;
@@ -165,8 +183,11 @@ int main(int argc, char* argv[]) {
     int gap = -2;
     std::string cigar;
     unsigned int target_begin = 0;
+
+	unsigned int k = 5;
+	unsigned int window_length = 15;
     
-    while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:", options, NULL)) != -1) {
+    while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:", options, NULL)) != -1) {
         switch(optchr) {
             case 'h': 
                 help();
@@ -184,23 +205,27 @@ int main(int argc, char* argv[]) {
                 type = pink::local;
                 break;
             case 'm':
-                match = atoi(optarg);
+				match = checkInput(optarg);
                 break;
             case 's':
-                mismatch = atoi(optarg);
+                mismatch = checkInput(optarg);
                 break;
             case 'g':
-                gap = atoi(optarg);
+                gap = checkInput(optarg);
                 break;
+			case 'k':
+				k = checkInput(optarg);
+				break;
+			case 'w':
+				window_length = checkInput(optarg);
+				break;
             default:  
-                std::cerr << helpMessage << std::endl;
-                return 1;
+                printError();
         }
     }
     
     if (argc - optind != 2) {
-        std::cout << helpMessage << std::endl;
-        return 1;
+        printError();
     }
     
     if ((check_extension(argv[optind], 'a') || check_extension(argv[optind], 'q')) && check_extension(argv[optind+1], 'a')) {
@@ -225,8 +250,8 @@ int main(int argc, char* argv[]) {
         
         const char* q  = (fast_objects1[query]  -> sequence).c_str();
         const char* t  = (fast_objects1[target] -> sequence).c_str();
-        unsigned q_len = (fast_objects1[query]  -> sequence).length();
-        unsigned t_len = (fast_objects1[target] -> sequence).length();
+        unsigned int q_len = (fast_objects1[query]  -> sequence).length();
+        unsigned int t_len = (fast_objects1[target] -> sequence).length();
         
         int cost = pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap);
         std::cout << "\nFinal cost: " << cost << std::endl;
@@ -234,10 +259,15 @@ int main(int argc, char* argv[]) {
         pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
         cigar = std::string(cigar.rbegin(), cigar.rend());
         std::cout << "\nCigar: " << cigar << "\n\n";
+
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector = pink::minimizers(q, q_len, k, window_length);
+		
+		/*for (auto const& minimizer: minimizers_vector) {
+			std::cout << std::get<0>(minimizer) << " " << std::get<1>(minimizer) << " " << std::get<2>(minimizer) << std::endl;
+    	}*/
         
     } else {
-        std::cout << helpMessage << std::endl;
-        return 1;
+        printError();
     }
     
     return 0;
