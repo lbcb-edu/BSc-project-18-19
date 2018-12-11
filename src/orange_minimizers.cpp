@@ -5,6 +5,7 @@
 #include <vector>
 #include <tuple>
 #include <algorithm>
+#include <functional>
 
 namespace orange {
 
@@ -41,20 +42,23 @@ namespace orange {
 		return constructStringWithMap(mer, values_map);
 	}
 
-	void middleMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length) { 
-
+	void searchForMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length,
+				unsigned int i_start, std::function<bool(unsigned int)> i_predicate, std::function<std::string(unsigned int)> segment_extractor,
+				std::function<int(unsigned int, bool)> j_start_calculator, std::function<bool(unsigned int, int)> j_predicate, std::function<int(int)> j_mover,
+				std::function<unsigned int(unsigned int, int)> min_pos_calculator) {
+		
 		unsigned int position_of_last_found_min_mer = -1;
 		unsigned int last_min_mer;
 
-		for(unsigned int i = 0; window_length + k + i - 1 <= seq.length(); i++) {
-			std::string temp_seg = seq.substr(i, window_length + k - 1);
+		for(unsigned int i = i_start; i_predicate(i); i++) {
+			std::string temp_seg = segment_extractor(i);
 
 			unsigned int min_mer = last_min_mer;
 			bool is_min_complement;
 			unsigned int min_pos = position_of_last_found_min_mer;
 			bool first_found = (position_of_last_found_min_mer >= i && position_of_last_found_min_mer <= window_length + k + i - 1);
 
-			for(int j = first_found ? temp_seg.length() - k : 0; j + k <= temp_seg.length(); j++) {
+			for(int j = j_start_calculator(i, first_found); j_predicate(i, j); j = j_mover(j)) {
 
 				unsigned int temp_mer_not_complement = strtol(constructValueString(temp_seg.substr(j, k)).c_str(), NULL, 4);
 				unsigned int temp_mer_complement = strtol(constructValueString(constructComplementMer(temp_seg.substr(j, k))).c_str(), NULL, 4);
@@ -67,7 +71,7 @@ namespace orange {
 
 					min_mer = temp_mer;
 					is_min_complement = is_complement;
-					min_pos = i + j;
+					min_pos = min_pos_calculator(i, j);
 				}
 			}
 
@@ -79,43 +83,28 @@ namespace orange {
 				last_min_mer = min_mer;
 			}
 		}
-
 	}
 
 	void endMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, bool isStart) {
-		int start;
-		for(unsigned int i = 1; i < window_length; i++) {
+		if(isStart) {
+			searchForMinimizers(seq, minimizers_vec, k, window_length,
+					k, [&](unsigned int i){ return i < k + window_length - 1;}, [&](unsigned int i){ return seq.substr(0, i);},
+					[&](unsigned int i, bool condition) {return condition ? i - k : 0;}, [&](unsigned int i, int j){ return j + k <= i;},
+					[&](int j){ return j + 1;}, [](unsigned int i, int j){ return j;});
+		} else {
+			searchForMinimizers(seq, minimizers_vec, k, window_length,
+					k, [&](unsigned int i){ return i < k + window_length - 1;}, [&](unsigned int i){ return seq.substr(seq.length() - i, i);},
+					[&](unsigned int i, bool condition) {return condition ? 0 : i - k;}, [](unsigned int i, int j){ return j >= 0;},
+					[&](int j){ return j - 1;}, [&](unsigned int i, int j){ return seq.length() - i + j;});
+		}		
+	}
 
-			unsigned int min_mer;
-			bool is_min_complement;
-			unsigned int min_pos = 0;
-			bool first_found = false;
+	void middleMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length) { 
 
-			for(int j = 0; j < i; j++) {
-
-				start = isStart ? j : seq.length()-k-j; 
-
-				unsigned int temp_mer_not_complement = strtol(constructValueString(seq.substr(start, k)).c_str(), NULL, 4);
-				unsigned int temp_mer_complement = strtol(constructValueString(constructComplementMer(seq.substr(start, k))).c_str(), NULL, 4);
-
-				bool is_complement = temp_mer_complement < temp_mer_not_complement;
-				unsigned int temp_mer = is_complement ? temp_mer_complement : temp_mer_not_complement;
-
-				if(!first_found || min_mer > temp_mer) {
-					if(!first_found) first_found = true;
-
-					min_mer = temp_mer;
-					is_min_complement = is_complement;
-					min_pos = start;
-				}
-			}
-
-			std::tuple<unsigned int, unsigned int, bool> temp_tuple = std::make_tuple (min_mer, min_pos, is_min_complement);
-
-			if(std::find(minimizers_vec.begin(), minimizers_vec.end(), temp_tuple) == minimizers_vec.end()) {
-				minimizers_vec.push_back(temp_tuple);
-			}
-		}
+		searchForMinimizers(seq, minimizers_vec, k, window_length,
+					0, [&](unsigned int i){ return window_length + k + i - 1 <= seq.length();}, [&](unsigned int start){ return seq.substr(start, window_length + k - 1);},
+					[&](unsigned int i, bool condition) {return condition ? window_length - 1 : 0;}, [&](unsigned int i, int j){ return j + k <= window_length + k - 1;},
+					[](int j){ return j + 1;}, [](unsigned int i, int j){ return i + j;});
 	}
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
