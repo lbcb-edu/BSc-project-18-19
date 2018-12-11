@@ -40,7 +40,6 @@ namespace white {
 
 	/*char* changeBasesToNumbers(const char* sequence, unsigned int sequence_length) {
 		char* newSequence = new char[sequence_length + 1];
-
 		for (unsigned int i = 0; i < sequence_length; i++) {
 			if ((i+1) % 2 == 1)
 				switch (sequence[i]) {

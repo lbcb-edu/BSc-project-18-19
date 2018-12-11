@@ -153,11 +153,10 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size) {
 	std::map <unsigned int, unsigned int> minimizer_occurrences;
 	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
-	int counter = 0;
+
 	for (auto &ptr : sequences) {
 		current_minimizers = white::minimizers(ptr -> sequence.c_str(), ptr -> sequence.size(), k, window_size);
-		counter++;
-		std::cout << counter << std::endl;
+
 		for (auto minimizer_tuple : current_minimizers) {
 			minimizer_occurrences[std::get<0>(minimizer_tuple)]++;
 		}
