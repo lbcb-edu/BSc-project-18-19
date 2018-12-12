@@ -35,7 +35,7 @@ namespace {
         EXPECT_EQ(target_begin, 2);
     }
 
-    TEST(BlueMinimizersTest) {
+    TEST(BlueMinimizersTest, VectorLengthTest) {
         char * sequence = "TGACGTACAT"
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 10, 3, 4);
@@ -44,7 +44,7 @@ namespace {
 
     }
 
-    TEST(BlueMinimizersTest) {
+    TEST(BlueMinimizersTest, VectorElementTest) {
         char * sequence = "TAACGTG"
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 7, 3, 3);
