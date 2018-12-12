@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include <memory>
 #include <stdint.h>
 #include <getopt.h>
+#include <map>
 #include "bioparser/bioparser.hpp"
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
@@ -44,7 +46,7 @@ static struct option long_options[] = {
     {"mismatch", required_argument, NULL, 's'},
     {"gap", required_argument, NULL, 'g'},
     {"type", required_argument, NULL, 't'},
-    {"k", required_argument, NULL, 'k'},
+    {"kmer_length", required_argument, NULL, 'k'},
     {"window_length", required_argument, NULL, 'w'},
     {NULL, no_argument, NULL, 0}
 };
@@ -82,7 +84,7 @@ int main (int argc, char* argv[]) {
         int gap = -1;
         char* align_type = "global";
 
-        unsigned int k = 5;
+        unsigned int kmer_length = 5;
         unsigned int window_length = 15;
 
         while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:", long_options, NULL)) != -1) {
@@ -124,7 +126,7 @@ int main (int argc, char* argv[]) {
                     align_type = optarg;
                     break;
                 case 'k':
-                    k = atoi(optarg);
+                    kmer_length = atoi(optarg);
                     break;
                 case 'w':
                     window_length = atoi(optarg);
@@ -211,7 +213,25 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
+        std::map<unsigned int, int> occurances;
+        int j = 0;
+        for(auto& i : first_object) {
+            std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
+            for (auto minimizer : sequenceMinimizers)
+                ++occurances[std::get<0>(minimizer)];
+            std::cout << ++j << std::endl;
+        }
 
-    return 0;
+        std::ofstream myfile;
+        myfile.open ("MinimizerOccurences.csv");
+        myfile << "Minimizer,Occurences\n";
+
+        using iterator = std::map< unsigned int, int >::iterator;
+        for (iterator iter = occurances.begin(); iter != occurances.end(); ++iter) {
+            myfile << iter->first << "," << iter->second << '\n';
+        }
+        myfile.close();
+        std::cout << ".CSV file with minimizer occurences is created!" << std::endl;
+        return 0;
 }
 
