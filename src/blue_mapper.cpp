@@ -217,7 +217,7 @@ int main (int argc, char* argv[]) {
         int j = 0;
         for(auto& i : first_object) {
             std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
-            for (auto minimizer : sequenceMinimizers)
+            for (auto& minimizer : sequenceMinimizers)
                 ++occurances[std::get<0>(minimizer)];
             std::cout << ++j << std::endl;
         }

@@ -1,4 +1,3 @@
-#include "blue_minimizers.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -9,7 +8,6 @@
 
 namespace blue
 {
-
     unsigned int calculateBits(std::string kmer, unsigned int k);
     std::set<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(std::string kMers, unsigned int k, int position, bool isOriginal);
     std::string makeNumberString(int flag, const char* sequence);
@@ -34,16 +32,23 @@ namespace blue
                 std::set<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(reverseCompl, k, i, false);
 
                 if(std::get<0>(*tempOriginal.begin()) > std::get<0>(*tempRCompl.begin())) {
-                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
+                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
 
                 } else if(std::get<0>(*tempOriginal.begin()) < std::get<0>(*tempRCompl.begin())) {
-                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
+                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
 
                 } else {
                     uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
                     uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
                 }
             }
+
+            //end-minimizers
+            unsigned int startEnd = calculateBits(numberString.substr(0, k), k);
+            unsigned int endEnd = calculateBits(numberString.substr(sequence_length-k, k), k);
+
+            uniqueMinimizers.insert(std::make_tuple(startEnd, 0, true));
+            uniqueMinimizers.insert(std::make_tuple(endEnd, sequence_length-k, true));
 
             std::vector<std::tuple<unsigned int, unsigned int, bool>> output(uniqueMinimizers.begin(), uniqueMinimizers.end());
             return output;
@@ -94,6 +99,8 @@ namespace blue
 
             minimizerSet.insert(std::make_tuple(bitResult, position+i, isOriginal));
         }
+
+        if(position == 0)
         return minimizerSet;
     }
 
