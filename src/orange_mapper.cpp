@@ -25,8 +25,8 @@ struct option options[] = {
 		{"match", required_argument, 0, 0},
 		{"mismatch", required_argument, 0, 0},
 		{"gap", required_argument, 0, 0},
-		{"kmer", required_argument, 0, 0},
-		{"window_lenght", required_argument,0 ,0},
+		{"kmer", required_argument, 0, 'k'},
+		{"window_lenght", required_argument, 0 ,'w'},
 		{0, 0, 0, 0}
 	};
 
@@ -118,8 +118,8 @@ void help() {
 		"	--match (arg) - sets match score parameter that is used in alignments(default value is 1)\n"
 		"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
 		"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n"
-		"   -k (arg) - sets size of minimizer"
-		"   -w (arg) - sets window lenght for minimizers");
+		"	-k (arg) - sets size of minimizer"
+		"	-w (arg) - sets window length for minimizers");
 }
 
 void version() {
@@ -228,34 +228,31 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght) {
 	std::map<unsigned int, unsigned int> csvMap;
 
 	unsigned int end=fasta_objects.size();
-	float counter = 0;
-	float b, temp;
-	float a=b=0.01;
+	unsigned int counter = 0;
+
+	std::cout << "Looking for minimizers, please wait\n";
 
 	for (auto const &x : fasta_objects) {
 		minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k, window_lenght);
 		counter++;
+
+		std::cout << "\r" << "Progress: " << counter << "/" << end << std::flush;
+
 		for(auto const &y : minimizers) {
 			csvMap[std::get<0>(y)]++;
-		}
-		if (counter/end>b) {
-			temp = b*100;
-			std::cout << "\b\b\b" << (int)temp << "%" << std::flush;
-			b+=a;
 		}
 	}
 
 	std::ofstream file;
-    file.open ("minimizers.csv");
+	file.open ("minimizers.csv");
 
 	for (auto const &m : csvMap) {
 		file << m.first << "," << m.second << "\n";
 	}
 
-	std::cout << "\b\b\b Done!" << std::flush;
+	std::cout << "\nDone!\n";
 
 	file.close();
-
 }
 
 int main(int argc, char** argv) {
@@ -267,7 +264,7 @@ int main(int argc, char** argv) {
 	char optchr;
 
 	int option_index = 0;
-	while((optchr = getopt_long(argc, argv, "hvgslkw", options, &option_index)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hvgslk:w:", options, &option_index)) != -1) {
 		switch(optchr) {
 			case 0:
 				if(options[option_index].flag != 0)
