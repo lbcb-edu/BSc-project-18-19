@@ -163,7 +163,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 	}
 
 	std::ofstream fout;
-  	fout.open ("minimizer_occurrences.txt", std::ios::out);
+  	fout.open ("minimizer_occurrences2.csv", std::ios::out);
 
 	if (!fout.is_open()){
 		std::cout << "Unable to open file.\n";
