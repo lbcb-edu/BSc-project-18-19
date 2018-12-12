@@ -1,6 +1,9 @@
 #include "blue_alignment.hpp"
+#include "blue_minimizers.hpp"
 #include "gtest/gtest.h"
 #include <string>
+#include <vector>
+#include <tuple>
 
 namespace {
     TEST(BlueAlignmentTest, GlobalAlignmentTest){
@@ -30,6 +33,24 @@ namespace {
 
         EXPECT_EQ(6, blue::pairwise_alignment(query, 8, target, 10, blue::local, 2, -1, -2, cigar, target_begin));
         EXPECT_EQ(target_begin, 2);
+    }
+
+    TEST(BlueMinimizersTest) {
+        char * sequence = "TGACGTACAT"
+
+        std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 10, 3, 4);
+
+        EXPECT_EQ(6, size(result));
+
+    }
+
+    TEST(BlueMinimizersTest) {
+        char * sequence = "TAACGTG"
+
+        std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 7, 3, 3);
+
+        EXPECT_EQ(std::make_tuple(4, 2, 1), result.at(0))
+
     }
 
 }
