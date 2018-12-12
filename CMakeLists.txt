@@ -26,5 +26,5 @@ if(blue_mapper_build_tests)
 	
 	add_subdirectory(test/googletests EXCLUDE_FROM_ALL)
 	
-	target_link_libraries(blue_mapper_tests blue_alignment gtest_main)
+	target_link_libraries(blue_mapper_tests blue_alignment blue_minimizers gtest_main)
 endif(blue_mapper_build_tests)
