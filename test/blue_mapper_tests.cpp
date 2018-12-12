@@ -40,7 +40,7 @@ namespace {
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 10, 3, 4);
 
-        EXPECT_EQ(6, size(result));
+        EXPECT_EQ(6, result.size());
 
     }
 
