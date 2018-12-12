@@ -6,6 +6,8 @@
 #include <cstring>
 #include <stdlib.h>
 #include <time.h>
+#include <map>
+#include <fstream>
 
 #include <bioparser/bioparser.hpp>
 #include "pink_alignment.hpp"
@@ -259,12 +261,37 @@ int main(int argc, char* argv[]) {
         pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
         cigar = std::string(cigar.rbegin(), cigar.rend());
         std::cout << "\nCigar: " << cigar << "\n\n";
+        
+        
+        std::map<unsigned int, unsigned int> occurences;
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
 
-		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector = pink::minimizers(q, q_len, k, window_length);
+		for (unsigned i; i < fast_objects1.size(); i++) {
+			q = (fast_objects1[i]  -> sequence).c_str();
+			q_len = (fast_objects1[i]  -> sequence).length();
+			minimizers_vector = pink::minimizers(q, q_len, k, window_length);
+            
+            for (auto const& minimizer: minimizers_vector) {
+                std::map<unsigned int, unsigned int>::iterator it = occurences.find(std::get<0>(minimizer)); 
+                
+                if (it == occurences.end()) {
+                    occurences.insert (std::pair<unsigned int, unsigned int>(std::get<0>(minimizer) ,  1));
+                
+                } else {
+                     it->second = ++(it->second);
+                }
+            }
+		}
+        
+        std::ofstream file;
+        file.open ("pink_minimizers.csv");
+        file << "minimizer,occurence" << "\n";
+        
+        for (auto o : occurences) {
+            file << o.first << "," << o.second << "\n";
+        }
 		
-		for (auto const& minimizer: minimizers_vector) {
-			std::cout << std::get<0>(minimizer) << " " << std::get<1>(minimizer) << " " << std::get<2>(minimizer) << std::endl;
-    	}
+        file.close();
         
     } else {
         printError();
