@@ -36,7 +36,7 @@ namespace {
     }
 
     TEST(BlueMinimizersTest, VectorLengthTest) {
-        char * sequence = "TGACGTACAT"
+        char * sequence = "TGACGTACAT";
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 10, 3, 4);
 
@@ -45,7 +45,7 @@ namespace {
     }
 
     TEST(BlueMinimizersTest, VectorElementTest) {
-        char * sequence = "TAACGTG"
+        char * sequence = "TAACGTG";
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> result = blue::minimizers(sequence, 7, 3, 3);
 
