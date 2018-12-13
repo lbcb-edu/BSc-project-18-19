@@ -263,19 +263,24 @@ int main(int argc, char* argv[]) {
         std::cout << "\nCigar: " << cigar << "\n\n";
         
         
-        std::map<unsigned int, unsigned int> occurences;
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
-
-		for (unsigned i; i < fast_objects1.size(); i++) {
-			q = (fast_objects1[i]  -> sequence).c_str();
-			q_len = (fast_objects1[i]  -> sequence).length();
+        std::map<unsigned int, unsigned int> occurences;
+        std::map<unsigned int, unsigned int>::iterator it;
+        
+        int i = 0;
+		for (auto const& object: fast_objects1) {
+			q = (object -> sequence).c_str();
+			q_len = (object -> sequence).length();
 			minimizers_vector = pink::minimizers(q, q_len, k, window_length);
             
+            i++;
+            std::cout << i << std::endl;
+            
             for (auto const& minimizer: minimizers_vector) {
-                std::map<unsigned int, unsigned int>::iterator it = occurences.find(std::get<0>(minimizer)); 
+                it = occurences.find(std::get<0>(minimizer)); 
                 
                 if (it == occurences.end()) {
-                    occurences.insert (std::pair<unsigned int, unsigned int>(std::get<0>(minimizer) ,  1));
+                    occurences.insert (std::pair<unsigned int, unsigned int>(std::get<0>(minimizer), 1));
                 
                 } else {
                      it->second = ++(it->second);
