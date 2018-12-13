@@ -247,6 +247,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "\n" << "~SECOND FILE~" << std::endl;
         print_stats(fast_objects2);
         
+        
         int query  = rand() % fast_objects1.size();
         int target = rand() % fast_objects1.size();
         
@@ -267,15 +268,10 @@ int main(int argc, char* argv[]) {
         std::map<unsigned int, unsigned int> occurences;
         std::map<unsigned int, unsigned int>::iterator it;
         
-        int i = 0;
 		for (auto const& object: fast_objects1) {
-			q = (object -> sequence).c_str();
-			q_len = (object -> sequence).length();
-			minimizers_vector = pink::minimizers(q, q_len, k, window_length);
-            
-            i++;
+			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
             std::cout << i << std::endl;
-            
+
             for (auto const& minimizer: minimizers_vector) {
                 it = occurences.find(std::get<0>(minimizer)); 
                 
@@ -283,7 +279,7 @@ int main(int argc, char* argv[]) {
                     occurences.insert (std::pair<unsigned int, unsigned int>(std::get<0>(minimizer), 1));
                 
                 } else {
-                     it->second = ++(it->second);
+                    ++(it->second);
                 }
             }
 		}
