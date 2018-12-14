@@ -20,7 +20,6 @@ template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
 
 namespace blue
 {
-
     long long int getMask(int length);
     unsigned long long int calculateFirstWindow(int length, const char* sequence);
     unsigned long long int calculateReverseWindow(int length, const char* sequence, unsigned int sequence_length);
@@ -32,7 +31,7 @@ namespace blue
                     const char* sequence, unsigned int sequence_length,
                     unsigned int k, unsigned int window_length) {
 
-            std::vector<std::tuple<unsigned int, unsigned int, bool>> uniqueMinimizers;
+            std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> uniqueMinimizers;
 
             int length = window_length + k - 1;
             int endCond = sequence_length - length;
@@ -44,8 +43,6 @@ namespace blue
             sequence = sequence + length;
             temp = temp - length;
 
-    //DUPLIKATII!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
             for(int i = 0; i <= endCond; i++) {
                 //find minimizers from original
                 std::vector<std::tuple<unsigned int, unsigned int, bool>> tempOriginal = findMinimizers(window, mask, k, window_length, i, true);
@@ -54,15 +51,14 @@ namespace blue
                 std::vector<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(endWindow, mask, k, window_length, i, false);
 
                 if(std::get<0>(tempOriginal[0]) > std::get<0>(tempRCompl[0])) {
-                    //if(tempRCompl[0] != uniqueMinimizers.back()
-                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempRCompl.begin(), tempRCompl.end());
+                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
 
                 } else if(std::get<0>(tempOriginal[0]) < std::get<0>(tempRCompl[0])) {
-                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempOriginal.begin(), tempOriginal.end());
+                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
 
                 } else {
-                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempOriginal.begin(), tempOriginal.end());
-                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempRCompl.begin(), tempRCompl.end());
+                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
+                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
                 }
 
                 unsigned int code;
@@ -107,7 +103,8 @@ namespace blue
                 ++sequence;
             }
 
-            return uniqueMinimizers;
+            std::vector<std::tuple<unsigned int, unsigned int, bool>> output (uniqueMinimizers.begin(), uniqueMinimizers.end());
+            return output;
     }
 
     //returns set od minimizers for given string
