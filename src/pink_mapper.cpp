@@ -6,7 +6,7 @@
 #include <cstring>
 #include <stdlib.h>
 #include <time.h>
-#include <map>
+#include <unordered_map>
 #include <fstream>
 
 #include <bioparser/bioparser.hpp>
@@ -265,12 +265,15 @@ int main(int argc, char* argv[]) {
         
         
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
-        std::map<unsigned int, unsigned int> occurences;
-        std::map<unsigned int, unsigned int>::iterator it;
+        std::unordered_map<unsigned int, unsigned int> occurences;
+        std::unordered_map<unsigned int, unsigned int>::iterator it;
         
+		int i = 0;
 		for (auto const& object: fast_objects1) {
 			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
-            std::cout << i << std::endl;
+            
+			i++;
+			std::cout << i << std::endl;
 
             for (auto const& minimizer: minimizers_vector) {
                 it = occurences.find(std::get<0>(minimizer)); 
