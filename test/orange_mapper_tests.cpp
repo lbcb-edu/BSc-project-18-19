@@ -31,6 +31,8 @@ TEST (Minimizers, 3mer_windowLenght3) {
 	std::tuple<unsigned int, unsigned int, bool> temp_tuple;
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizer_vec;
 
+	temp_tuple = std::make_tuple (18,0,1);
+	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (11,1,1);
 	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (6,4,1);
@@ -39,12 +41,13 @@ TEST (Minimizers, 3mer_windowLenght3) {
 	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (2,10,1);
 	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (18,0,1);
+	temp_tuple = std::make_tuple (11,11,1);
 	minimizer_vec.push_back(temp_tuple);
 	temp_tuple = std::make_tuple (17,12,0);
 	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (11,11,1);
-	minimizer_vec.push_back(temp_tuple);
+
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> res_vec = orange::minimizers("TGACGTACATGGACA", 15, 3, 3);
+	std::sort(res_vec.begin(), res_vec.end(), [](auto const &t1, auto const &t2) { return std::get<1>(t1) < get<1>(t2);});
 
 	EXPECT_EQ (orange::minimizers("TGACGTACATGGACA", 15, 3, 3), minimizer_vec);
 }
