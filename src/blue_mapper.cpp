@@ -203,8 +203,8 @@ int main (int argc, char* argv[]) {
         int random_1 = rand() % first_object.size();
         int random_2 = rand() % first_object.size();
 
-        std::string& query = first_object.at(random_1)->sequence;
-        std::string& target = first_object.at(random_2)->sequence;
+        std::string& query = first_object[random_1]->sequence;
+        std::string& target = first_object[random_2]->sequence;
         std::string cigar;
         unsigned int target_begin;
 

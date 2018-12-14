@@ -85,7 +85,7 @@ namespace blue
         std::set<std::tuple<unsigned int, unsigned int, bool>> minimizerSet;
         //set first kmer as minimum
         unsigned int minimum = calculateBits(kMers.substr(0, k), k);
-        minimizerSet.insert(std::make_tuple(minimum, position, isOriginal));
+        minimizerSet.emplace(minimum, position, isOriginal);
 
         for(int i = 1, length = kMers.length() - k; i <= length; i++) {
             std::string kmer = kMers.substr(i, k);
@@ -97,7 +97,7 @@ namespace blue
                 minimizerSet.clear();
             }
 
-            minimizerSet.insert(std::make_tuple(bitResult, position+i, isOriginal));
+            minimizerSet.emplace(bitResult, position+i, isOriginal);
         }
 
         if(position == 0)
@@ -109,7 +109,7 @@ namespace blue
         unsigned int bitResult = 0;
 
         for(int j = 0; j < k; j++) {
-            unsigned int digit = (unsigned int)kmer.at(j) - '0';
+            unsigned int digit = (unsigned int)kmer[j] - '0';
             bitResult = bitResult << 2;
             bitResult = bitResult | digit;
         }
@@ -121,7 +121,7 @@ namespace blue
     std::string reverseComplement(std::string original) {
         std::string numberString = "";
         for(int i = 0, length = original.length(); i < length; i++) {
-            switch(original.at(i)) {
+            switch(original[i]) {
                 case '0':
                     numberString += "3";
                     break;
