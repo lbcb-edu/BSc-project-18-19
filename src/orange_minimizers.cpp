@@ -6,8 +6,13 @@
 #include <tuple>
 #include <algorithm>
 #include <functional>
+#include <unordered_set>
 
 namespace orange {
+
+	struct MerTupleHasher {
+		std::size_t operator()(std::tuple<unsigned int, unsigned int, bool> const &val) const { return std::get<1>(val);}
+	};
 
 	std::map<char, char> complements_map = {
 		{'A', 'T'},
@@ -16,52 +21,57 @@ namespace orange {
 		{'C', 'G'}
 	};
 
-	std::map<char, char> values_map = {
-		{'C', '0'},
-		{'A', '1'},
-		{'T', '2'},
-		{'G', '3'}
+	std::map<char, int> values_map = {
+		{'C', 0},
+		{'A', 1},
+		{'T', 2},
+		{'G', 3}
 	};
 
-	
-	std::string constructStringWithMap(std::string const base_string, std::map<char, char> const map) {
+	std::string generateComplementSequence(const char *seq, unsigned int seq_length) {	
 		std::string result;
 
-		for(int i = 0; i < base_string.length(); i++) {
-			result += map.at(base_string.at(i));
+		for(int i = 0; i < seq_length; i++) {
+			result += complements_map[seq[i]];
+		}
+
+
+		return result;
+	}
+
+	unsigned int convertKmerToInteger(const char* temp_seg_ptr, int j, unsigned int k) {
+		unsigned int result = 0;
+
+		for(int i = 0; i < k; i++) {
+			unsigned int temp = (values_map[(temp_seg_ptr + j)[i]]) << (2 * (k - i - 1));
+			result |= temp;
 		}
 
 		return result;
 	}
 
-	std::string constructComplementMer(std::string const mer) {
-		return constructStringWithMap(mer, complements_map);
-	}
-
-	std::string constructValueString(std::string const mer) {
-		return constructStringWithMap(mer, values_map);
-	}
-
-	void searchForMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length,
-				unsigned int i_start, std::function<bool(unsigned int)> i_predicate, std::function<std::string(unsigned int)> segment_extractor,
+	void searchForMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::unordered_set<std::tuple<unsigned int, unsigned int, bool>, MerTupleHasher> &minimizers_set,
+				unsigned int k, unsigned int window_length, unsigned int i_start, std::function<bool(unsigned int)> i_predicate,
+				std::function<const char*(const char*, unsigned int)> segment_ptr_extractor, 
 				std::function<int(unsigned int, bool)> j_start_calculator, std::function<bool(unsigned int, int)> j_predicate, std::function<int(int)> j_mover,
 				std::function<unsigned int(unsigned int, int)> min_pos_calculator) {
 		
-		unsigned int position_of_last_found_min_mer = -1;
+		long int position_of_last_found_min_mer = -1;
 		unsigned int last_min_mer;
 
 		for(unsigned int i = i_start; i_predicate(i); i++) {
-			std::string temp_seg = segment_extractor(i);
+			const char* temp_seg_ptr = segment_ptr_extractor(sequence, i);
+			const char* temp_seg_complement_ptr = segment_ptr_extractor(sequence_complement, i);
 
 			unsigned int min_mer = last_min_mer;
 			bool is_min_complement;
 			unsigned int min_pos = position_of_last_found_min_mer;
-			bool first_found = (position_of_last_found_min_mer >= i && position_of_last_found_min_mer <= window_length + k + i - 1);
+			bool first_found = position_of_last_found_min_mer >= i;
 
 			for(int j = j_start_calculator(i, first_found); j_predicate(i, j); j = j_mover(j)) {
 
-				unsigned int temp_mer_not_complement = strtol(constructValueString(temp_seg.substr(j, k)).c_str(), NULL, 4);
-				unsigned int temp_mer_complement = strtol(constructValueString(constructComplementMer(temp_seg.substr(j, k))).c_str(), NULL, 4);
+				unsigned int temp_mer_not_complement = convertKmerToInteger(temp_seg_ptr, j, k);
+				unsigned int temp_mer_complement = convertKmerToInteger(temp_seg_complement_ptr, j, k);
 
 				bool is_complement = temp_mer_complement < temp_mer_not_complement;
 				unsigned int temp_mer = is_complement ? temp_mer_complement : temp_mer_not_complement;
@@ -75,50 +85,49 @@ namespace orange {
 				}
 			}
 
-			std::tuple<unsigned int, unsigned int, bool> temp_tuple = std::make_tuple (min_mer, min_pos, is_min_complement);
-
-			if(std::find(minimizers_vec.begin(), minimizers_vec.end(), temp_tuple) == minimizers_vec.end()) {
-				minimizers_vec.push_back(temp_tuple);
-				position_of_last_found_min_mer = min_pos;
-				last_min_mer = min_mer;
-			}
+			minimizers_set.emplace(min_mer, min_pos, is_min_complement);
+			position_of_last_found_min_mer = min_pos;
+			last_min_mer = min_mer;
 		}
+
 	}
 
-	void endMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, bool isStart) {
+	void endMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::unordered_set<std::tuple<unsigned int, unsigned int, bool>, MerTupleHasher> &minimizers_set, unsigned int k, unsigned int window_length, bool isStart) {
 		if(isStart) {
-			searchForMinimizers(seq, minimizers_vec, k, window_length,
-					k, [&](unsigned int i){ return i < k + window_length - 1;}, [&](unsigned int i){ return seq.substr(0, i);},
+			searchForMinimizers(sequence, sequence_complement, sequence_length, minimizers_set, k, window_length,
+					k, [&](unsigned int i){ return i < k + window_length - 1;}, [](const char* seq, unsigned int i){ return seq;},
 					[&](unsigned int i, bool condition) {return condition ? i - k : 0;}, [&](unsigned int i, int j){ return j + k <= i;},
 					[&](int j){ return j + 1;}, [](unsigned int i, int j){ return j;});
 		} else {
-			searchForMinimizers(seq, minimizers_vec, k, window_length,
-					k, [&](unsigned int i){ return i < k + window_length - 1;}, [&](unsigned int i){ return seq.substr(seq.length() - i, i);},
+			searchForMinimizers(sequence, sequence_complement, sequence_length, minimizers_set, k, window_length,
+					k, [&](unsigned int i){ return i < k + window_length - 1;}, [&](const char* seq, unsigned int i){ return seq + sequence_length - i;},
 					[&](unsigned int i, bool condition) {return condition ? 0 : i - k;}, [](unsigned int i, int j){ return j >= 0;},
-					[&](int j){ return j - 1;}, [&](unsigned int i, int j){ return seq.length() - i + j;});
+					[&](int j){ return j - 1;}, [&](unsigned int i, int j){ return sequence_length - i + j;});
 		}		
 	}
 
-	void middleMinimizers(const std::string seq, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length) { 
+	void middleMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::unordered_set<std::tuple<unsigned int, unsigned int, bool>, MerTupleHasher> &minimizers_set, unsigned int k, unsigned int window_length) { 
 
-		searchForMinimizers(seq, minimizers_vec, k, window_length,
-					0, [&](unsigned int i){ return window_length + k + i - 1 <= seq.length();}, [&](unsigned int start){ return seq.substr(start, window_length + k - 1);},
+		searchForMinimizers(sequence, sequence_complement, sequence_length, minimizers_set, k, window_length,
+					0, [&](unsigned int i){ return window_length + k + i - 1 <= sequence_length;}, [](const char* seq, unsigned int start){ return seq + start;},
 					[&](unsigned int i, bool condition) {return condition ? window_length - 1 : 0;}, [&](unsigned int i, int j){ return j + k <= window_length + k - 1;},
 					[](int j){ return j + 1;}, [](unsigned int i, int j){ return i + j;});
 	}
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
-		std::string seq;
-		seq.assign(sequence, sequence_length);
 		
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vec;
+		std::unordered_set<std::tuple<unsigned int, unsigned int, bool>, MerTupleHasher> minimizers_set;
 
-		middleMinimizers(seq, minimizers_vec, k, window_length);
+		const char* seq_complement = generateComplementSequence(sequence, sequence_length).c_str();
 
-		endMinimizers(seq, minimizers_vec, k, window_length, true);
+		middleMinimizers(sequence, seq_complement, sequence_length, minimizers_set, k, window_length);
 
-		endMinimizers(seq, minimizers_vec, k, window_length, false);
+		endMinimizers(sequence, seq_complement, sequence_length, minimizers_set, k, window_length, true);
 
+		endMinimizers(sequence, seq_complement, sequence_length, minimizers_set, k, window_length, false);
+
+		minimizers_vec.assign(minimizers_set.begin(), minimizers_set.end());
 		return minimizers_vec;
 	}
 }
