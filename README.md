@@ -99,7 +99,7 @@ where the return value is the list of found minimizers, their positions in the s
 
 Once the library is finished, it has to be used to find minimizers of all sequences in the first input file and the mapper has to print the histogram of minimizer occurences into a separate CSV file (add optional arguments for setting `k` and `w` to the mapper). The histogram for values `(k, w) = (5, 15)` can then be drawn in either `R` or `Python`, and must be added to this README on each teams branch (bellow this paragraph).
 
-![](misc/histogramm.png)
+![](misc/histogram.png)
 
 ## Disclaimer
 
