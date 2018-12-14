@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <getopt.h>
 #include <map>
+#include <unordered_map>
 #include "bioparser/bioparser.hpp"
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
