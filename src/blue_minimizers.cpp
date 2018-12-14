@@ -9,13 +9,22 @@
 #include <unordered_map>
 #include <map>
 
+namespace std {
+template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
+    inline size_t operator()(const std::tuple<unsigned int, unsigned int, bool > &v) const {
+        std::hash<int> int_hasher;
+        return int_hasher(std::get<0>(v)) ^ int_hasher(std::get<1>(v)) ^ int_hasher(std::get<2>(v));
+    }
+};
+}
+
 namespace blue
 {
 
     long long int getMask(int length);
     unsigned long long int calculateFirstWindow(int length, const char* sequence);
     unsigned long long int calculateReverseWindow(int length, const char* sequence, unsigned int sequence_length);
-    std::set<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask,
+    std::vector<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask,
                                                                           unsigned int k, unsigned int window_length,
                                                                           int position, bool isOriginal);
 
@@ -23,7 +32,7 @@ namespace blue
                     const char* sequence, unsigned int sequence_length,
                     unsigned int k, unsigned int window_length) {
 
-            std::set<std::tuple<unsigned int, unsigned int, bool>> uniqueMinimizers;
+            std::vector<std::tuple<unsigned int, unsigned int, bool>> uniqueMinimizers;
 
             int length = window_length + k - 1;
             int endCond = sequence_length - length;
@@ -35,22 +44,25 @@ namespace blue
             sequence = sequence + length;
             temp = temp - length;
 
+    //DUPLIKATII!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
             for(int i = 0; i <= endCond; i++) {
                 //find minimizers from original
-                std::set<std::tuple<unsigned int, unsigned int, bool>> tempOriginal = findMinimizers(window, mask, k, window_length, i, true);
+                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempOriginal = findMinimizers(window, mask, k, window_length, i, true);
 
                 //find minimizers from reverse complement
-                std::set<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(endWindow, mask, k, window_length, i, false);
+                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(endWindow, mask, k, window_length, i, false);
 
-                if(std::get<0>(*tempOriginal.begin()) > std::get<0>(*tempRCompl.begin())) {
-                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
+                if(std::get<0>(tempOriginal[0]) > std::get<0>(tempRCompl[0])) {
+                    //if(tempRCompl[0] != uniqueMinimizers.back()
+                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempRCompl.begin(), tempRCompl.end());
 
-                } else if(std::get<0>(*tempOriginal.begin()) < std::get<0>(*tempRCompl.begin())) {
-                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
+                } else if(std::get<0>(tempOriginal[0]) < std::get<0>(tempRCompl[0])) {
+                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempOriginal.begin(), tempOriginal.end());
 
                 } else {
-                    uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
-                    uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
+                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempOriginal.begin(), tempOriginal.end());
+                    uniqueMinimizers.insert(uniqueMinimizers.end(), tempRCompl.begin(), tempRCompl.end());
                 }
 
                 unsigned int code;
@@ -95,17 +107,16 @@ namespace blue
                 ++sequence;
             }
 
-            std::vector<std::tuple<unsigned int, unsigned int, bool>> output(uniqueMinimizers.begin(), uniqueMinimizers.end());
-            return output;
+            return uniqueMinimizers;
     }
 
     //returns set od minimizers for given string
-    std::set<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask, unsigned int k, unsigned int window_length, int position, bool isOriginal) {
+    std::vector<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask, unsigned int k, unsigned int window_length, int position, bool isOriginal) {
 
-        std::set<std::tuple<unsigned int, unsigned int, bool>> minimizerSet;
+        std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizerSet;
         //set first kmer as minimum
         unsigned int minimum = kMers & mask;
-        minimizerSet.emplace(minimum, position+window_length-1, isOriginal);
+        minimizerSet.emplace_back(minimum, position+window_length-1, isOriginal);
 
         for(int i = 1; i <= window_length; i++) {
             unsigned int bitResult = kMers & mask;
@@ -116,7 +127,7 @@ namespace blue
                 minimizerSet.clear();
             }
 
-            minimizerSet.emplace(bitResult, position+window_length-i, isOriginal);
+            minimizerSet.emplace_back(bitResult, position+window_length-i, isOriginal);
         }
         return minimizerSet;
     }

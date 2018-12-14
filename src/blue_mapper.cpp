@@ -14,6 +14,16 @@
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
 
+namespace std {
+template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
+    inline size_t operator()(const std::tuple<unsigned int, unsigned int, bool > &v) const {
+        std::hash<int> int_hasher;
+        return int_hasher(std::get<0>(v)) ^ int_hasher(std::get<1>(v)) ^ int_hasher(std::get<2>(v));
+    }
+};
+}
+
+
 class InputFile {
     public:
         std::string name;
@@ -214,7 +224,7 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
-        std::map<unsigned int, int> occurances;
+        std::unordered_map<unsigned int, int> occurances;
         int j = 0;
         for(auto& i : first_object) {
             std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
@@ -227,7 +237,7 @@ int main (int argc, char* argv[]) {
         myfile.open ("MinimizerOccurences.csv");
         myfile << "Minimizer,Occurences\n";
 
-        using iterator = std::map< unsigned int, int >::iterator;
+        using iterator = std::unordered_map< unsigned int, int >::iterator;
         for (iterator iter = occurances.begin(); iter != occurances.end(); ++iter) {
             myfile << iter->first << "," << iter->second << '\n';
         }
