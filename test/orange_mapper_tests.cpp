@@ -47,7 +47,7 @@ TEST (Minimizers, 3mer_windowLenght3) {
 	minimizer_vec.push_back(temp_tuple);
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> res_vec = orange::minimizers("TGACGTACATGGACA", 15, 3, 3);
-	std::sort(res_vec.begin(), res_vec.end(), [](auto const &t1, auto const &t2) { return std::get<1>(t1) < get<1>(t2);});
+	std::sort(res_vec.begin(), res_vec.end(), [](std::tuple<unsigned int, unsigned int, bool> const &t1, std::tuple<unsigned int, unsigned int, bool> const &t2) { return std::get<1>(t1) < std::get<1>(t2);});
 
 	EXPECT_EQ (res_vec, minimizer_vec);
 }
