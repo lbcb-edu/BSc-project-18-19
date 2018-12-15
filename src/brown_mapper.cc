@@ -8,7 +8,7 @@
 #include <string>
 #include <limits>
 #include <ctime>
-#include <map>
+#include <unordered_map>
 
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
@@ -92,7 +92,7 @@ public:
 void help(void) {
   printf("brown_mapper - for mapping long erroneous fragments from third\n"
          "               generation of sequencing technologies to a reference\n"
-         "               genome, which has various use cases in bioinformatics.\n\n"
+         "               genome.\n\n"
 
          "Usage: brown_mapper [OPTIONS] [file1 file2]   start mapper\n"
          "file1 - FASTA/FASTQ file containing a set of fragments\n"
@@ -207,18 +207,18 @@ int main (int argc, char **argv) {
         break;
       }
       default: {
-        fprintf(stderr, "Unknown option. Type %s --help for usage.\n", argv[0]);
+        fprintf(stderr, "[mapper] error: Unknown option. Type %s --help for usage.\n", argv[0]);
         exit(1);
       }
     }
   }
 
   if (argc - optind != 2) {
-    printf("Expected 2 mapping arguments! Use --help for usage.\n");
+    fprintf(stderr, "[mapper] error: Expected 2 mapping arguments! Use --help for usage.\n");
     exit(1);
   }
 
-  fprintf(stderr, "Loading files...");
+  fprintf(stderr, "\nLoading files...");
 
   std::string file1 (argv[optind]);
   std::string file2 (argv[optind+1]);
@@ -235,12 +235,12 @@ int main (int argc, char **argv) {
   file2_format = contains_extension(file2, fasta_formats);
 
   if ( !(file1_format && file2_format) ) {
-    printf("Unsupported format(s)! Check --help for supported file formats.\n");
+    fprintf(stderr, "[mapper] error: Unsupported format(s)! Check --help for supported file formats.\n");
     exit(1);
   }
 
   fprintf(stderr, " Done!\n");
-  fprintf(stderr, "Parsing files...");
+  fprintf(stderr, "\nParsing files...");
 
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects1;
   std::vector<std::unique_ptr<FastAQ>> fastaq_objects2;
@@ -248,16 +248,25 @@ int main (int argc, char **argv) {
   FastAQ::parse(fastaq_objects1, file1, file1_format);
   FastAQ::parse(fastaq_objects2, file2, file2_format);
 
-  fprintf(stderr, " Done!\n");
+  fprintf(stderr, " Done!\n\n");
 
   FastAQ::print_statistics(fastaq_objects1, file1);
   FastAQ::print_statistics(fastaq_objects2, file2);
 
-  fprintf(stderr, "Finding minimizers\n");
-  fprintf(stderr, " Kmers: = %d\n Window length = %d\n", k, window_length);
+
+
+
+  // Minimizers
+
+  fprintf(stderr, "\nFinding minimizers with parameters:\n");
+  fprintf(stderr, "  k = %d\n  Window length = %d\n", k, window_length);
+
+  char prog[] = {'|', '/', '-', '\\'};
 
   int counter = 0;
-  std::map<unsigned int, unsigned int> frequency_map;
+  int charcount = 0;
+  int percentage = 0.01 * fastaq_objects1.size();
+  std::unordered_map<unsigned int, unsigned int> frequency_map;
   for(unsigned int i = 0; i < fastaq_objects1.size(); i++){
 
   	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers(fastaq_objects1[i]->sequence.c_str(),
@@ -265,15 +274,16 @@ int main (int argc, char **argv) {
   	for(auto const& minimizer: minimizers){
   		frequency_map[std::get<0>(minimizer)]++;
   	}
-  	if(counter % 200 == 0){
-  		fprintf(stderr, "%3.2f%%\r", ((float)counter/fastaq_objects1.size()) * 100);
-  	}
   	counter++;
+    if(counter % percentage == 0){
+      charcount++;
+      fprintf(stderr, "\r[ %c %3.0f%% ]", prog[charcount%4], (float)counter/fastaq_objects1.size() * 100);
+    }
   }
 
-  fprintf(stderr, "Minimizers found\n");
+  fprintf(stderr, "\rMinimizers found!\n");
 
-  fprintf(stderr, "Creating CSV file\n");
+  fprintf(stderr, "\nCreating CSV file...");
 
   std::ofstream csv_file ("frequency.csv");
 
@@ -284,12 +294,17 @@ int main (int argc, char **argv) {
 
   csv_file.close();
 
+  fprintf(stderr, " Done!\n");
 
 
-  fprintf(stderr, "Starting alignment with parameters:\n");
+
+
+  // Alignment
+
+  fprintf(stderr, "\nStarting alignment with parameters:\n");
   fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
   std::cerr << "  Alignment type = " << alignmentType <<std::endl;
-  fprintf(stderr, "Aligning...\n");
+  fprintf(stderr, "Aligning...");
 
   srand(time(NULL));
   int i1 = rand() % fastaq_objects1.size();
@@ -304,8 +319,10 @@ int main (int argc, char **argv) {
   std::cout << "Pos: " << target_begin << std::endl;
   std::cout << "CIGAR: " << cigar << std::endl;
 
-  fprintf(stderr, " Done!\nFinished!\n");
+  fprintf(stderr, " Done!\n");
   
+
+
   // Small test examples
 
   // std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGAC",4, 3 , 1);
@@ -348,6 +365,8 @@ int main (int argc, char **argv) {
   // std::cout << value << std::endl;
   // std::cout << target_begin << std::endl;
   // std::cout << cigar << std::endl;
+
+  fprintf(stderr, "\nFinished!\n");
 
   return 0;
 }
