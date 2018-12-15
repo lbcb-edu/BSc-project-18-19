@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <utility>
+#include <deque>
 
 namespace orange {
 
@@ -52,7 +53,7 @@ namespace orange {
 		long int position_of_last_found_min_mer = -1;
 		unsigned int last_min_mer;
 
-		std::unordered_map<unsigned int, std::pair<unsigned int, bool>> temp_results_cache;
+		std::deque<std::tuple<unsigned int, unsigned int, bool>> temp_results_cache;
 
 		for(unsigned int i = 0; window_length + k + i - 1 <= sequence_length; ++i) {
 			const char* temp_seg_ptr = sequence + i;
@@ -69,9 +70,9 @@ namespace orange {
 				bool is_complement = false;
 				unsigned int temp_mer;
 
-				if(temp_results_cache.count(current_pos) != 0) {
-					is_complement = temp_results_cache[current_pos].second;
-					temp_mer = temp_results_cache[current_pos].first;
+				if(!temp_results_cache.empty() && current_pos <= std::get<1>(temp_results_cache[temp_results_cache.size() - 1])) {
+					is_complement = std::get<2>(temp_results_cache[current_pos - i]);
+					temp_mer = std::get<0>(temp_results_cache[current_pos - i]);
 				} else {
 					is_complement = false;
 					temp_mer = convertKmerToInteger(temp_seg_ptr, j, k);
@@ -81,7 +82,7 @@ namespace orange {
 						is_complement = true;
 					}
 
-					temp_results_cache.emplace(current_pos, std::make_pair(temp_mer, is_complement));
+					temp_results_cache.emplace_back(temp_mer, current_pos, is_complement);
 				}
 
 				if(!first_found || min_mer > temp_mer) {
@@ -99,7 +100,7 @@ namespace orange {
 				last_min_mer = min_mer;
 			}
 
-			temp_results_cache.erase(i);
+			temp_results_cache.pop_front();
 		}
 	}
 
