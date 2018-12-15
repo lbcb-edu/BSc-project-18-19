@@ -7,6 +7,7 @@
 #include <ctime>
 #include <string.h>
 #include <fstream>
+#include <unordered_map>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
@@ -225,7 +226,7 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght) {
 	fasta_parser->parse_objects(fasta_objects, -1);
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
-	std::map<unsigned int, unsigned int> csvMap;
+	std::unordered_map<unsigned int, unsigned int> csvMap;
 
 	unsigned int end=fasta_objects.size();
 	unsigned int counter = 0;
@@ -234,12 +235,12 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght) {
 
 	for (auto const &x : fasta_objects) {
 		minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k, window_lenght);
-		counter++;
+		++counter;
 
 		std::cout << "\r" << "Progress: " << counter << "/" << end << std::flush;
 
 		for(auto const &y : minimizers) {
-			csvMap[std::get<0>(y)]++;
+			++csvMap[std::get<0>(y)];
 		}
 	}
 
