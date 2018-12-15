@@ -233,6 +233,11 @@ int main (int argc, char* argv[]) {
             std::cout << ++j << std::endl;
         }
 
+        //char * seq = "TGACGATCTAGGACAACATG";
+        //std::vector<std::tuple<unsigned int, unsigned int, bool>> res = blue::minimizers(seq, 20, 5, 15);
+        //for (auto& minimizer : res)
+        //    std::cout << std::get<0>(minimizer) << "," << std::get<1>(minimizer) <<"," << std::get<2>(minimizer) << std::endl;
+
         std::ofstream myfile;
         myfile.open ("MinimizerOccurences.csv");
         myfile << "Minimizer,Occurences\n";

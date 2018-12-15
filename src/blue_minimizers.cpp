@@ -25,7 +25,7 @@ namespace blue
     unsigned long long int calculateReverseWindow(int length, const char* sequence, unsigned int sequence_length);
     std::vector<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask,
                                                                           unsigned int k, unsigned int window_length,
-                                                                          int position, bool isOriginal);
+                                                                          int position, bool isOriginal, std::tuple<unsigned int, unsigned int, bool> current);
 
     std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
                     const char* sequence, unsigned int sequence_length,
@@ -42,23 +42,29 @@ namespace blue
             unsigned long long int window = calculateFirstWindow(length, sequence);
             sequence = sequence + length;
             temp = temp - length;
+            std::tuple<unsigned int, unsigned int, bool> currentO = std::make_tuple(-1, -1, 0);
+            std::tuple<unsigned int, unsigned int, bool> currentR = std::make_tuple(-1, -1, 0);
 
             for(int i = 0; i <= endCond; i++) {
                 //find minimizers from original
-                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempOriginal = findMinimizers(window, mask, k, window_length, i, true);
+                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempOriginal = findMinimizers(window, mask, k, window_length, i, true, currentO);
 
                 //find minimizers from reverse complement
-                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(endWindow, mask, k, window_length, i, false);
+                std::vector<std::tuple<unsigned int, unsigned int, bool>> tempRCompl = findMinimizers(endWindow, mask, k, window_length, i, false, currentR);
 
                 if(std::get<0>(tempOriginal[0]) > std::get<0>(tempRCompl[0])) {
                     uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
+                    currentR = tempRCompl[0];
 
                 } else if(std::get<0>(tempOriginal[0]) < std::get<0>(tempRCompl[0])) {
                     uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
+                    currentO = tempOriginal[0];
 
                 } else {
                     uniqueMinimizers.insert(tempOriginal.begin(), tempOriginal.end());
                     uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
+                    currentO = tempOriginal[0];
+                    currentR = tempRCompl[0];
                 }
 
                 unsigned int code;
@@ -108,11 +114,24 @@ namespace blue
     }
 
     //returns set od minimizers for given string
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask, unsigned int k, unsigned int window_length, int position, bool isOriginal) {
+    std::vector<std::tuple<unsigned int, unsigned int, bool>> findMinimizers(unsigned long long int kMers, long long int mask, unsigned int k, unsigned int window_length, int position,
+     bool isOriginal, std::tuple<unsigned int, unsigned int, bool> current) {
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizerSet;
         //set first kmer as minimum
         unsigned int minimum = kMers & mask;
+
+        if (std::get<1>(current) >= position) {
+            if (std::get<0>(current) < minimum) {
+                minimizerSet.emplace_back(std::get<0>(current), std::get<1>(current), std::get<2>(current));
+                return minimizerSet;
+            }
+            if (std::get<0>(current) == minimum) {
+                minimizerSet.emplace_back(minimum, position+window_length-1, isOriginal);
+                return minimizerSet;
+            }
+        }
+
         minimizerSet.emplace_back(minimum, position+window_length-1, isOriginal);
 
         for(int i = 1; i <= window_length; i++) {
