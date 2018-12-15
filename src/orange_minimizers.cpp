@@ -103,6 +103,23 @@ namespace orange {
 		}
 	}
 
+	void processEndMer(const char* sequence, const char* sequence_complement, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec,unsigned int i, unsigned int k, unsigned int border, unsigned int &min_mer, bool &first_found) {
+		bool is_complement = false;
+		unsigned int temp_mer = convertKmerToInteger(sequence, i, k);
+
+		if(temp_mer > border) {
+			temp_mer = convertKmerToInteger(sequence_complement, i, k);
+			is_complement = true;
+		}
+
+		if(!first_found || min_mer > temp_mer) {
+			if(!first_found) first_found = true;
+
+			min_mer = temp_mer;
+			minimizers_vec.emplace_back(temp_mer, i, is_complement);
+		}
+	}
+
 	void endFirstMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int border) {
 		unsigned int min_mer;
 
@@ -110,20 +127,7 @@ namespace orange {
 
 		bool first_found = false;
 		for(unsigned int i = 0; i < stop_pos; ++i) {
-			bool is_complement = false;
-			unsigned int temp_mer = convertKmerToInteger(sequence, i, k);
-
-			if(temp_mer > border) {
-				temp_mer = convertKmerToInteger(sequence_complement, i, k);
-				is_complement = true;
-			}
-
-			if(!first_found || min_mer > temp_mer) {
-				if(!first_found) first_found = true;
-
-				min_mer = temp_mer;
-				minimizers_vec.emplace_back(temp_mer, i, is_complement);
-			}
+			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, border, min_mer, first_found);
 		}
 	}
 
@@ -134,20 +138,7 @@ namespace orange {
 
 		bool first_found = false;
 		for(unsigned int i = sequence_length - k; i > stop_pos; --i) {
-			bool is_complement = false;
-			unsigned int temp_mer = convertKmerToInteger(sequence, i, k);
-
-			if(temp_mer > border) {
-				temp_mer = convertKmerToInteger(sequence_complement, i, k);
-				is_complement = true;
-			}
-
-			if(!first_found || min_mer > temp_mer) {
-				if(!first_found) first_found = true;
-
-				min_mer = temp_mer;
-				minimizers_vec.emplace_back(temp_mer, i, is_complement);
-			}
+			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, border, min_mer, first_found);
 		}
 	}
 
