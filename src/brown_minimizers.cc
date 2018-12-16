@@ -1,175 +1,220 @@
 #include <iostream>
-#include <string>
 #include <vector>
-#include <map>
-#include <set>
+#include <unordered_set>
 #include <tuple>
+#include <queue>
+#include <limits>
+#include <algorithm>
+#include <functional>
+#include <map>
 
 #include "brown_minimizers.hpp"
 
 namespace brown {
 
-// C, A, T/U, G = 0, 1, 2, 3 for odd based
-// C, A, T/U, G = 3, 2, 1, 0 for even based
-// Position in array is even meaning that the actual position is odd
-// e.g. array:  0 1 2 ...
-//      actual: 1 2 3 ...
-// Otherwise reverse odd-based
 std::map<char, int> char_to_val = {{'C', 0}, {'A', 1}, {'T', 2}, {'U', 2}, {'G', 3}};
 
-unsigned int value(const char* sequence, unsigned int pos, unsigned int k) {
+typedef std::tuple<unsigned int, unsigned int, bool> triplet_t;
+
+struct triplet_hash {
+  std::size_t operator() (const triplet_t& k) const noexcept {
+    return std::hash<unsigned int>{}(std::get<0>(k)) ^ std::hash<unsigned int>{}(std::get<1>(k)) ^ std::hash<bool>{}(std::get<2>(k));
+  }
+};
+
+struct triplet_equal {
+  bool operator() (const triplet_t& v0, const triplet_t& v1) const noexcept {
+    return (
+            std::get<0>(v0) == std::get<0>(v1) &&
+            std::get<1>(v0) == std::get<1>(v1) &&
+            std::get<2>(v0) == std::get<2>(v1)
+           );
+  }
+};
+
+struct triplet_ordering {
+  bool operator() (const triplet_t& v0, const triplet_t& v1) const noexcept {
+    return (std::get<1>(v0) < std::get<1>(v1));
+  }
+};
+
+inline unsigned int value(const char* sequence, unsigned int pos, unsigned int k) {
   unsigned int val = 0;
   for (unsigned int i = 0; i < k; ++i) {
-    val *= 10;
-    if ((pos + i) % 2 == 0) {
-      val += char_to_val[sequence[pos + i]];
-    } else {
-      val += (3 - char_to_val[sequence[pos + i]]);
-    }
+    val = (val << 2) | char_to_val[sequence[pos + i]];
   }
   return val;
 }
 
-unsigned int value_reverse_complement(const char* sequence,
-                                      unsigned int sequence_length,
+inline unsigned int value_reverse_complement(const char* sequence,
                                       unsigned int pos,
                                       unsigned int k) {
 
   unsigned int val = 0;
-  for (unsigned int i = 0; i < k; ++i) {
-    val *= 10;
-    if ((sequence_length - 1 - (pos - i)) % 2 == 0) {
-      val += (3 - char_to_val[sequence[pos - i]]);
-    } else {
-      val += char_to_val[sequence[pos - i]];
-    }
+  for (unsigned int i = k - 1; i < (unsigned int)(-1); --i) {
+    val = (val << 2) | ((~char_to_val[sequence[pos + i]] & 3));
   }
   return val;
 }
 
 void interior_minimizers_fill(
-    std::set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set,
+    std::unordered_set<triplet_t, triplet_hash, triplet_equal>& minimizers_set,
     const char* sequence,
     unsigned int sequence_length,
     unsigned int k,
     unsigned int window_length) {
 
-  std::tuple<unsigned int, unsigned int, bool> t;
+  unsigned int mask = (1 << (2 * k)) - 1;
+  unsigned int original;
+  unsigned int rev_com;
+  unsigned int foriginal;
+  unsigned int frev_com;
 
-  unsigned int l = window_length + k - 1;
-  unsigned int last_window_pos = sequence_length - l;
+  std::priority_queue<triplet_t, std::vector<triplet_t>, triplet_ordering> cache;
+  for (unsigned int i = 0; i <= sequence_length - window_length - k + 1; ++i) {
+    unsigned int m = std::numeric_limits<unsigned int>::max();
 
-  for (unsigned int i = 0; i <= last_window_pos; ++i) {
-    unsigned int min_val = value(sequence, i, k);
-    unsigned int min_pos = i;
-    bool         min_strand = 0;
-    for (unsigned int j = 0; j < window_length; ++j) {
-      unsigned int val = value(sequence, i + j, k);
-      unsigned int val_rev_com = value_reverse_complement(sequence, sequence_length, i + l - 1 - j, k);
-      if (val < min_val) {
-        min_val = val;
-        min_pos = i + j;
-        min_strand = 0;
-      }
-      if (val_rev_com < min_val) {
-        min_val = val_rev_com;
-        min_pos = sequence_length - 1 - (i + l - 1 - j);
-        min_strand = 1;
+    if (cache.empty()) {
+      foriginal = value(sequence, i, k) >> 2;
+      frev_com = (value_reverse_complement(sequence, i, k) << 2) & mask;
+    } else {
+      foriginal = original;
+      frev_com = rev_com;
+    }
+    original = foriginal;
+    rev_com = frev_com;
+
+    unsigned int start;
+    start = cache.empty() ? 0 : window_length - 1;
+
+    for (unsigned int j = start; j < window_length; ++j) {
+      original = ((original << 2) | char_to_val[sequence[k - 1 + i + j]]) & mask;
+      rev_com = ((rev_com >> 2) | ((~char_to_val[sequence[k - 1 + i + j]] & 3) << (2 * (k - 1)))) & mask;
+      if (original != rev_com) {
+        m = std::min(m, std::min(original, rev_com));
       }
     }
-    t = std::make_tuple(min_val, min_pos, min_strand);
-    minimizers_set.insert(t);
+
+    if (!cache.empty()) {
+      std::priority_queue<triplet_t, std::vector<triplet_t>, triplet_ordering> temp_queue;
+      triplet_t temp_trip = cache.top();
+      unsigned int cache_m = std::get<0>(temp_trip);
+      if (std::get<1>(temp_trip) >= i && cache_m <= m) {
+        temp_queue.push(temp_trip);
+        m = cache_m;
+      }
+      std::swap(cache, temp_queue);
+    }
+
+    original = foriginal;
+    rev_com = frev_com;
+
+    for (unsigned int j = start; j < window_length; ++j) {
+      original = ((original << 2) | char_to_val[sequence[k - 1 + i + j]]) & mask;
+      rev_com = ((rev_com >> 2) | ((~char_to_val[sequence[k - 1 + i + j]] & 3) << (2 * (k - 1)))) & mask;
+      if (original < rev_com && original == m) {
+        minimizers_set.emplace(m, i + j, 0);
+        cache.emplace(m, i + j, 0);
+      } else if (rev_com < original && rev_com == m) {
+        minimizers_set.emplace(m, i + j, 1);
+        cache.emplace(m, i + j, 1);
+      }
+    }
   }
 }
 
-void front_end_minimizers_fill(
-    std::set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set,
-    const char* sequence,
-    unsigned int sequence_length,
+void end_minimizers_fill(
+    std::unordered_set<triplet_t, triplet_hash, triplet_equal>& minimizers_set,
     unsigned int k,
-    unsigned int window_length) {
+    unsigned int window_length,
+    std::function<unsigned int(unsigned int)> position,
+    std::function<unsigned int(unsigned int, unsigned int)> start_o,
+    std::function<unsigned int(unsigned int, unsigned int)> start_r,
+    std::function<unsigned int(unsigned int, int, unsigned int)> insert_o,
+    std::function<unsigned int(unsigned int, int, unsigned int)> insert_r) {
 
-  std::tuple<unsigned int, unsigned int, bool> t;
+  unsigned int mask = (1 << (2 * k)) - 1;
+  unsigned int original;
+  unsigned int rev_com;
+  unsigned int m = std::numeric_limits<unsigned int>::max();
 
-  for (int u = 1; u < window_length; ++u) {
-    unsigned int min_val = value(sequence, 0, k);
-    unsigned int min_pos = 0;
-    bool         min_strand = 0;
-    for (int i = 0; i < u; ++i) {
-      unsigned int val = value(sequence, i, k);
-      unsigned int val_rev_com = value_reverse_complement(sequence, sequence_length, u + k - 2 - i, k);
-      if (val < min_val) {
-        min_val = val;
-        min_pos = i;
-        min_strand = 0;
-      }
-      if (val_rev_com < min_val) {
-        min_val = val_rev_com;
-        min_pos = sequence_length - 1 - (u + k - 2 - i);
-        min_strand = 1;
-      }
+  for (unsigned int i = 0; i < window_length - 1; ++i) {
+    if (i == 0) {
+      original = start_o(position(i), mask);
+      rev_com = start_r(position(i), mask);
     }
-    t = std::make_tuple(min_val, min_pos, min_strand);
-    minimizers_set.insert(t);
+
+    original = insert_o(original, position(i), mask);
+    rev_com = insert_r(rev_com, position(i), mask);
+
+    if (original != rev_com) {
+      m = std::min(m, std::min(original, rev_com));
+    }
+
+    if (original < rev_com && original == m) {
+      minimizers_set.emplace(m, position(i), 0);
+    } else if (rev_com < original && rev_com == m) {
+      minimizers_set.emplace(m, position(i), 1);
+    }
   }
 }
 
-void back_end_minimizers_fill(
-    std::set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set,
-    const char* sequence,
-    unsigned int sequence_length,
-    unsigned int k,
-    unsigned int window_length) {
-
-  std::tuple<unsigned int, unsigned int, bool> t;
-
-  unsigned int last_pos = sequence_length - k;
-  for (int u = 1; u < window_length; ++u) {
-    unsigned int min_val = value(sequence, last_pos, k);
-    unsigned int min_pos = last_pos;
-    bool         min_strand = 0;
-    for (int i = 1; i < u; ++i) {
-      unsigned int val = value(sequence, last_pos - i, k);
-      unsigned int val_rev_com = value_reverse_complement(sequence, sequence_length, sequence_length - 1 - i, k);
-      if (val < min_val) {
-        min_val = val;
-        min_pos = last_pos - i;
-        min_strand = 0;
-      }
-      if (val_rev_com < min_val) {
-        min_val = val_rev_com;
-        min_pos = sequence_length - 1 - i;
-        min_strand = 1;
-      }
-    }
-    t = std::make_tuple(min_val, min_pos, min_strand);
-    minimizers_set.insert(t);
-  }
-}
-
-// bool | 0 == original strand minimizer
-//      | 1 == reverse complement strand minimizer
-std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
+std::vector<triplet_t> minimizers(
     const char* sequence,
     unsigned int sequence_length,
     unsigned int k,
     unsigned int window_length) {
 
   if (sequence_length < window_length + k - 1) {
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> empty_vector;
-    return empty_vector;
+    fprintf(stderr, "[brown::minimizers] error: Sequence length too short for given parameters!\n"
+                    "  Length = %d, k = %d, window length = %d.\n",
+        sequence_length, k, window_length);
+    exit(1);
   }
 
-  std::set<std::tuple<unsigned int, unsigned int, bool>> minimizers_set;
+  std::unordered_set<triplet_t, triplet_hash, triplet_equal> minimizers_set;
   
   interior_minimizers_fill(minimizers_set, sequence, sequence_length, k, window_length);
 
-  front_end_minimizers_fill(minimizers_set, sequence, sequence_length, k, window_length);
+  end_minimizers_fill(minimizers_set, k, window_length,
+                      [] (unsigned int i) {return i;},
+                      [&k, &sequence] (unsigned int pos, unsigned int mask) {
+                        return (value(sequence, pos, k) >> 2) & mask;
+                      },
+                      [&k, &sequence] (unsigned int pos, unsigned int mask) {
+                        return (value_reverse_complement(sequence, pos, k) << 2) & mask;
+                      },
+                      [&k, &sequence] (unsigned int original, unsigned int pos, unsigned int mask) {
+                        return ((original << 2) | char_to_val[sequence[k - 1 + pos]]) & mask;
+                      },
+                      [&k, &sequence] (unsigned int rev_com, unsigned int pos, unsigned int mask) {
+                        return ((rev_com >> 2) | ((~char_to_val[sequence[k - 1 + pos]] & 3) << (2 * (k - 1)))) & mask;
+                      }
+                     );
 
-  back_end_minimizers_fill(minimizers_set, sequence, sequence_length, k, window_length);
+  end_minimizers_fill(minimizers_set, k, window_length,
+                      [&sequence_length, &k] (unsigned int i) {return sequence_length - k - i;},
+                      [&k, &sequence] (unsigned int pos, unsigned int mask) {
+                        return (value(sequence, pos, k) << 2) & mask;
+                      },
+                      [&k, &sequence] (unsigned int pos, unsigned int mask) {
+                        return (value_reverse_complement(sequence, pos, k) >> 2) & mask;
+                      },
+                      [&k, &sequence] (unsigned int original, unsigned int pos, unsigned int mask) {
+                        return ((original >> 2) | (char_to_val[sequence[pos]] << (2 * (k - 1)))) & mask;
+                      },
+                      [&sequence] (unsigned int rev_com, unsigned int pos, unsigned int mask) {
+                        return ((rev_com << 2) | (~char_to_val[sequence[pos]] & 3)) & mask;
+                      }
+                     );
 
-  std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector(
+  std::vector<triplet_t> minimizers_vector(
       minimizers_set.begin(), minimizers_set.end());
+  std::sort(minimizers_vector.begin(), minimizers_vector.end(),
+            [] (const triplet_t& a,
+            const triplet_t& b) {
+              return (std::get<1>(a) < std::get<1>(b));
+            });
   return minimizers_vector;
 }
 

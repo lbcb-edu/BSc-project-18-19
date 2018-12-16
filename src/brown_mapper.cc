@@ -8,7 +8,7 @@
 #include <string>
 #include <limits>
 #include <ctime>
-#include <unordered_map>
+#include <map>
 
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
@@ -63,30 +63,30 @@ public:
       }
     }
 
-    static void print_statistics(
-      const std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
-      const std::string file) {
-        int num = fastaq_objects.size();
-        double average = 0;
-        uint32_t max = 0;
-        uint32_t min = std::numeric_limits<int>::max();
-        for (int i = 0; i < num; i++) {
-          average += fastaq_objects[i]->sequence.size();
-          if (fastaq_objects[i]->sequence.size() > max) {
-            max = fastaq_objects[i]->sequence.size();
-          }
-          if (fastaq_objects[i]->sequence.size() < min) {
-            min = fastaq_objects[i]->sequence.size();
-          }
+  static void print_statistics(
+    const std::vector<std::unique_ptr<FastAQ>> &fastaq_objects,
+    const std::string file) {
+      int num = fastaq_objects.size();
+      double average = 0;
+      uint32_t max = 0;
+      uint32_t min = std::numeric_limits<int>::max();
+      for (int i = 0; i < num; i++) {
+        average += fastaq_objects[i]->sequence.size();
+        if (fastaq_objects[i]->sequence.size() > max) {
+          max = fastaq_objects[i]->sequence.size();
         }
-        average /= num;
-        fprintf(stderr, "Stats for: %s\n"
-                        "  Number of sequences: %d\n"
-                        "  Average length:      %g\n"
-                        "  Maximum length:      %d\n"
-                        "  Minimum length:      %d\n",
-                        file.c_str(), num, average, max, min);
-    }
+        if (fastaq_objects[i]->sequence.size() < min) {
+          min = fastaq_objects[i]->sequence.size();
+        }
+      }
+      average /= num;
+      fprintf(stderr, "Stats for: %s\n"
+                      "  Number of sequences: %d\n"
+                      "  Average length:      %g\n"
+                      "  Maximum length:      %d\n"
+                      "  Minimum length:      %d\n",
+                      file.c_str(), num, average, max, min);
+  }
 };
 
 void help(void) {
@@ -250,9 +250,12 @@ int main (int argc, char **argv) {
 
   fprintf(stderr, " Done!\n\n");
 
+
+
+  // File stats
+
   FastAQ::print_statistics(fastaq_objects1, file1);
   FastAQ::print_statistics(fastaq_objects2, file2);
-
 
 
 
@@ -266,7 +269,7 @@ int main (int argc, char **argv) {
   int counter = 0;
   int charcount = 0;
   int percentage = 0.01 * fastaq_objects1.size();
-  std::unordered_map<unsigned int, unsigned int> frequency_map;
+  std::map<unsigned int, unsigned int> frequency_map;
   for(unsigned int i = 0; i < fastaq_objects1.size(); i++){
 
   	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers(fastaq_objects1[i]->sequence.c_str(),
@@ -298,28 +301,27 @@ int main (int argc, char **argv) {
 
 
 
-
   // Alignment
 
-  fprintf(stderr, "\nStarting alignment with parameters:\n");
-  fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
-  std::cerr << "  Alignment type = " << alignmentType <<std::endl;
-  fprintf(stderr, "Aligning...");
+  // fprintf(stderr, "\nStarting alignment with parameters:\n");
+  // fprintf(stderr, "  Match = %d \n  Mismatch = %d\n  Gap/Indel = %d\n", match, mismatch, gap);
+  // std::cerr << "  Alignment type = " << alignmentType <<std::endl;
+  // fprintf(stderr, "Aligning...");
 
-  srand(time(NULL));
-  int i1 = rand() % fastaq_objects1.size();
-  int i2 = rand() % fastaq_objects1.size();
+  // srand(time(NULL));
+  // int i1 = rand() % fastaq_objects1.size();
+  // int i2 = rand() % fastaq_objects1.size();
 
-  std::string cigar;
-  unsigned int target_begin = 0;
-  int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
-                                        fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
-                                        alignment, match, mismatch, gap, cigar, target_begin);
-  std::cout << "Alignment score: " << value << std::endl;
-  std::cout << "Pos: " << target_begin << std::endl;
-  std::cout << "CIGAR: " << cigar << std::endl;
+  // std::string cigar;
+  // unsigned int target_begin = 0;
+  // int value = brown::pairwise_alignment(fastaq_objects1[i1]->sequence.c_str(), fastaq_objects1[i1]->sequence.size(),
+  //                                       fastaq_objects1[i2]->sequence.c_str(), fastaq_objects1[i2]->sequence.size(),
+  //                                       alignment, match, mismatch, gap, cigar, target_begin);
+  // std::cout << "Alignment score: " << value << std::endl;
+  // std::cout << "Pos: " << target_begin << std::endl;
+  // std::cout << "CIGAR: " << cigar << std::endl;
 
-  fprintf(stderr, " Done!\n");
+  // fprintf(stderr, " Done!\n");
   
 
 
