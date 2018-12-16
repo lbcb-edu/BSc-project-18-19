@@ -6,6 +6,7 @@
 #include <set>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include <fstream>
 
 #include "white_minimizers.h"
@@ -151,7 +152,7 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 }
 
 void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size) {
-	std::map <unsigned int, unsigned int> minimizer_occurrences;
+	std::unordered_map <unsigned int, unsigned int> minimizer_occurrences;
 	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
 
 	for (auto &ptr : sequences) {
@@ -163,7 +164,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 	}
 
 	std::ofstream fout;
-  	fout.open ("minimizer_occurrences2.csv", std::ios::out);
+  	fout.open ("minimizer_occurrences.csv", std::ios::out);
 
 	if (!fout.is_open()){
 		std::cout << "Unable to open file.\n";
@@ -172,7 +173,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 
   	fout << "Minimizer, Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
 
-	for (std::map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
 	{
   		fout << it->first << ", ";
 		fout << it->second << "\r\n";

@@ -51,10 +51,10 @@ namespace {
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
 
-	minimizers.push_back(std::make_tuple(133, 2, true));
-	minimizers.push_back(std::make_tuple(113, 5, true));
-	minimizers.push_back(std::make_tuple(113, 8, true));
-	minimizers.push_back(std::make_tuple(131, 12, true));
+	minimizers.push_back(std::make_tuple(10, 2, true));
+	minimizers.push_back(std::make_tuple(2, 5, true));
+	minimizers.push_back(std::make_tuple(2, 8, true));
+	minimizers.push_back(std::make_tuple(8, 12, true));
 
 	EXPECT_EQ (minimizers, white::minimizers(s1.c_str(), s1.size(), k, window_length));
 
@@ -64,9 +64,9 @@ namespace {
         window_length = 4;
 
 	minimizers.clear();
-        minimizers.push_back(std::make_tuple(112, 3, false));
-        minimizers.push_back(std::make_tuple(123, 7, true));
-        minimizers.push_back(std::make_tuple(143, 10, false));
+        minimizers.push_back(std::make_tuple(1, 3, false));
+        minimizers.push_back(std::make_tuple(6, 7, true));
+        minimizers.push_back(std::make_tuple(14, 10, false));
 
         EXPECT_EQ (minimizers, white::minimizers(s2.c_str(), s2.size(), k, window_length));
 
@@ -76,9 +76,9 @@ namespace {
         window_length = 5;
 
 	minimizers.clear();
-        minimizers.push_back(std::make_tuple(112343, 3, false));
-        minimizers.push_back(std::make_tuple(123432, 4, false));
-	minimizers.push_back(std::make_tuple(123442, 7, true));
+        minimizers.push_back(std::make_tuple(110, 3, false));
+        minimizers.push_back(std::make_tuple(441, 4, false));
+	minimizers.push_back(std::make_tuple(445, 7, true));
 
         EXPECT_EQ (minimizers, white::minimizers(s3.c_str(), s3.size(), k, window_length));
 	}
