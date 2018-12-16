@@ -6,8 +6,6 @@
 #include <tuple>
 #include <algorithm>
 #include <unordered_set>
-#include <unordered_map>
-#include <map>
 
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
@@ -44,6 +42,7 @@ namespace blue
             temp = temp - length;
             std::tuple<unsigned int, unsigned int, bool> currentO = std::make_tuple(-1, -1, 0);
             std::tuple<unsigned int, unsigned int, bool> currentR = std::make_tuple(-1, -1, 0);
+            uniqueMinimizers.emplace((window & (mask << 2*(window_length - 1))) >> 2*(window_length - 1), 0, 1);
 
             for(int i = 0; i <= endCond; i++) {
                 //find minimizers from original
@@ -65,6 +64,10 @@ namespace blue
                     uniqueMinimizers.insert(tempRCompl.begin(), tempRCompl.end());
                     currentO = tempOriginal[0];
                     currentR = tempRCompl[0];
+                }
+
+                if (i == endCond) {
+                    break;
                 }
 
                 unsigned int code;
@@ -109,6 +112,8 @@ namespace blue
                 ++sequence;
             }
 
+            uniqueMinimizers.emplace(window & mask, sequence_length - k, 1);
+
             std::vector<std::tuple<unsigned int, unsigned int, bool>> output (uniqueMinimizers.begin(), uniqueMinimizers.end());
             return output;
     }
@@ -123,7 +128,7 @@ namespace blue
 
         if (std::get<1>(current) >= position) {
             if (std::get<0>(current) < minimum) {
-                minimizerSet.emplace_back(std::get<0>(current), std::get<1>(current), std::get<2>(current));
+                minimizerSet.emplace_back(current);
                 return minimizerSet;
             }
             if (std::get<0>(current) == minimum) {
