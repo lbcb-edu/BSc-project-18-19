@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 project(brown_mapper)
 
 set(brown_mapper_VERSION_MAJOR 1)
-set(brown_mapper_VERSION_MINOR 1)
+set(brown_mapper_VERSION_MINOR 2)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 set(CMAKE_CXX_STANDARD 11)
@@ -28,10 +28,12 @@ if (mapper_build_tests)
   include_directories(${PROJECT_SOURCE_DIR}/src)
 
   add_executable(brown_mapper_unittest test/brown_mapper_unittest.cc)
+  add_executable(brown_mapper src/brown_mapper.cc)
 
   add_subdirectory(vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
   target_link_libraries(brown_mapper_unittest brown_alignment gtest_main brown_minimizers)
+  target_link_libraries(brown_mapper bioparser brown_alignment brown_minimizers)
 else()
   add_executable(brown_mapper src/brown_mapper.cc)
   target_link_libraries(brown_mapper bioparser brown_alignment brown_minimizers)

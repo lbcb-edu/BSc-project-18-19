@@ -41,10 +41,10 @@ namespace {
 		TEST(MapperTest, TestCGAC){
  		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGAC",4, 3 , 1);
 
-		EXPECT_EQ(std::get<0>(minimizers.at(0)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(0)), 13);
 		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
 		EXPECT_EQ(std::get<2>(minimizers.at(0)), 0);
-		EXPECT_EQ(std::get<0>(minimizers.at(1)), 13);
+		EXPECT_EQ(std::get<0>(minimizers.at(1)), 52);
 		EXPECT_EQ(std::get<1>(minimizers.at(1)), 1);
 		EXPECT_EQ(std::get<2>(minimizers.at(1)), 0);
 		EXPECT_EQ(minimizers.size(), 2);
@@ -53,16 +53,46 @@ namespace {
 	TEST(MapperTest, TestCGACT){
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGACT", 5, 3, 1);
 
-		EXPECT_EQ(std::get<0>(minimizers.at(0)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(0)), 13);
 		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
 		EXPECT_EQ(std::get<2>(minimizers.at(0)), 0);
-		EXPECT_EQ(std::get<0>(minimizers.at(1)), 13);
+		EXPECT_EQ(std::get<0>(minimizers.at(1)), 52);
 		EXPECT_EQ(std::get<1>(minimizers.at(1)), 1);
 		EXPECT_EQ(std::get<2>(minimizers.at(1)), 0);
-		EXPECT_EQ(std::get<0>(minimizers.at(2)), 102);
-		EXPECT_EQ(std::get<1>(minimizers.at(2)), 0);
-		EXPECT_EQ(std::get<2>(minimizers.at(2)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(2)), 18);
+		EXPECT_EQ(std::get<1>(minimizers.at(2)), 2);
+		EXPECT_EQ(std::get<2>(minimizers.at(2)), 0);
 		EXPECT_EQ(minimizers.size(), 3);
+	}
+
+	TEST(MapperTest, TestTGACGTACATGGACA){
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("TGACGTACATGGACA", 15, 3, 3);
+
+		EXPECT_EQ(std::get<0>(minimizers.at(0)), 33);
+		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
+		EXPECT_EQ(std::get<2>(minimizers.at(0)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(1)), 14);
+		EXPECT_EQ(std::get<1>(minimizers.at(1)), 2);
+		EXPECT_EQ(std::get<2>(minimizers.at(1)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(2)), 14);
+		EXPECT_EQ(std::get<1>(minimizers.at(2)), 3);
+		EXPECT_EQ(std::get<2>(minimizers.at(2)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(3)), 17);
+		EXPECT_EQ(std::get<1>(minimizers.at(3)), 6);
+		EXPECT_EQ(std::get<2>(minimizers.at(3)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(4)), 6);
+		EXPECT_EQ(std::get<1>(minimizers.at(4)), 7);
+		EXPECT_EQ(std::get<2>(minimizers.at(4)), 0);
+		EXPECT_EQ(std::get<0>(minimizers.at(5)), 6);
+		EXPECT_EQ(std::get<1>(minimizers.at(5)), 8);
+		EXPECT_EQ(std::get<2>(minimizers.at(5)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(6)), 1);
+		EXPECT_EQ(std::get<1>(minimizers.at(6)), 9);
+		EXPECT_EQ(std::get<2>(minimizers.at(6)), 1);
+		EXPECT_EQ(std::get<0>(minimizers.at(7)), 17);
+		EXPECT_EQ(std::get<1>(minimizers.at(7)), 12);
+		EXPECT_EQ(std::get<2>(minimizers.at(7)), 0);
+		EXPECT_EQ(minimizers.size(), 8);
 	}
 }
 
