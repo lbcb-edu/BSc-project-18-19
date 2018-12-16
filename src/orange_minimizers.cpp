@@ -77,7 +77,7 @@ namespace orange {
 					is_complement = false;
 					temp_mer = convertKmerToInteger(temp_seg_ptr, j, k);
 
-					if(temp_mer > border) {
+					if(temp_mer >= border) {
 						temp_mer = convertKmerToInteger(temp_seg_complement_ptr, j, k);
 						is_complement = true;
 					}
@@ -108,7 +108,7 @@ namespace orange {
 		bool is_complement = false;
 		unsigned int temp_mer = convertKmerToInteger(sequence, i, k);
 
-		if(temp_mer > border) {
+		if(temp_mer >= border) {
 			temp_mer = convertKmerToInteger(sequence_complement, i, k);
 			is_complement = true;
 		}
