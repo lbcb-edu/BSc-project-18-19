@@ -51,6 +51,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 	}
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
+	minimizers.reserve(sequence_length);
 	unsigned int current_kmer_original = 0;
 	unsigned int current_kmer_reverse_complement = 0;
 	unsigned int next_window_starting_kmer_original = 0;
@@ -191,7 +192,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 				}
 				if (last_minimizer >= current_kmer_reverse_complement) {
 					last_minimizer = current_kmer_reverse_complement;
-					position_of_last_minimizer = j - (k - 1); //=j jer bi trebali gledat obrnuto
+					position_of_last_minimizer = j - (k - 1); //jednako kao gore jer bi trebali gledat obrnuto
 					isOriginal = false;
 				}
 			}
@@ -259,9 +260,12 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 		//std::tuple<unsigned int, unsigned int, bool> current_minimizer = std::make_tuple(get_kmer(last_minimizer, k), (unsigned int) position_of_last_minimizer, isOriginal); -> stari ispis
 		std::tuple<unsigned int, unsigned int, bool> current_minimizer = std::make_tuple(last_minimizer, (unsigned int) position_of_last_minimizer, isOriginal);
 
-		if (std::find(minimizers.begin(), minimizers.end(), current_minimizer) == minimizers.end()) {
+		if (minimizers.empty())
 			minimizers.emplace_back(current_minimizer);
-		}
+
+		else if (minimizers[minimizers.size() - 1] != current_minimizer)
+			minimizers.emplace_back(current_minimizer);
+
 	}
 
 	return minimizers;

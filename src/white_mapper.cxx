@@ -171,11 +171,11 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 		exit(1);
 	}
 
-  	fout << "Minimizer, Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
+  	fout << "Minimizer,Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
 
 	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
 	{
-  		fout << it->first << ", ";
+  		fout << it->first << ",";
 		fout << it->second << "\r\n";
 	}
 
