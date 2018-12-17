@@ -268,12 +268,8 @@ int main(int argc, char* argv[]) {
         std::unordered_map<unsigned int, unsigned int> occurences;
         std::unordered_map<unsigned int, unsigned int>::iterator it;
         
-		int i = 0;
 		for (auto const& object: fast_objects1) {
 			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
-            
-			i++;
-			std::cout << i << std::endl;
 
             for (auto const& minimizer: minimizers_vector) {
                 it = occurences.find(std::get<0>(minimizer)); 
@@ -296,6 +292,8 @@ int main(int argc, char* argv[]) {
         }
 		
         file.close();
+        
+        std::cout << "Work with minimizers done!" << std::endl;
         
     } else {
         printError();
