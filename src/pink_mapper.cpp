@@ -165,9 +165,9 @@ void help() {
         "       -g, --gap\n"
         "           input insertion/deletion cost, default: -2\n"
 		"       -k\n"
-		"           input k, default: 5\n"
+		"           input k, default: 15\n"
 		"       -w\n"
-		"           input window length, default: 15\n"
+		"           input window length, default: 5\n"
         );
 }
 
@@ -186,8 +186,8 @@ int main(int argc, char* argv[]) {
     std::string cigar;
     unsigned int target_begin = 0;
 
-	unsigned int k = 5;
-	unsigned int window_length = 15;
+	unsigned int k = 15;
+	unsigned int window_length = 5;
     
     while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:", options, NULL)) != -1) {
         switch(optchr) {
@@ -267,7 +267,7 @@ int main(int argc, char* argv[]) {
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
         std::unordered_map<unsigned int, unsigned int> occurences;
         std::unordered_map<unsigned int, unsigned int>::iterator it;
-        
+
 		for (auto const& object: fast_objects1) {
 			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
 
