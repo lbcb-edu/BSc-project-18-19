@@ -199,7 +199,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 	unsigned int number_of_minimizers_with_frequency_of_1 = 0;
 
 	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++) {
-		frequencies.push_back (it -> second);
+		frequencies.emplace_back (it -> second);
 
 		if (it -> second == 1)
 			number_of_minimizers_with_frequency_of_1++;
