@@ -9,6 +9,7 @@
 #include <limits>
 #include <ctime>
 #include <map>
+#include <algorithm>
 
 #include "brown_mapper.hpp"
 #include "bioparser/bioparser.hpp"
@@ -29,6 +30,7 @@ static struct option long_options[] = {
   {"semi_global", no_argument, NULL, 'S'},
   {"window_length", required_argument, NULL, 'w'},
   {"kmers", required_argument, NULL, 'k'},
+  {"frequency", required_argument, NULL, 'f'},
   {NULL, no_argument, NULL, 0}
 };
 
@@ -122,12 +124,14 @@ void help(void) {
          "  -L  or  --local          local alignment\n"
          "  -S  or  --semi_global    semi_global alignment\n"
          "  -w  or  --window_length  <int>\n"
-         "                             default: 15\n"
+         "                             default: 5\n"
          "                             length of window\n"
          "  -k  or  --kmers          <int>\n"
-         "                             default: 5\n"
-         "                             maximum:  10\n"
+         "                             default: 15\n"
          "                             number of letters in substrings\n"
+         "  -f  or  --frequency      <int>\n"
+         "                             default: 0.001\n"
+         "                             number of frequent minimizers that are not taken in account\n"
   );
 }
 
@@ -158,10 +162,11 @@ int main (int argc, char **argv) {
   brown::AlignmentType alignment = brown::AlignmentType::global;
   std::string alignmentType = "global";
 
-  int window_length = 15;
-  int k = 5;
+  int window_length = 5;
+  int k = 15;
+  float f = 0.001;
 
-  while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLSk:w:", long_options, NULL)) != -1) {
+  while ((optchr = getopt_long(argc, argv, "hvm:g:M:GLSk:w:f:", long_options, NULL)) != -1) {
     switch (optchr) {
       case 'h': {
         help();
@@ -204,6 +209,10 @@ int main (int argc, char **argv) {
       }
       case 'k': {
         k = atoi(optarg);
+        break;
+      }
+      case 'f': {
+        f = atoi(optarg);
         break;
       }
       default: {
@@ -262,7 +271,7 @@ int main (int argc, char **argv) {
   // Minimizers
 
   fprintf(stderr, "\nFinding minimizers with parameters:\n");
-  fprintf(stderr, "  k = %d\n  Window length = %d\n", k, window_length);
+  fprintf(stderr, "  k = %d\n  Window length = %d\n  f= %f\n", k, window_length, f);
 
   char prog[] = {'|', '/', '-', '\\'};
 
@@ -286,16 +295,20 @@ int main (int argc, char **argv) {
 
   fprintf(stderr, "\rMinimizers found!\n");
 
-  fprintf(stderr, "\nCreating CSV file...");
+  fprintf(stderr, "Number of distinct minimizers: %lu\n", frequency_map.size());
 
-  std::ofstream csv_file ("frequency.csv");
+  std::vector<unsigned int> occurences;
+  occurences.reserve(frequency_map.size());
 
-  csv_file << "Minimizer, Frequency" << std::endl;
   for(auto const& entry : frequency_map){
-  	csv_file << entry.first << ", " << entry.second << std::endl;
+  	occurences.push_back(entry.second);
   }
 
-  csv_file.close();
+  int position = (1-f) * occurences.size();
+
+  std::sort(occurences.begin(), occurences.end());
+
+  fprintf(stderr, "Number of occurences of the most frequent minimizer: %d\n", occurences[position]);
 
   fprintf(stderr, " Done!\n");
 
