@@ -242,9 +242,13 @@ int main (int argc, char* argv[]) {
         }
 
         int distinctCounter = 0;
+        std::vector<std::pair<unsigned int, int>> nonDistinctMinimizers;
        	std::unordered_map<unsigned int, int>::iterator it = occurences.begin();
         while (it != occurences.end()) {
             if(it->second == 1) ++distinctCounter;
+            else {
+                nonDistinctMinimizers.emplace_back(it->first, it->second);
+            }
             it++;
         }
         std::cout << "Number of distinct minimizers: " << distinctCounter << std::endl;
@@ -256,11 +260,11 @@ int main (int argc, char* argv[]) {
 				return elem1.second > elem2.second;
 			};
 
-        std::vector<std::pair<unsigned int, int>> sortedMinimizers(occurences.begin(), occurences.end());
-        sort(sortedMinimizers.begin(), sortedMinimizers.end(), comparator);
+        sort(nonDistinctMinimizers.begin(), nonDistinctMinimizers.end(), comparator);
 
-        int minimizer = f * occurences.size();
-        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << sortedMinimizers[minimizer].second << std::endl;
+        std::cout << nonDistinctMinimizers.size() << std::endl;
+        int minimizer = f * nonDistinctMinimizers.size();
+        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << nonDistinctMinimizers[minimizer].second << std::endl;
         return 0;
 }
 
