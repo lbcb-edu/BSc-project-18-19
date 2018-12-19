@@ -260,7 +260,7 @@ int main(int argc, char** argv) {
 
 	srand((unsigned)time(0)); 
 	alignment alignment;
-	int k=5, window_lenght=15;
+	int k=15, window_lenght=5;
 
 	char optchr;
 
