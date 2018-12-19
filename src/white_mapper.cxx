@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <cmath>
+#include <algorithm>
 
 #include "white_minimizers.h"
 #include "white_alignment.h"
@@ -162,7 +163,7 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 }
 
 void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size, float f) {
-	std::map <unsigned int, unsigned int> minimizer_occurrences;
+	std::unordered_map <unsigned int, unsigned int> minimizer_occurrences;
 	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
 
 	for (auto &ptr : sequences) {
@@ -183,7 +184,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 
   	fout << "Minimizer,Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
 
-	for (std::map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
 	{
 		if(it->second != 1) {
   			fout << it->first << ",";
@@ -194,17 +195,20 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
   	fout.close();*/
 
 	unsigned int number_of_minimizers_to_disregard = (unsigned int) std::round(minimizer_occurrences.size() * f);
+	std::vector<unsigned int> frequencies;
 
-	std::map<unsigned int, unsigned int>::iterator it = std::prev(minimizer_occurrences.end(), number_of_minimizers_to_disregard + 1);
+	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+		frequencies.push_back (it -> second);
+
+	std::sort (frequencies.begin(), frequencies.end());
 
 	printf("\n--- Minimizer statistics ---\n\n"
 
-		"-> Minimizers found: %lu								\n"
-		"-> After disregarding top %f minimizers the most frequent minimizer is:		\n"
-		"	Minimizer: %u									\n"
-		"	Frequency: %u									\n\n",
+		"-> Minimizers found: %lu									\n"
+		"-> After disregarding top %f minimizers the frequency of the most frequent minimizer is:	\n"
+		"	Frequency: %u										\n\n",
 
-		minimizer_occurrences.size(), f, it->first, it->second);
+		minimizer_occurrences.size(), f, frequencies[frequencies.size() - 1 - number_of_minimizers_to_disregard]);
 }
 
 int main (int argc, char* argv[])
