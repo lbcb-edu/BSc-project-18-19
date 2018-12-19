@@ -99,8 +99,6 @@ where the return value is the list of found minimizers, their positions in the s
 
 Once the library is finished, it has to be used to find minimizers of all sequences in the first input file. The mapper has to print the number of distinct minimizers and the number of occurences of the most frequent minimizer when the top `f` frequent minimizers are **not** taken in account (add optional arguments for setting `k`, `w` and `f` to the mapper). Default values for `(k, w, f)` should be `(15, 5, 0.001)`.
 
-![](misc/minimizers_histogram.png)
-
 ## Disclaimer
 
 Laboratory for Bioinformatics and Computational Biology cannot be held responsible for any copyright infringement caused by actions of students contributing to any of its repositories. Any case of copyright infringement will be promptly removed from the affected repositories and reported to appropriate faculty organs.
