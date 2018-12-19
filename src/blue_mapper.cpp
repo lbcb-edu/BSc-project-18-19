@@ -8,7 +8,10 @@
 #include <memory>
 #include <stdint.h>
 #include <getopt.h>
+#include <functional>
+#include <algorithm>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include "bioparser/bioparser.hpp"
 #include "blue_alignment.hpp"
@@ -59,6 +62,7 @@ static struct option long_options[] = {
     {"type", required_argument, NULL, 't'},
     {"kmer_length", required_argument, NULL, 'k'},
     {"window_length", required_argument, NULL, 'w'},
+    {"f", required_argument, NULL, 'f'},
     {NULL, no_argument, NULL, 0}
 };
 
@@ -95,10 +99,11 @@ int main (int argc, char* argv[]) {
         int gap = -1;
         char* align_type = "global";
 
-        unsigned int kmer_length = 5;
-        unsigned int window_length = 15;
+        unsigned int kmer_length = 15;
+        unsigned int window_length = 5;
+        double f = 0.001;
 
-        while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:", long_options, NULL)) != -1) {
+        while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:f:", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
                     std::cout << "You've asked for help.\n\nThis program implements 3 algorithms for pairwise alignment:" << std::endl
@@ -141,6 +146,9 @@ int main (int argc, char* argv[]) {
                     break;
                 case 'w':
                     window_length = atoi(optarg);
+                    break;
+                case 'f':
+                    f = atof(optarg);
                     break;
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
@@ -224,24 +232,38 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
-        std::unordered_map<unsigned int, int> occurances;
+        std::unordered_map<unsigned int, int> occurences;
         int j = 0;
         for(auto& i : first_object) {
             std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             for (auto& minimizer : sequenceMinimizers)
-                ++occurances[std::get<0>(minimizer)];
+                ++occurences[std::get<0>(minimizer)];
+                std::cout << ++j << std::endl;
         }
 
-        std::ofstream myfile;
-        myfile.open ("MinimizerOccurences.csv");
-        myfile << "Minimizer,Occurences\n";
+        int occurencesSize = occurences.size();
+        std::cout << "Number of distinct minimizers: " << occurencesSize << std::endl;
 
-        using iterator = std::unordered_map< unsigned int, int >::iterator;
-        for (iterator iter = occurances.begin(); iter != occurances.end(); ++iter) {
-            myfile << iter->first << "," << iter->second << '\n';
+        typedef std::function<bool(std::pair<unsigned int, int>, std::pair<unsigned int, int>)> Comparator;
+        Comparator comparator =
+			[](std::pair<unsigned int, int> elem1, std::pair<unsigned int, int> elem2)
+			{
+				return elem1.second > elem2.second;
+			};
+
+        std::set<std::pair<unsigned int, int>, Comparator> setOfMinimizers(occurences.begin(), occurences.end(), comparator);
+
+        std::cout << setOfMinimizers.size() << std::endl;
+        int minimizer = f * occurencesSize;
+        int i = 0;
+        for (std::pair<unsigned int, int> element : setOfMinimizers) {
+            if(i < minimizer) {
+                ++i;
+                continue;
+            }
+            std::cout << element.first << " :: " << element.second << std::endl;
+            break;
         }
-        myfile.close();
-        std::cout << ".CSV file with minimizer occurences is created!" << std::endl;
         return 0;
 }
 
