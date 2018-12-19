@@ -123,7 +123,8 @@ void help() {
 		"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
 		"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n"
 		"	-k (arg) - sets size of minimizer"
-		"	-w (arg) - sets window length for minimizers");
+		"	-w (arg) - sets window length for minimizers"
+		"	-f (arg) - sets number of ignored minimizers in promille");
 }
 
 void version() {
