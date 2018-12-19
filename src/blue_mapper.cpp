@@ -251,19 +251,11 @@ int main (int argc, char* argv[]) {
 				return elem1.second > elem2.second;
 			};
 
-        std::set<std::pair<unsigned int, int>, Comparator> setOfMinimizers(occurences.begin(), occurences.end(), comparator);
+        std::vector<std::pair<unsigned int, int>> sortedMinimizers(occurences.begin(), occurences.end());
+        sort(sortedMinimizers.begin(), sortedMinimizers.end(), comparator);
 
-        std::cout << setOfMinimizers.size() << std::endl;
         int minimizer = f * occurencesSize;
-        int i = 0;
-        for (std::pair<unsigned int, int> element : setOfMinimizers) {
-            if(i < minimizer) {
-                ++i;
-                continue;
-            }
-            std::cout << element.first << " :: " << element.second << std::endl;
-            break;
-        }
+        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << sortedMinimizers[minimizer].second << std::endl;
         return 0;
 }
 
