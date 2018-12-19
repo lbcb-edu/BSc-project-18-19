@@ -196,19 +196,25 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 
 	unsigned int number_of_minimizers_to_disregard = (unsigned int) std::round(minimizer_occurrences.size() * f);
 	std::vector<unsigned int> frequencies;
+	unsigned int number_of_minimizers_with_frequency_of_1 = 0;
 
-	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++) {
 		frequencies.push_back (it -> second);
+
+		if (it -> second == 1)
+			number_of_minimizers_with_frequency_of_1++;
+	}
 
 	std::sort (frequencies.begin(), frequencies.end());
 
 	printf("\n--- Minimizer statistics ---\n\n"
 
 		"-> Minimizers found: %lu									\n"
+		"-> Number of minimizers with frequency of 1: %u						\n"
 		"-> After disregarding top %f minimizers the frequency of the most frequent minimizer is:	\n"
 		"	Frequency: %u										\n\n",
 
-		minimizer_occurrences.size(), f, frequencies[frequencies.size() - 1 - number_of_minimizers_to_disregard]);
+		minimizer_occurrences.size(), number_of_minimizers_with_frequency_of_1, f, frequencies[frequencies.size() - 1 - number_of_minimizers_to_disregard]);
 }
 
 int main (int argc, char* argv[])
