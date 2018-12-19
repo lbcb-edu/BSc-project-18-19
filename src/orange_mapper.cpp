@@ -257,7 +257,9 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght, float 
 
 	std::sort(vec.begin(), vec.end(), cmp);
 
-	printf("%d", vec[0].first);
+	int pos = f*csvMap.size();
+
+	printf("%d", vec[pos].first);
 	
 	std::cout << "\nDone!\n";
 	
