@@ -28,6 +28,7 @@ struct option options[] = {
 		{"gap", required_argument, 0, 0},
 		{"kmer", required_argument, 0, 'k'},
 		{"window_lenght", required_argument, 0 ,'w'},
+		{"top_minimizers", required_argument, 0 ,'f'},
 		{0, 0, 0, 0}
 	};
 
@@ -219,7 +220,7 @@ void calculateAndPrintOutStatistics(std::string const &firstFilePath, std::strin
 	readFASTAFile(secondFilePath, alignment);
 }
 
-void createCSVfile(std::string const &filePath, int k, int window_lenght) {
+void createCSVfile(std::string const &filePath, int k, int window_lenght, float f) {
 	std::vector<std::unique_ptr<FASTAEntity>> fasta_objects;
 	auto fasta_parser = bioparser::createParser<bioparser::FastaParser, FASTAEntity>(filePath);
 	
@@ -254,6 +255,7 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght) {
 	std::cout << "\nDone!\n";
 
 	file.close();
+	
 }
 
 int main(int argc, char** argv) {
@@ -261,11 +263,12 @@ int main(int argc, char** argv) {
 	srand((unsigned)time(0)); 
 	alignment alignment;
 	int k=15, window_lenght=5;
+	float f = 0.001;
 
 	char optchr;
 
 	int option_index = 0;
-	while((optchr = getopt_long(argc, argv, "hvgslk:w:", options, &option_index)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hvgslk:w:f:", options, &option_index)) != -1) {
 		switch(optchr) {
 			case 0:
 				if(options[option_index].flag != 0)
@@ -300,6 +303,9 @@ int main(int argc, char** argv) {
 			case 'w':
 				window_lenght = atoi(optarg);
 				break;
+			case 'f':
+				f = std::atof(optarg);
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
@@ -327,7 +333,7 @@ int main(int argc, char** argv) {
 
 	calculateAndPrintOutStatistics(firstFilePath, secondFilePath, isFirstFASTA, alignment);
 
-	createCSVfile(firstFilePath, k, window_lenght);
+	createCSVfile(firstFilePath, k, window_lenght, f);
 
 	return 0;
 }
