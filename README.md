@@ -95,7 +95,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char*
 
 where the return value is the list of found minimizers, their positions in the sequence and their origin (whether they are located on the original strand or the reverse complement), while parameters `k` and `window_length` are self explanatory (check minimizer paper).
 
-Once the library is finished, it has to be used to find minimizers of all sequences in the first input file and the mapper has to print the histogram of minimizer occurences into a separate CSV file (add optional arguments for setting `k` and `w` to the mapper). The histogram for values `(k, w) = (5, 15)` can then be drawn in either `R` or `Python`, and must be added to this README on each teams branch (bellow this paragraph).
+Once the library is finished, it has to be used to find minimizers of all sequences in the first input file. The mapper has to print the number of distinct minimizers and the number of occurences of the most frequent minimizer when the top `f` frequent minimizers are **not** taken in account (add optional arguments for setting `k`, `w` and `f` to the mapper). Default values for `(k, w, f)` should be `(15, 5, 0.001)`.
 
 ![](misc/minimizers.png)
 
