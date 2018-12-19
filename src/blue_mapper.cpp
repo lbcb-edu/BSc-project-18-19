@@ -241,8 +241,13 @@ int main (int argc, char* argv[]) {
                 std::cout << ++j << std::endl;
         }
 
-        int occurencesSize = occurences.size();
-        std::cout << "Number of distinct minimizers: " << occurencesSize << std::endl;
+        int distinctCounter = 0;
+       	std::unordered_map<unsigned int, int>::iterator it = occurences.begin();
+        while (it != occurences.end()) {
+            if(it->second == 1) ++distinctCounter;
+            it++;
+        }
+        std::cout << "Number of distinct minimizers: " << distinctCounter << std::endl;
 
         typedef std::function<bool(std::pair<unsigned int, int>, std::pair<unsigned int, int>)> Comparator;
         Comparator comparator =
@@ -254,7 +259,7 @@ int main (int argc, char* argv[]) {
         std::vector<std::pair<unsigned int, int>> sortedMinimizers(occurences.begin(), occurences.end());
         sort(sortedMinimizers.begin(), sortedMinimizers.end(), comparator);
 
-        int minimizer = f * occurencesSize;
+        int minimizer = f * occurences.size();
         std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << sortedMinimizers[minimizer].second << std::endl;
         return 0;
 }
