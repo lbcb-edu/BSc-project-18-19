@@ -8,6 +8,7 @@
 #include <map>
 #include <unordered_map>
 #include <fstream>
+#include <cmath>
 
 #include "white_minimizers.h"
 #include "white_alignment.h"
@@ -19,6 +20,7 @@
 #define GAP -2;
 #define K_MER_LENGTH 15;
 #define WINDOW_SIZE 5;
+#define PERCENTAGE 0.001;
 
 class SequenceFormat
 {
@@ -104,9 +106,16 @@ void help() {
 				"	In order to alleviate the alignment proces we use seed and extend approach. Among all	\n"
 				"	k-mers we choose a set of minimizers which will be used for fast detection of similar	\n"
 				"	regions between two sequences prior the exact alignment. The mapper will find minimizers\n"
-				"	for every sequence in the first file and print the histogram of minimizer occurences	\n"
-				"	into a separate CSV file. The proces of finding minimizers uses two variables: k-mer	\n"
-				"	length k and window size w. Their default values are 5 and 15 respecively.		\n\n"
+				"	for every sequence in the first file and print the number of distinct minimizers and the\n"
+				"	number of occurences of the most frequent minimizer when the top f frequent minimizers 	\n"
+				"	are not taken in account.								\n\n"
+
+				"	The proces of finding minimizers uses three variables:					\n"
+				"	-> k-mer length k									\n"
+				"	-> window size w									\n"
+				"	-> percentage of top minimizers to disregard f						\n\n"
+
+				"	Their default values are 15, 5 and 0.001 respecively.					\n\n"
 
                                 "	File extensions accepted:								\n"
                                 "	-> .fasta             -> .fastq								\n"
@@ -123,7 +132,8 @@ void help() {
 				"       -> \"-s ARG\" sets mismatch value to ARG                                                \n"
 				"       -> \"-g ARG\" sets gap value to ARG                                                     \n"
 				"       -> \"-k ARG\" sets length k of k-mers to ARG						\n"
-				"       -> \"-w ARG\" sets window size to ARG							\n\n";
+				"       -> \"-w ARG\" sets window size to ARG							\n"
+				"	-> \"-f ARG\" sets f to ARG								\n\n";
 }
 
 void version() {
@@ -151,8 +161,8 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 	return objects;
 }
 
-void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size) {
-	std::unordered_map <unsigned int, unsigned int> minimizer_occurrences;
+void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size, float f) {
+	std::map <unsigned int, unsigned int> minimizer_occurrences;
 	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
 
 	for (auto &ptr : sequences) {
@@ -163,7 +173,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 		}
 	}
 
-	std::ofstream fout;
+	/*std::ofstream fout;
   	fout.open ("minimizer_occurrences.csv", std::ios::out);
 
 	if (!fout.is_open()){
@@ -173,7 +183,7 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 
   	fout << "Minimizer,Number of occurrences\r\n"; //posto mi je linux na windowsima da mogu citat i u notepadu
 
-	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
+	for (std::map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
 	{
 		if(it->second != 1) {
   			fout << it->first << ",";
@@ -181,7 +191,20 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 		}
 	}
 
-  	fout.close();
+  	fout.close();*/
+
+	unsigned int number_of_minimizers_to_disregard = (unsigned int) std::round(minimizer_occurrences.size() * f);
+
+	std::map<unsigned int, unsigned int>::iterator it = std::prev(minimizer_occurrences.end(), number_of_minimizers_to_disregard + 1);
+
+	printf("\n--- Minimizer statistics ---\n\n"
+
+		"-> Minimizers found: %lu								\n"
+		"-> After disregarding top %f minimizers the most frequent minimizer is:		\n"
+		"	Minimizer: %u									\n"
+		"	Frequency: %u									\n\n",
+
+		minimizer_occurrences.size(), f, it->first, it->second);
 }
 
 int main (int argc, char* argv[])
@@ -195,8 +218,9 @@ int main (int argc, char* argv[])
         int gap = GAP;
 	int k = K_MER_LENGTH;
 	int window_size = WINDOW_SIZE;
+	float f = PERCENTAGE;
 
-        while ((option = getopt_long(argc, argv, "hvm:s:g:k:w:", long_options, NULL)) != -1) {
+        while ((option = getopt_long(argc, argv, "hvm:s:g:k:w:f:", long_options, NULL)) != -1) {
                 switch (option) {
                         case 'h':
 				help();
@@ -226,8 +250,12 @@ int main (int argc, char* argv[])
 				window_size = atoi (optarg);
 				break;
 
+			case 'f':
+				f = std::stof (optarg, NULL);
+				break;
+
                         default:
-                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] [-m ARG] [-s ARG] [-g ARG] [-k ARG] [-w ARG] "
+                                fprintf (stderr, "\n--Error:\n\tUnsupported option. Usage: %s [-h] [--help] [-v] [--version] [-m ARG] [-s ARG] [-g ARG] [-k ARG] [-w ARG] [-f ARG] "
 						"sequence_file reference_genome_file match mismatch gap\n\n", argv[0]);
                                 exit(0);
 
@@ -280,7 +308,7 @@ int main (int argc, char* argv[])
 	sekvenceTest.push_back(std::move(p3));*/
 
 	//finding minimizers and making a csv file of their occurrences
-	minimizer_occurrences (sequences, k, window_size);
+	minimizer_occurrences (sequences, k, window_size, f);
 
 	//alignment of 2 random selected sequences
 	srand (time (NULL));
