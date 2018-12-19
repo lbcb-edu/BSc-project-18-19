@@ -8,6 +8,8 @@
 #include <string.h>
 #include <fstream>
 #include <unordered_map>
+#include <functional>
+#include <algorithm>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
@@ -245,16 +247,19 @@ void createCSVfile(std::string const &filePath, int k, int window_lenght, float 
 		}
 	}
 
-	std::ofstream file;
-	file.open ("minimizers.csv");
+	printf("\nNumber of minimizers: %lu\n", csvMap.size());
 
-	for (auto const &m : csvMap) {
-		file << m.first << "," << m.second << "\n";
-	}
+	auto cmp = [](std::pair<unsigned int,unsigned int> const & a, std::pair<unsigned int,unsigned int> const & b) { 
+     	return a.second != b.second?  a.second > b.second : a.first > b.first;
+	};
 
+	std::vector<std::pair<unsigned int, unsigned int>> vec(csvMap.begin(), csvMap.end());
+
+	std::sort(vec.begin(), vec.end(), cmp);
+
+	printf("%d", vec[0].first);
+	
 	std::cout << "\nDone!\n";
-
-	file.close();
 	
 }
 
