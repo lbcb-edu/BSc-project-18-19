@@ -17,8 +17,8 @@
 #define MATCH 2;
 #define MISMATCH -1;
 #define GAP -2;
-#define K_MER_LENGTH 5;
-#define WINDOW_SIZE 15;
+#define K_MER_LENGTH 15;
+#define WINDOW_SIZE 5;
 
 class SequenceFormat
 {
@@ -175,8 +175,10 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 
 	for (std::unordered_map<unsigned int, unsigned int>::iterator it = minimizer_occurrences.begin(); it != minimizer_occurrences.end(); it++)
 	{
-  		fout << it->first << ",";
-		fout << it->second << "\r\n";
+		if(it->second != 1) {
+  			fout << it->first << ",";
+			fout << it->second << "\r\n";
+		}
 	}
 
   	fout.close();
