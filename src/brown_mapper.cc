@@ -128,10 +128,12 @@ void help(void) {
          "                             length of window\n"
          "  -k  or  --kmers          <int>\n"
          "                             default: 15\n"
+         "                             constraints: largest supported is 16\n"
          "                             number of letters in substrings\n"
          "  -f  or  --frequency      <int>\n"
          "                             default: 0.001\n"
-         "                             number of frequent minimizers that are not taken in account\n"
+         "                             constraints: must be from [0, 1]\n"
+         "                             number of most frequent minimizers that are not taken into account\n"
   );
 }
 
@@ -212,7 +214,11 @@ int main (int argc, char **argv) {
         break;
       }
       case 'f': {
-        f = atoi(optarg);
+        f = atof(optarg);
+        if (f < 0.0 || f > 1.0) {
+          fprintf(stderr, "[mapper] error: f must be from [0, 1]!\n"); 
+          exit(1); 
+        }
         break;
       }
       default: {
@@ -271,7 +277,7 @@ int main (int argc, char **argv) {
   // Minimizers
 
   fprintf(stderr, "\nFinding minimizers with parameters:\n");
-  fprintf(stderr, "  k = %d\n  Window length = %d\n  f= %f\n", k, window_length, f);
+  fprintf(stderr, "  k = %d\n  Window length = %d\n  f= %g\n", k, window_length, f);
 
   char prog[] = {'|', '/', '-', '\\'};
 
@@ -303,14 +309,12 @@ int main (int argc, char **argv) {
   for(auto const& entry : frequency_map){
   	occurences.push_back(entry.second);
   }
-
-  int position = (1-f) * occurences.size();
+  
+  unsigned int position = (unsigned int)((1.0 - f) * (occurences.size() - 1.0));
 
   std::sort(occurences.begin(), occurences.end());
 
-  fprintf(stderr, "Number of occurences of the most frequent minimizer: %d\n", occurences[position]);
-
-  fprintf(stderr, " Done!\n");
+  fprintf(stderr, "Number of occurences of the most frequent minimizer after top 'f': %d\n", occurences[position]);
 
 
 
