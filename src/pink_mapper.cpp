@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unordered_map>
 #include <fstream>
+#include <cmath> 
 
 #include <bioparser/bioparser.hpp>
 #include "pink_alignment.hpp"
@@ -24,6 +25,7 @@ static struct option options[] = {
     {"gap",           required_argument, 0, 'g'},
 	{"k",             required_argument, 0, 'k'},
 	{"window_length", required_argument, 0, 'w'},
+    {"f",			  required_argument, 0, 'f'},
     {NULL,            no_argument,       0,  0 }
 };
 
@@ -168,6 +170,8 @@ void help() {
 		"           input k, default: 15\n"
 		"       -w\n"
 		"           input window length, default: 5\n"
+        "       -f\n"
+        "           input percentage of minimizers which are not taken in account\n"
         );
 }
 
@@ -188,6 +192,7 @@ int main(int argc, char* argv[]) {
 
 	unsigned int k = 15;
 	unsigned int window_length = 5;
+    float f = 0.001;
     
     while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:", options, NULL)) != -1) {
         switch(optchr) {
@@ -221,6 +226,9 @@ int main(int argc, char* argv[]) {
 			case 'w':
 				window_length = checkInput(optarg);
 				break;
+            case 'f':
+                f = checkInput(optarg);
+                break;
             default:  
                 printError();
         }
@@ -261,16 +269,19 @@ int main(int argc, char* argv[]) {
         
         pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
         cigar = std::string(cigar.rbegin(), cigar.rend());
-        std::cout << "\nCigar: " << cigar << "\n\n";
+        std::cout << "\nCigar: " << cigar << std::endl;
         
+
+		std::cout << "\nPlease wait until the minimizers are processed..." << std::endl;
         
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
         std::unordered_map<unsigned int, unsigned int> occurences;
         std::unordered_map<unsigned int, unsigned int>::iterator it;
-
+        std::vector<unsigned int>  sorted_occurences;
+        
 		for (auto const& object: fast_objects1) {
 			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
-
+            
             for (auto const& minimizer: minimizers_vector) {
                 it = occurences.find(std::get<0>(minimizer)); 
                 
@@ -289,11 +300,16 @@ int main(int argc, char* argv[]) {
         
         for (auto o : occurences) {
             file << o.first << "," << o.second << "\n";
+            sorted_occurences.emplace_back(o.second);
         }
 		
         file.close();
         
-        std::cout << "Work with minimizers done!" << std::endl;
+        unsigned int x = std::round(f * occurences.size());
+        std::sort (sorted_occurences.begin(), sorted_occurences.end());
+        
+        std::cout << "Number of distinct minimizers: " << occurences.size() << std::endl;
+        std::cout << "Number of occurences of the most frequent minimizer: " << sorted_occurences.at(occurences.size() - x - 1) << "\n\n";
         
     } else {
         printError();
