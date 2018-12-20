@@ -8,7 +8,7 @@
 #include <string>
 #include <limits>
 #include <ctime>
-#include <map>
+#include <unordered_map>
 #include <algorithm>
 
 #include "brown_mapper.hpp"
@@ -278,7 +278,7 @@ int main (int argc, char **argv) {
   int counter = 0;
   int charcount = 0;
   int percentage = 0.01 * fastaq_objects1.size();
-  std::map<unsigned int, unsigned int> frequency_map;
+  std::unordered_map<unsigned int, unsigned int> frequency_map;
   for(unsigned int i = 0; i < fastaq_objects1.size(); i++){
 
   	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers(fastaq_objects1[i]->sequence.c_str(),
