@@ -48,12 +48,20 @@ namespace orange {
 		return result;
 	}
 
-	void middleMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length,  std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int border) { 
+	unsigned int convertKmerToIntegerWithPrevious(unsigned int last_kmer, char next_char, unsigned int mask) {
+		return ((last_kmer << 2) | values_map[next_char]) & mask;
+	}
+
+	unsigned int convertKmerToIntegerWithPreviousInverse(unsigned int last_kmer, char next_char, unsigned int mask, unsigned int k) {
+		return ((last_kmer >> 2) | (values_map[next_char] << 2*(k - 1))) & mask;
+	}
+
+	void middleMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length,  std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int mask) { 
 
 		long int position_of_last_found_min_mer = -1;
 		unsigned int last_min_mer;
 
-		std::deque<std::tuple<unsigned int, unsigned int, bool>> temp_results_cache;
+		std::deque<std::tuple<unsigned int, unsigned int, unsigned int>> temp_results_cache;
 
 		for(unsigned int i = 0; window_length + k + i - 1 <= sequence_length; ++i) {
 			const char* temp_seg_ptr = sequence + i;
@@ -70,19 +78,25 @@ namespace orange {
 				bool is_complement = false;
 				unsigned int temp_mer;
 
-				if(!temp_results_cache.empty() && current_pos <= std::get<1>(temp_results_cache[temp_results_cache.size() - 1])) {
-					is_complement = std::get<2>(temp_results_cache[current_pos - i]);
-					temp_mer = std::get<0>(temp_results_cache[current_pos - i]);
+				if(!temp_results_cache.empty() && current_pos <= std::get<2>(temp_results_cache[temp_results_cache.size() - 1])) {
+					is_complement = std::get<1>(temp_results_cache[current_pos - i]) < std::get<0>(temp_results_cache[current_pos - i]);
+					temp_mer = is_complement ? std::get<1>(temp_results_cache[current_pos - i]) : std::get<0>(temp_results_cache[current_pos - i]);
 				} else {
-					is_complement = false;
-					temp_mer = convertKmerToInteger(temp_seg_ptr, j, k);
+					unsigned int comp;
+					unsigned int not_comp;
 
-					if(temp_mer >= border) {
-						temp_mer = convertKmerToInteger(temp_seg_complement_ptr, j, k);
-						is_complement = true;
+					if(temp_results_cache.empty()) {
+						not_comp = convertKmerToInteger(temp_seg_ptr, j, k);
+						comp = convertKmerToInteger(temp_seg_complement_ptr, j, k);
+					} else {
+						not_comp = convertKmerToIntegerWithPrevious(std::get<0>(temp_results_cache[temp_results_cache.size() - 1]), *(sequence + current_pos + k - 1), mask);
+						comp = convertKmerToIntegerWithPrevious(std::get<1>(temp_results_cache[temp_results_cache.size() - 1]), *(sequence_complement + current_pos + k - 1), mask);
 					}
 
-					temp_results_cache.emplace_back(temp_mer, current_pos, is_complement);
+					is_complement = comp < not_comp;
+					temp_mer = is_complement ? comp : not_comp;
+
+					temp_results_cache.emplace_back(not_comp, comp, current_pos);
 				}
 
 				if(!first_found || min_mer > temp_mer) {
@@ -104,14 +118,23 @@ namespace orange {
 		}
 	}
 
-	void processEndMer(const char* sequence, const char* sequence_complement, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec,unsigned int i, unsigned int k, unsigned int border, unsigned int &min_mer, bool &first_found) {
-		bool is_complement = false;
-		unsigned int temp_mer = convertKmerToInteger(sequence, i, k);
-
-		if(temp_mer >= border) {
-			temp_mer = convertKmerToInteger(sequence_complement, i, k);
-			is_complement = true;
+	void processEndMer(const char* sequence, const char* sequence_complement, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec,unsigned int i, unsigned int k, unsigned int mask, unsigned int &min_mer, bool &first_found, unsigned int &last_not_comp, unsigned int &last_comp, bool isStart) {
+		
+		if(!first_found) {
+			last_not_comp = convertKmerToInteger(sequence, i, k);
+			last_comp = convertKmerToInteger(sequence_complement, i, k);
+		} else {
+			if(isStart) {
+				last_not_comp = convertKmerToIntegerWithPrevious(last_not_comp, *(sequence + i + k - 1), mask);
+				last_comp = convertKmerToIntegerWithPrevious(last_comp, *(sequence_complement + i + k - 1), mask);
+			} else {
+				last_not_comp = convertKmerToIntegerWithPreviousInverse(last_not_comp, *(sequence + i), mask, k);
+				last_comp = convertKmerToIntegerWithPreviousInverse(last_comp, *(sequence_complement + i), mask, k);
+			}
 		}
+
+		bool is_complement = last_comp < last_not_comp;
+		unsigned int temp_mer = is_complement ? last_comp : last_not_comp;
 
 		if(!first_found || min_mer > temp_mer) {
 			if(!first_found) first_found = true;
@@ -121,33 +144,38 @@ namespace orange {
 		}
 	}
 
-	void endFirstMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int border) {
+	void endFirstMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int mask) {
 		unsigned int min_mer;
-
 		unsigned int stop_pos = std::min(std::get<1>(minimizers_vec[0]), window_length - 1);
+
+		unsigned int last_not_comp;
+		unsigned int last_comp;
 
 		bool first_found = false;
 		for(unsigned int i = 0; i < stop_pos; ++i) {
-			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, border, min_mer, first_found);
+			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, mask, min_mer, first_found, last_not_comp, last_comp, true);
 		}
 	}
 
-	void endLastMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int border) {
+	void endLastMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, unsigned int mask) {
 		unsigned int min_mer;
 
 		unsigned int stop_pos = std::max(std::get<1>(minimizers_vec[minimizers_vec.size() - 1]), sequence_length - k - window_length + 1);
 
+		unsigned int last_not_comp;
+		unsigned int last_comp;
+
 		bool first_found = false;
 		for(unsigned int i = sequence_length - k; i > stop_pos; --i) {
-			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, border, min_mer, first_found);
+			processEndMer(sequence, sequence_complement, minimizers_vec,i, k, mask, min_mer, first_found, last_not_comp, last_comp, false);
 		}
 	}
 
-	void endMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, bool isStart, unsigned int border) {
+	void endMinimizers(const char* sequence, const char* sequence_complement, unsigned int sequence_length, std::vector<std::tuple<unsigned int, unsigned int, bool>> &minimizers_vec, unsigned int k, unsigned int window_length, bool isStart, unsigned int mask) {
 		if(isStart) {
-			endFirstMinimizers(sequence, sequence_complement, sequence_length, minimizers_vec, k, window_length, border);
+			endFirstMinimizers(sequence, sequence_complement, sequence_length, minimizers_vec, k, window_length, mask);
 		} else {	
-			endLastMinimizers(sequence, sequence_complement, sequence_length, minimizers_vec, k, window_length, border);
+			endLastMinimizers(sequence, sequence_complement, sequence_length, minimizers_vec, k, window_length, mask);
 		}		
 	}
 
@@ -155,7 +183,7 @@ namespace orange {
 		
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vec;
 
-		unsigned int border = (1 << (2 * k)) / 2;
+		unsigned int mask = (1 << (2 * k)) - 1;
 
 		std::string result;		
 
@@ -165,11 +193,11 @@ namespace orange {
 	
 		const char* seq_complement = result.c_str();
 
-		middleMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, border);
+		middleMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, mask);
 		
-		endMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, false, border);
+		endMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, false, mask);
 
-		endMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, true, border);
+		endMinimizers(sequence, seq_complement, sequence_length, minimizers_vec, k, window_length, true, mask);
 
 		return minimizers_vec;
 	}
