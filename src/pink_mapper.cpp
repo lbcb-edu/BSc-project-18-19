@@ -26,6 +26,8 @@ static struct option options[] = {
 	{"k",             required_argument, 0, 'k'},
 	{"window_length", required_argument, 0, 'w'},
     {"f",			  required_argument, 0, 'f'},
+	{"cigar",         no_argument,       0, 'c'},
+	{"thread",        required_argument, 0, 't'},
     {NULL,            no_argument,       0,  0 }
 };
 
@@ -172,6 +174,10 @@ void help() {
 		"           input window length, default: 5\n"
         "       -f\n"
         "           input percentage of minimizers which are not taken in account\n"
+		"		-c, --cigar\n"
+		"			include CIGAR strings of the alignment\n"
+		"		-t, --thread\n"
+		"			input number of threads\n"
         );
 }
 
@@ -194,7 +200,10 @@ int main(int argc, char* argv[]) {
 	unsigned int window_length = 5;
     float f = 0.001;
     
-    while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:", options, NULL)) != -1) {
+	//bool c = false;
+	//int thread = 1;
+	
+    while((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:f:ct:", options, NULL)) != -1) {
         switch(optchr) {
             case 'h': 
                 help();
@@ -227,13 +236,19 @@ int main(int argc, char* argv[]) {
 				window_length = checkInput(optarg);
 				break;
             case 'f':
-                f = checkInput(optarg);
+                f = atof(optarg);
+                break;
+			case 'c':
+				//c = true;
+				break;
+			case 't':
+				//thread = checkInput(optarg);
                 break;
             default:  
                 printError();
         }
     }
-    
+
     if (argc - optind != 2) {
         printError();
     }
@@ -271,45 +286,39 @@ int main(int argc, char* argv[]) {
         cigar = std::string(cigar.rbegin(), cigar.rend());
         std::cout << "\nCigar: " << cigar << std::endl;
         
-
-		std::cout << "\nPlease wait until the minimizers are processed..." << std::endl;
         
-		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
-        std::unordered_map<unsigned int, unsigned int> occurences;
-        std::unordered_map<unsigned int, unsigned int>::iterator it;
-        std::vector<unsigned int>  sorted_occurences;
         
-		for (auto const& object: fast_objects1) {
-			minimizers_vector = pink::minimizers((object -> sequence).c_str(), (object -> sequence).length(), k, window_length);
+        std::cout << "\nPlease wait until the minimizers are processed..." << std::endl;
+        
+        std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizer_vector;
+        std::unordered_map<unsigned int, std::vector<unsigned int>> minimizer_index;
+        std::unordered_map<unsigned int, std::vector<unsigned int>>::iterator it;
+        
+        minimizer_vector = pink::minimizers((fast_objects2.front() -> sequence).c_str(), (fast_objects2.front() -> sequence).length(), k, window_length);
             
-            for (auto const& minimizer: minimizers_vector) {
-                it = occurences.find(std::get<0>(minimizer)); 
+        for (auto const& minimizer: minimizer_vector) {
+            it = minimizer_index.find(std::get<0>(minimizer)); 
                 
-                if (it == occurences.end()) {
-                    occurences.insert (std::pair<unsigned int, unsigned int>(std::get<0>(minimizer), 1));
+            if (it == minimizer_index.end()) {
+                std::vector<unsigned int> positions;
+                positions.emplace_back(std::get<1>(minimizer));
+                minimizer_index.insert(std::pair<unsigned int, std::vector<unsigned int>>(std::get<0>(minimizer), positions));
                 
-                } else {
-                    ++(it->second);
-                }
+            } else {
+                (it->second).emplace_back(std::get<1>(minimizer));
             }
-		}
-        
-        std::ofstream file;
-        file.open ("pink_minimizers.csv");
-        file << "minimizer,occurence" << "\n";
-        
-        for (auto o : occurences) {
-            file << o.first << "," << o.second << "\n";
-            sorted_occurences.emplace_back(o.second);
         }
-		
-        file.close();
+
+        std::vector<std::pair<unsigned int, std::vector<unsigned int>>> index(minimizer_index.begin(), minimizer_index.end());
         
-        unsigned int x = std::round(f * occurences.size());
-        std::sort (sorted_occurences.begin(), sorted_occurences.end());
-        
-        std::cout << "Number of distinct minimizers: " << occurences.size() << std::endl;
-        std::cout << "Number of occurences of the most frequent minimizer: " << sorted_occurences.at(occurences.size() - x - 1) << "\n\n";
+        auto comparator = [](std::pair<unsigned int, std::vector<unsigned int>> a, std::pair<unsigned int, std::vector<unsigned int>> b) {
+            return (a.second).size() > (b.second).size();
+        };
+
+        std::sort(index.begin(), index.end(), comparator);
+       
+        unsigned int x = std::round(f * minimizer_index.size()); 
+        index.erase(index.begin(), index.begin() + x);
         
     } else {
         printError();

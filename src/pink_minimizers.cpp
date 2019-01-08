@@ -76,7 +76,7 @@ namespace pink {
     
     unsigned int get_value_reversed(const char* sequence, unsigned int position, unsigned int k, unsigned int temp_value_reversed){
         unsigned int value = 0b0;
-            value = ((get_complement_letter_value(sequence[position+2]) << 2*k) | temp_value_reversed) >> 2;
+            value = ((get_complement_letter_value(sequence[position+k-1]) << 2*k) | temp_value_reversed) >> 2;
         return value;
     }
     
