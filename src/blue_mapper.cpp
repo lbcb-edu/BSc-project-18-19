@@ -17,6 +17,9 @@
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
 
+typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
+uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome);
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome);
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
     inline size_t operator()(const std::tuple<unsigned int, unsigned int, bool > &v) const {
@@ -24,6 +27,115 @@ template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
         return int_hasher(std::get<0>(v)) ^ int_hasher(std::get<1>(v)) ^ int_hasher(std::get<2>(v));
     }
 };
+}
+
+
+ typedef std::function<bool(std::tuple<unsigned int, unsigned int, bool>, std::tuple<unsigned int, unsigned int, bool>)> Comparator;
+            Comparator comparator =
+                [](std::tuple<unsigned int, unsigned int, bool> elem1, std::tuple<unsigned int, unsigned int, bool> elem2)
+                {
+                    if(std::get<2>(elem1) == std::get<2>(elem2)) {
+                        return std::get<0>(elem1) < std::get<0>(elem2);
+
+                    } else {
+                        return std::get<2>(elem1) < std::get<2>(elem2);
+                    }
+};
+
+int ceilIndex(uubtuple input, int T[], int end, int s) {
+        int start = 0;
+        int middle;
+        int len = end;
+        while(start <= end) {
+            middle = (start + end)/2;
+            if(middle < len && std::get<1>(input[T[middle]]) < s && s <= std::get<1>(input[T[middle+1]])) {
+                return middle+1;
+            }else if(std::get<1>(input[T[middle]]) < s){
+                start = middle+1;
+            }else{
+                end = middle-1;
+            }
+        }
+        return -1;
+}
+
+std::pair<std::vector<unsigned int>, std::vector<unsigned int>> longestIncreasingSubSequence(uubtuple input){
+        int T[input.size()];
+        int R[input.size()];
+
+        int T2[input.size()];
+        int R2[input.size()];
+
+        for(int i=0; i < input.size() ; i++) {
+            R[i] = -1;
+            R2[i] = -1;
+        }
+
+        T[0] = 0;
+        int len = 0;
+
+        T2[0] = 0;
+        int len2 = 0;
+
+        for(int i=1; i < input.size(); i++){
+
+            if(std::get<2>(input[i]) == 0) {
+                if(std::get<1>(input[T[0]]) > std::get<1>(input[i]) || std::get<0>(input[T[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.
+                    T[0] = i;
+                }else if(std::get<1>(input[T[len]]) < std::get<1>(input[i]) &&  std::get<0>(input[T[len]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T
+                    len = len + 1;
+                    T[len] = i;
+                    R[T[len]] = T[len-1];
+
+                }else{ //do a binary search to find ceiling of input[i] and put it there.
+                    int index = ceilIndex(input, T, len, std::get<1>(input[i]));
+                    T[index] = i;
+                    R[T[index]] = T[index-1];
+                }
+
+            } else {
+                 if(std::get<1>(input[T2[0]]) > std::get<1>(input[i]) || std::get<0>(input[T2[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.
+                    T2[0] = i;
+                }else if(std::get<1>(input[T2[len2]]) < std::get<1>(input[i]) &&  std::get<0>(input[T2[len2]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T
+                    len2 = len2 + 1;
+                    T2[len2] = i;
+                    R2[T2[len2]] = T2[len2-1];
+
+                }else{ //do a binary search to find ceiling of input[i] and put it there.
+                    int index = ceilIndex(input, T2, len2, std::get<1>(input[i]));
+                    T2[index] = i;
+                    R2[T2[index]] = T2[index-1];
+                }
+            }
+        }
+
+        std::cout << "Longest increasing subsequences " << std::endl;
+        int index = T[len];
+        int indexPrvi = T[len];
+        int indexZadnji = T[len];
+
+        while(index != -1) {
+            indexZadnji = index;
+            index = R[index];
+        }
+
+        std::vector<unsigned int> regija = {std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0};
+
+        index = T2[len2];
+        indexPrvi = T2[len2];
+        indexZadnji = T2[len2];
+
+        while(index != -1) {
+            indexZadnji = index;
+            index = R2[index];
+        }
+
+        std::vector<unsigned int> regija2 = {std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 1};
+
+        std::pair<std::vector<unsigned int>, std::vector<unsigned int>> retPair;
+        retPair.first = regija;
+        retPair.second = regija2;
+        return retPair;
 }
 
 
@@ -232,7 +344,7 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
-        std::unordered_map<unsigned int, int> occurences;
+/*      std::unordered_map<unsigned int, int> occurences;
         int j = 0;
         for(auto& i : first_object) {
             std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
@@ -264,7 +376,83 @@ int main (int argc, char* argv[]) {
 
         std::cout << nonDistinctMinimizers.size() << std::endl;
         int minimizer = f * nonDistinctMinimizers.size();
-        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << nonDistinctMinimizers[minimizer].second << std::endl;
+        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << nonDistinctMinimizers[minimizer].second << std::endl;*/
+
+        uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
+        std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
+
+        int j = 0;
+        for(auto& i : first_object) {
+            std::cout << "j = " << j++ << std::endl;
+            uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
+            uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
+
+            sort(result.begin(), result.end(), comparator);
+            std::pair<std::vector<unsigned int>, std::vector<unsigned int>> positions = longestIncreasingSubSequence(result);
+
+            unsigned int querySize = positions.first[1]-positions.first[0]+1;
+            unsigned int targetSize = positions.first[3]-positions.first[2]+1;
+
+            std::string queryString = (i->sequence).substr(positions.first[0], querySize);
+            std::string targetString = (second_object[0]->sequence).substr(positions.first[2], targetSize);
+
+            std::string cigar1;
+            unsigned int target_begin1;
+
+            std::cout << blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1) << std::endl;
+            std::cout << cigar1 << std::endl;
+            std::cout << target_begin1 << std::endl;
+
+            std::cout << "me here" << std::endl;
+
+            querySize = positions.second[1]-positions.second[0]+1;
+            targetSize = positions.second[3]-positions.second[2]+1;
+
+            std::string queryString2 = (i->sequence).substr(positions.second[0], querySize);
+            std::string targetString2 = (second_object[0]->sequence).substr(positions.second[2], targetSize);
+
+            std::string cigar2;
+            unsigned int target_begin2;
+
+            std::cout << blue::pairwise_alignment(queryString2.c_str(), querySize, targetString2.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar2, target_begin2) << std::endl;
+            std::cout << cigar2 << std::endl;
+            std::cout << target_begin2 << std::endl;
+        }
         return 0;
 }
 
+typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
+
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
+    std::unordered_map<unsigned int, uubtuple> mapa;
+    for(auto &i : genome) {
+        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapa.find(std::get<0>(i));
+        if ( got == mapa.end() ) {
+            uubtuple novi;
+            novi.push_back(i);
+            mapa[std::get<0>(i)] = novi;
+
+        } else {
+            uubtuple novi2 = got->second;
+            novi2.push_back(i);
+            mapa[std::get<0>(i)] = novi2;
+        }
+    }
+    return mapa;
+}
+
+uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome) {
+    uubtuple result;
+    for(auto& i : sequenceMinimizers) {
+        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapGenome.find(std::get<0>(i));
+        if(got == mapGenome.end()) {
+            continue;
+
+        } else {
+            for(auto& j : got->second) {
+                result.emplace_back(std::get<1>(i), std::get<1>(j), std::get<2>(i) ^ std::get<2>(j));
+            }
+        }
+    }
+    return result;
+}

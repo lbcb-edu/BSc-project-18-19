@@ -6,6 +6,7 @@
 #include <tuple>
 #include <algorithm>
 #include <unordered_set>
+#include <functional>
 
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
@@ -115,6 +116,14 @@ namespace blue
             uniqueMinimizers.emplace(window & mask, sequence_length - k, 1);
 
             std::vector<std::tuple<unsigned int, unsigned int, bool>> output (uniqueMinimizers.begin(), uniqueMinimizers.end());
+            typedef std::function<bool(std::tuple<unsigned int, unsigned int, bool>, std::tuple<unsigned int, unsigned int, bool>)> Comparator;
+            Comparator comparator =
+                [](std::tuple<unsigned int, unsigned int, bool> elem1, std::tuple<unsigned int, unsigned int, bool> elem2)
+                {
+                    return std::get<1>(elem1) < std::get<1>(elem2);
+                };
+
+            sort(output.begin(), output.end(), comparator);
             return output;
     }
 
