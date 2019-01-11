@@ -281,7 +281,6 @@ int main (int argc, char* argv[]) {
         std::string first = argv[optind];
         std::string second = argv[optind+1];
 
-
         for (size_t i=0; i<extensions.size(); i++) {
             if(first.find(extensions[i])>=0) {
                 for (size_t j=0; j<extensions.size(); j++) {
@@ -344,6 +343,10 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
+        query.clear();
+        target.clear();
+        cigar.clear();
+
 /*      std::unordered_map<unsigned int, int> occurences;
         int j = 0;
         for(auto& i : first_object) {
@@ -381,6 +384,8 @@ int main (int argc, char* argv[]) {
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
         std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
 
+        genomeMinimizers.clear();
+
         int j = 0;
         for(auto& i : first_object) {
             std::cout << "j = " << j++ << std::endl;
@@ -390,12 +395,23 @@ int main (int argc, char* argv[]) {
             sort(result.begin(), result.end(), comparator);
             std::pair<std::vector<unsigned int>, std::vector<unsigned int>> positions = longestIncreasingSubSequence(result);
 
+            result.clear();
+            sequenceMinimizers.clear();
+
             unsigned int querySize = positions.first[1]-positions.first[0]+1;
             unsigned int targetSize = positions.first[3]-positions.first[2]+1;
 
-            std::string queryString = (i->sequence).substr(positions.first[0], querySize);
-            std::string targetString = (second_object[0]->sequence).substr(positions.first[2], targetSize);
+            std::string& aq = (i-> sequence);
+            std::string& tq = (second_object[0]->sequence);
 
+            std::string queryString = aq.substr(positions.first[0], querySize);
+            std::string targetString = tq.substr(positions.first[2], targetSize);
+
+            std::cout<< queryString << std::endl;
+            std::cout<< targetString << std::endl;
+
+            std::cout << "query len " << querySize << std::endl;
+            std::cout << "target len " << targetSize << std::endl;
             std::string cigar1;
             unsigned int target_begin1;
 
@@ -404,6 +420,7 @@ int main (int argc, char* argv[]) {
             std::cout << target_begin1 << std::endl;
 
             std::cout << "me here" << std::endl;
+
 
             querySize = positions.second[1]-positions.second[0]+1;
             targetSize = positions.second[3]-positions.second[2]+1;

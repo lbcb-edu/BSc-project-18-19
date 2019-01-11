@@ -10,7 +10,7 @@ namespace blue
 {
     typedef struct {
         int value;
-        std::pair<int, int> trace;
+        char trace;
     } Cell;
 
     void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int i, int j, std::string &cigar, unsigned int &target_begin, const char* query, unsigned int query_length, const char* target);
@@ -82,10 +82,11 @@ namespace blue
 
         for(int i = 1; i < query_length+1; i++) {
             for(int j = 1; j<target_length+1; j++ ) {
+
                 if (matrix[i][j].value > max_val) {
-                max_val = matrix[i][j].value;
-                max_cell.first = i;
-                max_cell.second = j;
+                    max_val = matrix[i][j].value;
+                    max_cell.first = i;
+                    max_cell.second = j;
                 }
             }
         }
@@ -151,32 +152,27 @@ namespace blue
                            int match, int mismatch, int gap, std::vector<std::vector<Cell> > &matrix, AlignmentType type) {
 
         matrix[0][0].value = 0;
-        matrix[0][0].trace.first = -1;
-        matrix[0][0].trace.second = -1;
+        matrix[0][0].trace = 'n';
 
         if (type == global) {
             for(int i = 1; i < query_length+1; i++) {
                 matrix[i][0].value = gap*i;
-                matrix[i][0].trace.first = i-1;
-                matrix[i][0].trace.second = 0;
+                matrix[i][0].trace = 'u';
             }
 
             for(int i = 1; i<target_length + 1; i++) {
                 matrix[0][i].value = gap*i;
-                matrix[0][i].trace.first = 0;
-                matrix[0][i].trace.second = i-1;
+                matrix[0][i].trace = 'l';
             }
         } else {
             for (int i=1; i < query_length + 1; i++){
                 matrix[i][0].value = 0;
-                matrix[i][0].trace.first = -1;
-                matrix[i][0].trace.second = -1;
+                matrix[i][0].trace = 'n';
             }
 
             for (int i=1; i < target_length + 1; i++){
                 matrix[0][i].value = 0;
-                matrix[0][i].trace.first = -1;
-                matrix[0][i].trace.second = -1;
+                matrix[0][i].trace = 'n';
             }
         }
 
@@ -189,52 +185,43 @@ namespace blue
 
                 if (match_mismatch < 0 && insertion < 0 && deletion < 0 && type == local) {
                     matrix[i][j].value = 0;
-                    matrix[i][j].trace.first = -1;
-                    matrix[i][j].trace.second = -1;
+                    matrix[i][j].trace = 'n';
                 } else {
                     if(insertion > deletion) {
                         if(match_mismatch > insertion) {
                             matrix[i][j].value = match_mismatch;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j-1;
+                            matrix[i][j].trace = 'd';
 
                     } else if (match_mismatch == insertion) {
                         if (matrix[i-1][j-1].value > matrix[i][j-1].value) {
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j-1;
+                            matrix[i][j].trace = 'd';
                         } else {
-                            matrix[i][j].trace.first = i;
-                            matrix[i][j].trace.second = j-1;
+                            matrix[i][j].trace = 'l';
                         }
                         matrix[i][j].value = match_mismatch;
 
                     } else {
                         matrix[i][j].value = insertion;
-                        matrix[i][j].trace.first = i;
-                        matrix[i][j].trace.second = j-1;
+                        matrix[i][j].trace = 'l';
                     }
 
     //***********************************************************************************
                     } else {  //deletion > insertion
                         if(match_mismatch > deletion) {
                             matrix[i][j].value = match_mismatch;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j-1;
+                            matrix[i][j].trace = 'd';
 
                         } else if (match_mismatch == deletion) {
                             if (matrix[i-1][j-1].value > matrix[i-1][j].value) {
-                                matrix[i][j].trace.first = i-1;
-                                matrix[i][j].trace.second = j-1;
+                                matrix[i][j].trace = 'd';
                             } else {
-                                matrix[i][j].trace.first = i-1;
-                                matrix[i][j].trace.second = j;
+                                matrix[i][j].trace = 'u';
                             }
                             matrix[i][j].value = match_mismatch;
 
                         } else {
                             matrix[i][j].value = deletion;
-                            matrix[i][j].trace.first = i-1;
-                            matrix[i][j].trace.second = j;
+                            matrix[i][j].trace = 'u';
                         }
                     }
                 }
@@ -243,7 +230,7 @@ namespace blue
     }
 
     void create_cigar_string(std::vector<std::vector<Cell> > &matrix, int start_row, int start_column,
-                             std::string &adress, unsigned int &target_begin, 
+                             std::string &adress, unsigned int &target_begin,
                                const char* query, unsigned int query_length, const char* target) {
 
         int mism_counter, mis_counter, del_counter, ins_counter;
@@ -251,6 +238,8 @@ namespace blue
 
         std::string cigar_reverse = "";
         Cell current = matrix[start_row][start_column];
+        int currentRow = start_row;
+        int currentColumn = start_column;
 
         if (start_row < query_length) {
             cigar_reverse+='S';
@@ -261,9 +250,9 @@ namespace blue
         pos.first = start_row;
         pos.second = start_column;
 
-        while(current.trace.first != -1 && current.trace.second != -1) {
+        while(current.trace != 'n') {
             //provjera za match/mismatch
-            if(current.trace.first == pos.first-1 && current.trace.second == pos.second-1) {
+            if(current.trace == 'd') {
                 if(del_counter != 0) {
                     cigar_reverse+=std::to_string(del_counter);
                     del_counter = 0;
@@ -271,7 +260,7 @@ namespace blue
                     cigar_reverse +=std::to_string(ins_counter);
                     ins_counter = 0;
                 }
-                
+
                 if(query[pos.first-1] == target[pos.second-1]){
                     if(mism_counter != 0) {
                         cigar_reverse+=std::to_string(mism_counter);
@@ -293,7 +282,7 @@ namespace blue
                 }
 
                 // provjera za insertion
-            } else if(current.trace.first == pos.first && current.trace.second == pos.second-1) {
+            } else if(current.trace == 'l') {
                 if(del_counter != 0) {
                     cigar_reverse+=std::to_string(del_counter);
                     del_counter = 0;
@@ -326,8 +315,25 @@ namespace blue
                 }
                 ++del_counter;
             }
-            pos = current.trace;
-            current = matrix[current.trace.first][current.trace.second];
+
+            if (current.trace == 'd'){
+                pos.first = currentRow - 1;
+                pos.second = currentColumn - 1;
+            } else if(current.trace == 'u'){
+                pos.first = currentRow - 1;
+                pos.second = currentColumn;
+            } else if(current.trace == 'l'){
+                pos.first = currentRow;
+                pos.second = currentColumn - 1;
+            }
+
+            if (current.trace == 'd'){
+                current = matrix[--currentRow][--currentColumn];
+            } else if(current.trace == 'u'){
+                current = matrix[--currentRow][currentColumn];
+            } else if(current.trace == 'l'){
+                current = matrix[currentRow][--currentColumn];
+            }
         }
 
        target_begin = (unsigned int) pos.second;
