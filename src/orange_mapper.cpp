@@ -34,6 +34,7 @@ struct option options[] = {
 		{"kmer", required_argument, 0, 'k'},
 		{"window_lenght", required_argument, 0 ,'w'},
 		{"top_minimizers", required_argument, 0 ,'f'},
+		{"cigar", no_argument, 0, 'c'},
 		{0, 0, 0, 0}
 	};
 
@@ -401,10 +402,12 @@ int main(int argc, char** argv) {
 	int k=15, window_lenght= 5;
 	double f = 0.001;
 
+	bool includeCIGARInPAF = false;
+
 	char optchr;
 
 	int option_index = 0;
-	while((optchr = getopt_long(argc, argv, "hvgslk:w:f:", options, &option_index)) != -1) {
+	while((optchr = getopt_long(argc, argv, "hvcgslk:w:f:", options, &option_index)) != -1) {
 		switch(optchr) {
 			case 0:
 				if(options[option_index].flag != 0)
@@ -442,6 +445,9 @@ int main(int argc, char** argv) {
 			case 'f':
 				f = std::atof(optarg);
 				break;
+			case 'c':
+				includeCIGARInPAF = true;
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
@@ -471,7 +477,7 @@ int main(int argc, char** argv) {
 
 	//findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
 
-	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, false);
+	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF);
 
 //	unsigned int a, b, c, d;
 //	unsigned int max = 0;
