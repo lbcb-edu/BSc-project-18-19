@@ -28,26 +28,19 @@ TEST (Pairwise_alignment, semi_global) {
 }
 
 TEST (Minimizers, 3mer_windowLenght3) {
-	std::tuple<unsigned int, unsigned int, bool> temp_tuple;
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizer_vec;
 
-	temp_tuple = std::make_tuple (18,0,1);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (11,1,1);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (6,4,1);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (6,7,0);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (2,10,1);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (11,11,1);
-	minimizer_vec.push_back(temp_tuple);
-	temp_tuple = std::make_tuple (17,12,0);
-	minimizer_vec.push_back(temp_tuple);
+	minimizer_vec.emplace_back(18, 0, 1);
+	minimizer_vec.emplace_back(11, 1, 1);
+	minimizer_vec.emplace_back(6, 4, 1);
+	minimizer_vec.emplace_back(6, 7, 0);
+	minimizer_vec.emplace_back(2, 10, 1);
+	minimizer_vec.emplace_back(11, 11, 1);
+	minimizer_vec.emplace_back(17, 12, 0);
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> res_vec = orange::minimizers("TGACGTACATGGACA", 15, 3, 3);
-	std::sort(res_vec.begin(), res_vec.end(), [](std::tuple<unsigned int, unsigned int, bool> const &t1, std::tuple<unsigned int, unsigned int, bool> const &t2) { return std::get<1>(t1) < std::get<1>(t2);});
+	std::sort(res_vec.begin(), res_vec.end(), [](const std::tuple<unsigned int, unsigned int, bool> &a, const std::tuple<unsigned int, unsigned int, bool> &b)
+							{return std::get<1>(a) < std::get<1>(b);});
 
 	EXPECT_EQ (res_vec, minimizer_vec);
 }
