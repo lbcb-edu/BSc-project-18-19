@@ -105,7 +105,7 @@ namespace pink {
         temp_value = first_min_value;
         temp_value_reversed = first_min_value_reversed;
         
-        for (int i = 1; i < window_length-1; i++) {
+        for (unsigned int i = 1; i < window_length-1; i++) {
             temp_value = get_value(sequence, i, k, temp_value);
             temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
             if(temp_value < temp_value_reversed) {
@@ -166,7 +166,7 @@ namespace pink {
         temp_value = first_min_value;
         temp_value_reversed = first_min_value_reversed;
         
-        for (int i = 1; i < window_length-1; i++) {
+        for (unsigned int i = 1; i < window_length-1; i++) {
             temp_value = get_value(sequence, i, k, temp_value);
             temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
             if(temp_value < temp_value_reversed) {
@@ -202,7 +202,7 @@ namespace pink {
         temp_value = first_min_value;
         temp_value_reversed = first_min_value_reversed;
         
-        for (int i = last_beginning; i >= last_window; i--) {
+        for (unsigned int i = last_beginning; i >= last_window; i--) {
             temp_value = get_value(sequence, i, k, temp_value);
             temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
             
