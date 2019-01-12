@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <tuple>
 #include <unordered_set>
+#include <queue>
 
 #include "pink_minimizers.hpp"
 
@@ -72,170 +73,149 @@ namespace pink {
         }
         return value;
     }
-        
+    
     
     unsigned int get_value_reversed(const char* sequence, unsigned int position, unsigned int k, unsigned int temp_value_reversed){
         unsigned int value = 0b0;
-            value = ((get_complement_letter_value(sequence[position+k-1]) << 2*k) | temp_value_reversed) >> 2;
+        value = ((get_complement_letter_value(sequence[position+k-1]) << 2*k) | temp_value_reversed) >> 2;
         return value;
     }
     
-    void calculate_min_value(unsigned int* min_value, unsigned int* min_position, bool* min_direction, const char* sequence, unsigned int minimizer_beginning, unsigned int k,unsigned int* temp_value, unsigned int* temp_value_reversed){
-        
-        *temp_value = get_value(sequence, minimizer_beginning, k, *temp_value);
-        *temp_value_reversed = get_value_reversed(sequence, minimizer_beginning, k, *temp_value_reversed);
-
-        if (*temp_value < *min_value){
-            *min_value = *temp_value;
-            *min_position = minimizer_beginning;
-            *min_direction = 0;
-        }
-        if (*temp_value_reversed < *min_value){
-            *min_value = *temp_value_reversed;
-            *min_position = minimizer_beginning;
-            *min_direction = 1;
-        }
-    }
     
     void get_interior_minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length,std::unordered_set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set){
         
         unsigned int l = window_length + k - 1;
         unsigned int last_beginning = sequence_length - l;
         
-        unsigned int min_value;
-        unsigned int min_position;
-        bool min_direction;
-        unsigned int minimizer_beginning;
+        unsigned int first_min_value;
+        unsigned int first_min_value_reversed;
+        unsigned int temp_value;
+        unsigned int temp_value_reversed;
         
-        unsigned int first_min_value = get_first_value(sequence, 0, k);
-        unsigned int first_min_value_reversed = get_first_value_reversed(sequence, 0, k);
+        std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
         
-        for (unsigned beginning_position = 0; beginning_position <= last_beginning; beginning_position++){
-            
-            
-            
-            unsigned int temp_value = 0;
-            unsigned int temp_value_reversed = 0;
-            
-            for (unsigned i = 0; i < window_length; i++){
-                minimizer_beginning = beginning_position + i;
-                if (i == 0){
-                    if (first_min_value < first_min_value_reversed){
-                        min_value = first_min_value;
-                        min_position = beginning_position;
-                        min_direction = 0;
-                    } else {
-                        min_value = first_min_value_reversed;
-                        min_position = beginning_position;
-                        min_direction = 1;
-                    }
-                    
-                    temp_value = first_min_value;
-                    temp_value_reversed = first_min_value_reversed;
-                    
-                } else {
-                    calculate_min_value(&min_value, &min_position, &min_direction, sequence, minimizer_beginning, k, &temp_value, &temp_value_reversed);
-                }
-                if (i == 1){
-                    first_min_value = temp_value;
-                    first_min_value_reversed = temp_value_reversed;
-                }
-                
+        first_min_value = get_first_value(sequence, 0, k);
+        first_min_value_reversed = get_first_value_reversed(sequence, 0, k);
+        
+        if(first_min_value < first_min_value_reversed) {
+            red.emplace_back(first_min_value, 0, 0);
+        } else {
+            red.emplace_back(first_min_value_reversed, 0, 1);
+        }
+        temp_value = first_min_value;
+        temp_value_reversed = first_min_value_reversed;
+        
+        for (int i = 1; i < window_length-1; i++) {
+            temp_value = get_value(sequence, i, k, temp_value);
+            temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
+            if(temp_value < temp_value_reversed) {
+                red.emplace_back(temp_value, i, 0);
+            } else {
+                red.emplace_back(temp_value_reversed, i, 1);
             }
-            minimizers_set.emplace(min_value, min_position, min_direction);
+        }
+        
+        
+        
+        for (unsigned beginning_position = window_length-1; beginning_position <= last_beginning; beginning_position++){
+            
+            temp_value = get_value(sequence, beginning_position, k, temp_value);
+            temp_value_reversed = get_value_reversed(sequence, beginning_position, k, temp_value_reversed);
+            int min_orientation_tmp = temp_value < temp_value_reversed ? 0 : 1;
+            int min_value_tmp = temp_value < temp_value_reversed ? temp_value : temp_value_reversed;
+            
+            std::tuple<unsigned int, unsigned int, bool> tmp_elem = std::make_tuple(min_value_tmp, beginning_position, min_orientation_tmp);
+            
+            while(!red.empty()) {
+                std::tuple<unsigned int, unsigned int, bool> current_elemn = red.back();
+                if(std::get<0>(current_elemn) >= std::get<0>(tmp_elem)) {
+                    red.pop_back();
+                } else {
+                    break;
+                }
+            }
+            
+            red.push_back(tmp_elem);
+            
+            
+            std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+            minimizers_set.insert(tmp_rez);
+            
+            if(std::get<1>(tmp_rez) + (window_length-1) <= beginning_position) {
+                red.pop_front();
+            }
         }
     }
     
     void get_beginning_minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length, std::unordered_set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set){
-        
-        unsigned int min_value;
-        unsigned int min_position;
-        bool min_direction;
-        unsigned int minimizer_beginning;
+
+        unsigned int temp_value;
+        unsigned int temp_value_reversed;
         
         unsigned int first_min_value = get_first_value(sequence, 0, k);
         unsigned int first_min_value_reversed = get_first_value_reversed(sequence, 0, k);
         
-        for (unsigned beginning_position = 1; beginning_position < window_length - 1; beginning_position++){
-            min_value = get_value(sequence, 0, k, 0);
-            min_position = 0;
-            min_direction = 0;
-            unsigned int temp_value = 0;
-            unsigned int temp_value_reversed = 0;
-            
-            for (unsigned i = 0; i < beginning_position; i++){
-                if (i == 0){
-                    
-                    if (first_min_value < first_min_value_reversed){
-                        min_value = first_min_value;
-                        min_position = beginning_position - 1;
-                        min_direction = 0;
-                    } else {
-                        min_value = first_min_value_reversed;
-                        min_position = beginning_position - 1;
-                        min_direction = 1;
-                    }
-                    
-                    temp_value = first_min_value;
-                    temp_value_reversed = first_min_value_reversed;
-                } else {
-                    minimizer_beginning = beginning_position + i;
-                    calculate_min_value(&min_value, &min_position, &min_direction, sequence, minimizer_beginning, k, &temp_value, &temp_value_reversed);
-                }
-                if (i == 1){
-                    first_min_value = temp_value;
-                    first_min_value_reversed = temp_value_reversed;
-                }
-            }
-            minimizers_set.emplace(min_value, min_position, min_direction);
+        std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
+        
+        
+        if(first_min_value < first_min_value_reversed) {
+            red.emplace_back(first_min_value, 0, 0);
+        } else {
+            red.emplace_back(first_min_value_reversed, 0, 1);
         }
+        temp_value = first_min_value;
+        temp_value_reversed = first_min_value_reversed;
+        
+        for (int i = 1; i < window_length-1; i++) {
+            temp_value = get_value(sequence, i, k, temp_value);
+            temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
+            if(temp_value < temp_value_reversed) {
+                red.emplace_back(temp_value, i, 0);
+            } else {
+                red.emplace_back(temp_value_reversed, i, 1);
+            }
+        }
+        
+        std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+        minimizers_set.insert(tmp_rez);
+        
     }
     
     void get_end_minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length, std::unordered_set<std::tuple<unsigned int, unsigned int, bool>>& minimizers_set){
-        
-        unsigned int min_value;
-        unsigned int min_position;
-        bool min_direction;
-        unsigned int minimizer_beginning;
+      
         unsigned int last_beginning = sequence_length - k;
         unsigned int last_window = sequence_length - window_length;
         
-        unsigned int first_min_value = get_first_value(sequence, last_beginning - 1, k);
-        unsigned int first_min_value_reversed = get_first_value_reversed(sequence, last_beginning - 1, k);
+        unsigned int first_min_value = get_first_value(sequence, last_beginning, k);
+        unsigned int first_min_value_reversed = get_first_value_reversed(sequence, last_beginning, k);
+        unsigned int temp_value;
+        unsigned int temp_value_reversed;
         
-        for (unsigned int beginning_position = last_beginning - 1; beginning_position > last_window; beginning_position--){
-            min_value = get_value(sequence, last_beginning, k, last_beginning);
-            min_position = last_beginning;
-            min_direction = 0;
-            unsigned int temp_value = 0;
-            unsigned int temp_value_reversed = 0;
-            
-            
-            for (unsigned i = beginning_position; i < last_beginning; i++){
-                if (i == last_beginning - 1){
-                    
-                    if (first_min_value < first_min_value_reversed){
-                        min_value = first_min_value;
-                        min_position = beginning_position;
-                        min_direction = 0;
-                    } else {
-                        min_value = first_min_value_reversed;
-                        min_position = beginning_position;
-                        min_direction = 1;
-                    }
-                    temp_value = first_min_value;
-                    temp_value_reversed = first_min_value_reversed;
-                } else {
-                    minimizer_beginning = beginning_position + i;
-                    calculate_min_value(&min_value, &min_position, &min_direction, sequence, minimizer_beginning, k, &temp_value, &temp_value_reversed);
-                }
-                if (i == last_beginning){
-                    first_min_value = temp_value;
-                    first_min_value_reversed = temp_value_reversed;
-                }
-            }
-            minimizers_set.emplace(min_value, min_position, min_direction);
+        std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
+        
+        
+        if(first_min_value < first_min_value_reversed) {
+            red.emplace_back(first_min_value, last_beginning, 0);
+        } else {
+            red.emplace_back(first_min_value_reversed, last_beginning, 1);
         }
+        temp_value = first_min_value;
+        temp_value_reversed = first_min_value_reversed;
+        
+        for (int i = last_beginning; i >= last_window; i--) {
+            temp_value = get_value(sequence, i, k, temp_value);
+            temp_value_reversed = get_value_reversed(sequence, i, k, temp_value_reversed);
+            
+            if(temp_value < temp_value_reversed) {
+                red.emplace_back(temp_value, i, 0);
+            } else {
+                red.emplace_back(temp_value_reversed, i, 1);
+            }
+        }
+        
+        std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+        minimizers_set.insert(tmp_rez);
+        
     }
     
     std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(const char* sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length){
@@ -253,3 +233,5 @@ namespace pink {
         
     }
 }
+
+
