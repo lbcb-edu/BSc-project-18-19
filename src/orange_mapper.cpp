@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <functional>
 #include <algorithm>
+#include <iterator>
+#include <bits/stdc++.h>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
@@ -47,6 +49,26 @@ typedef struct alignmentStruct alignment;
 auto cmp_def = [](std::pair<unsigned int,unsigned int> const & a, std::pair<unsigned int,unsigned int> const & b) { 
  		return a.second != b.second?  a.second > b.second : a.first > b.first;
 	};
+
+auto custom_cmp_1 = [](std::tuple<unsigned int, short, long int, long int> const & a, std::tuple<unsigned int, short, long int, long int> const & b) { 
+			if(std::get<1>(a) == 1) return std::get<2>(a) - std::get<3>(a) < std::get<2>(b) - std::get<3>(b);
+			return std::get<2>(a) + std::get<3>(a) < std::get<2>(b) + std::get<3>(b);
+	};// ???
+
+auto custom_lis_cmp = [](long int a, std::tuple<unsigned int, short, long int, unsigned int> const & b) { 
+				return a < std::get<3>(b);
+			};// ???
+
+//auto custom_cmp_2 = [](unsigned int a, std::tuple<unsigned int, short, long int, unsigned int> const &b) { 
+//				return std::get<3>(b) < a;
+//			};// ???
+
+auto custom_cmp = [](std::tuple<unsigned int, short, long int, unsigned int> const & a, std::tuple<unsigned int, short, long int, unsigned int> const & b) { 
+				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);		
+				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
+				if(std::get<2>(a) != std::get<2>(b)) return std::get<2>(a) < std::get<2>(b);
+				return std::get<3>(a) < std::get<3>(b);
+			};// ???
 
 struct statsStruct {
 	uint32_t max;
@@ -298,18 +320,46 @@ std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned i
 	return ref_index;
 }
 
+void LISAlgorithm(std::vector<std::tuple<unsigned int, short, long int, long int>> const &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+	std::vector<std::tuple<unsigned int, short, long int, long int>> temp_vec;
+
+	for(int i = start; i <= end; i++) {
+		auto it = std::upper_bound(temp_vec.begin(), temp_vec.end(), std::get<3>(vec[i]), custom_lis_cmp);
+		if(it == temp_vec.end())
+			temp_vec.push_back(vec[i]);
+		else
+			*it = vec[i];
+	}
+
+	if(temp_vec.size() > max_len) {
+		max_len = temp_vec.size();
+		query_start = std::get<1>(temp_vec[0]) == 0 ? std::get<2>(temp_vec[0]) + std::get<3>(temp_vec[0]) : std::get<2>(temp_vec[0]) - std::get<3>(temp_vec[0]);
+		ref_start = std::get<3>(temp_vec[0]);
+		query_end = std::get<1>(temp_vec[temp_vec.size() - 1]) == 0 ? std::get<2>(temp_vec[temp_vec.size() - 1]) + std::get<3>(temp_vec[temp_vec.size() - 1]) : std::get<2>(temp_vec[temp_vec.size() - 1]) - std::get<3>(temp_vec[temp_vec.size() - 1]);
+		ref_end = std::get<3>(temp_vec[temp_vec.size() - 1]);
+	}
+}
+
+void findLongestLinearChain(std::vector<std::tuple<unsigned int, short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+	std::sort(vec.begin() + start, vec.begin() + end + 1, custom_cmp_1);
+
+	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
+}
+
 void constructAndPrintPAF(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFASTA, int k, int window_lenght, double f, bool cigar) {
 	alignment al;
 	std::vector<std::unique_ptr<FASTAQEntity>> fastaq_objects = 
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
-	for(auto const &reference_gen : reference_gen_vec) {
-		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, reference_gen);
+	for(int i = 0; i < reference_gen_vec.size(); ++i) {
+		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, reference_gen_vec[i]);
+		std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
+		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers;
 
 		for(auto const &x : fastaq_objects) {
-			std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers = orange::minimizers(reference_gen->sequence.c_str(), reference_gen->sequence.length(), k,window_lenght);
-			std::vector<std::tuple<unsigned int, short, long int, unsigned int>> vec;	
+			fragment_minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k,window_lenght);
+			vec.clear();
 
 			for(auto const &t : fragment_minimizers) {
 				for(auto const &rt : ref_index[std::get<0>(t)]) {
@@ -320,27 +370,28 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 					}
 				}
 			}
-			
-			auto custom_cmp = [](std::tuple<unsigned int, short, long int, unsigned int> const & a, std::tuple<unsigned int, short, long int, unsigned int> const & b) { 
-				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);		
-				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
-				if(std::get<2>(a) != std::get<2>(b)) return std::get<2>(a) < std::get<2>(b);
-				return std::get<3>(a) < std::get<3>(b);
-			};// ???
 
 			std::sort(vec.begin(), vec.end(), custom_cmp);
 
 			unsigned int b = 0;
+
+			unsigned int query_start;
+			unsigned int query_end;
+			unsigned int ref_start;
+			unsigned int ref_end;
+
+			unsigned int max_len = 0;
 			for(unsigned int i = 0; i < vec.size(); ++i) {
 				if(i == vec.size() - 1 ||
 					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
 					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
-					//longest linear chain here <==
+					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
 					b = i + 1;
 				}
 			}
 		}
+
 	}
 }
 
@@ -419,9 +470,48 @@ int main(int argc, char** argv) {
 
 	calculateAndPrintOutStatistics(firstFilePath, secondFilePath, isFirstFASTA, alignment);
 
-//	findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
+	//findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
 
 	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, false);
+
+//	unsigned int a, b, c, d;
+//	unsigned int max = 0;
+//	std::vector<std::tuple<unsigned int, short, long int, long int>> vect;
+//	vect.emplace_back(11, 1, 19, 15);//25
+//	vect.emplace_back(11, 1, 37, 15);//5
+//	vect.emplace_back(11, 0, 99, 31);
+//	vect.emplace_back(11, 1, 18, 8);//10
+//	vect.emplace_back(11, 1, 26, 11);//15
+//	vect.emplace_back(11, 1, 29, 11);
+//	vect.emplace_back(2, 1, 153, 51);
+//	vect.emplace_back(11, 1, 33, 13);//20
+//	vect.emplace_back(2, 1, 45, 22);
+	
+//	for(int i = 0; i < vect.size(); i++) {
+//		printf("%d %d %ld %ld \n", std::get<0>(vect[i]), std::get<1>(vect[i]), std::get<2>(vect[i]), std::get<3>(vect[i]));
+//	}
+//	printf("sort\n");
+
+//	std::sort(vect.begin(), vect.end(), custom_cmp);
+
+//	for(int i = 0; i < vect.size(); i++) {
+//		printf("%d %d %ld %ld \n", std::get<0>(vect[i]), std::get<1>(vect[i]), std::get<2>(vect[i]), std::get<3>(vect[i]));
+//	}
+//	printf("rr\n");
+//	int br = 0;
+//	for(unsigned int i = 0; i < vect.size(); ++i) {
+//				if(i == vect.size() - 1 ||
+//					std::get<0>(vect[i + 1]) != std::get<0>(vect[i]) ||
+//					std::get<1>(vect[i + 1]) != std::get<1>(vect[i]) ||
+//					std::get<2>(vect[i + 1]) - std::get<2>(vect[i]) >= DEFAULT_BAND_OF_WIDTH) {
+//					findLongestLinearChain(vect, br, i, a, b, c, d, max);
+//					printf("max je %d\n", max);
+//					br = i + 1;
+//				}
+//			}
+
+	
+//	printf("%d %d %d %d %d \n", a, b, c, d, max);
 
 	return 0;
 }
