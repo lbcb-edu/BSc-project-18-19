@@ -11,7 +11,6 @@
 #include <functional>
 #include <algorithm>
 #include <iterator>
-#include <bits/stdc++.h>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
