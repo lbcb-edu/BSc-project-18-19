@@ -385,6 +385,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			unsigned int max_len = 0;
 			for(unsigned int i = 0; i < vec.size(); ++i) {
 				if(i == vec.size() - 1 ||
+					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
 					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
 					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
