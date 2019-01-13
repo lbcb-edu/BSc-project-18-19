@@ -385,7 +385,6 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			unsigned int max_len = 0;
 			for(unsigned int i = 0; i < vec.size(); ++i) {
 				if(i == vec.size() - 1 ||
-					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
 					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
 					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
@@ -394,13 +393,22 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			}
 
 			std::string cigar;
+			std::string sub;
 			std::string paf="";
 			orange::pairwise_alignment(x->sequence.substr(query_start, query_end-query_start).c_str(), query_end-query_start, reference_gen_vec[j]->sequence.substr(ref_start, ref_end-ref_start).c_str(), ref_end-ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
 			unsigned int len = cigar.length();
-			unsigned int count=0;
+			unsigned int count=0, e=0;
 			for(int i = 0; i < len; ++i) {
-				if(cigar[i]=='M')
-					count++;
+				if(cigar[i]=='I' || cigar[i]=='D') {
+					e= i+1;
+				}
+				else {
+					if(cigar[i]=='X' || cigar[i]=='=') {
+						sub = cigar.substr(e, i-e);
+						e = i+1;
+						count += std::stoi(sub);
+					}
+				}
 			}
 
 			paf += x->name + "\n";
