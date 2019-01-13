@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include <string>
+#include <algorithm>
 #include "brown_alignment.hpp"
 #include "brown_minimizers.hpp"
 
@@ -40,6 +41,11 @@ namespace {
 
 		TEST(MapperTest, TestCGAC){
  		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGAC",4, 3 , 1);
+ 		std::sort(minimizers.begin(), minimizers.end(),
+ 				[] (const std::tuple<unsigned int, unsigned int, bool>& a,
+ 						const std::tuple<unsigned int, unsigned int, bool>& b) {
+ 					return std::get<1>(a) < std::get<1>(b);
+ 				});
 
 		EXPECT_EQ(std::get<0>(minimizers.at(0)), 13);
 		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
@@ -52,6 +58,11 @@ namespace {
 
 	TEST(MapperTest, TestCGACT){
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("CGACT", 5, 3, 1);
+		std::sort(minimizers.begin(), minimizers.end(),
+ 				[] (const std::tuple<unsigned int, unsigned int, bool>& a,
+ 						const std::tuple<unsigned int, unsigned int, bool>& b) {
+ 					return std::get<1>(a) < std::get<1>(b);
+ 				});
 
 		EXPECT_EQ(std::get<0>(minimizers.at(0)), 13);
 		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
@@ -67,6 +78,11 @@ namespace {
 
 	TEST(MapperTest, TestTGACGTACATGGACA){
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers = brown::minimizers("TGACGTACATGGACA", 15, 3, 3);
+		std::sort(minimizers.begin(), minimizers.end(),
+ 				[] (const std::tuple<unsigned int, unsigned int, bool>& a,
+ 						const std::tuple<unsigned int, unsigned int, bool>& b) {
+ 					return std::get<1>(a) < std::get<1>(b);
+ 				});
 
 		EXPECT_EQ(std::get<0>(minimizers.at(0)), 33);
 		EXPECT_EQ(std::get<1>(minimizers.at(0)), 0);
@@ -95,8 +111,3 @@ namespace {
 		EXPECT_EQ(minimizers.size(), 8);
 	}
 }
-
-// int main(int argc, char **argv) {
-//   ::testing::InitGoogleTest(&argc, argv);
-//   return RUN_ALL_TESTS();
-// }

@@ -215,11 +215,7 @@ std::vector<triplet_t> minimizers(
 
   std::vector<triplet_t> minimizers_vector(
       minimizers_set.begin(), minimizers_set.end());
-  std::sort(minimizers_vector.begin(), minimizers_vector.end(),
-            [] (const triplet_t& a,
-            const triplet_t& b) {
-              return (std::get<1>(a) < std::get<1>(b));
-            });
+
   return minimizers_vector;
 }
 
