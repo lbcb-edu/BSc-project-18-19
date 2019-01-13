@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <fstream>
 #include <cmath>
-#include <tr1/memory>
+#include <memory>
 #include <iterator>
 
 #include <bioparser/bioparser.hpp>
@@ -188,20 +188,20 @@ void version() {
 template<typename E>
 struct Node {
     E value;
-    std::tr1::shared_ptr<Node<E>> pointer;
+    std::shared_ptr<Node<E>> pointer;
 };
 
 template<class E>
 struct node_ptr_less {
-    bool operator()(const std::tr1::shared_ptr<Node<E> > &node1,
-                    const std::tr1::shared_ptr<Node<E> > &node2) const {
+    bool operator()(const std::shared_ptr<Node<E> > &node1,
+                    const std::shared_ptr<Node<E> > &node2) const {
         return node1->value < node2->value;
     }
 };
 
 template<typename E>
 std::vector<E> lis(const std::vector<E> &n) {
-    typedef std::tr1::shared_ptr<Node<E> > NodePtr;
+    typedef std::shared_ptr<Node<E> > NodePtr;
 
     std::vector<NodePtr> pileTops;
     // sort into piles
@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
     unsigned int window_length = 5;
     float f = 0.001;
 
-    //bool c = false;
+    bool c = false;
     //int thread = 1;
 
     while ((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:f:ct:", options, NULL)) != -1) {
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
                 f = atof(optarg);
                 break;
             case 'c':
-                //c = true;
+                c = true;
                 break;
             case 't':
                 //thread = checkInput(optarg);
@@ -385,8 +385,8 @@ int main(int argc, char *argv[]) {
         type = pink::local;
         std::string t_v2 = fast_objects2[0]->sequence;
 
-        for (auto const &query : fast_objects1) {
 
+        for (auto const &query : fast_objects1) {
             q_minimizer_vector = pink::minimizers((query->sequence).c_str(),
                                                   (query->sequence).length(), k, window_length);
 
@@ -426,13 +426,16 @@ int main(int argc, char *argv[]) {
             unsigned int q_end;
             unsigned int t_begin;
             unsigned int t_end;
+            bool s;
 
             if (s_locations.size() >= d_locations.size()) {
+                s = true;
                 q_begin = std::get<1>(s_locations.at(0));
                 q_end = std::get<1>(s_locations.at(s_locations.size() - 1));
                 t_begin = std::get<0>(s_locations.at(0));
                 t_end = std::get<0>(s_locations.at(s_locations.size() - 1));
             } else {
+                s = false;
                 q_begin = std::get<1>(d_locations.at(0));
                 q_end = std::get<1>(d_locations.at(s_locations.size() - 1));
                 t_begin = std::get<0>(d_locations.at(0));
@@ -464,9 +467,32 @@ int main(int argc, char *argv[]) {
 
             pink::pairwise_alignment(q_v3.c_str(), q_len, t_v3.c_str(), t_len, type, match, mismatch, gap, cigar, target_begin);
             cigar = std::string(cigar.rbegin(), cigar.rend());
-            std::cout << "\nCigar: " << cigar << std::endl;
-
-
+     //       std::cout << "\nCigar: " << cigar << std::endl;
+            
+            //PAF
+            std::string pafFormat = query->name + '\n' + std::to_string((query->sequence).size()) + '\n' + '0' + '\n' + std::to_string(query -> sequence.length() - k) + '\n';
+            if (s == true){
+                pafFormat += "+\n";
+            } else {
+                pafFormat += "-\n";
+            }
+            
+            pafFormat += fast_objects2[0] -> name + '\n' + std::to_string(t_v2.size()) + '\n' + '0' + '\n' + std::to_string(t_v2.length() - k) + '\n';
+            
+            int numberOfMatches = 0;
+            int blockLength = cigar.size();
+            
+            for (char c: cigar){
+                if (c == '=')
+                    numberOfMatches++;
+            }
+            
+            pafFormat += std::to_string(numberOfMatches) + '\n' + std::to_string(blockLength) + '\n' + "255" + '\n';
+            
+            if (c)
+                pafFormat += cigar;
+            
+            std::cout<<pafFormat<<std::endl;
             same.clear();
             different.clear();
         }
