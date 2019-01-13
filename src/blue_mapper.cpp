@@ -111,7 +111,6 @@ std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(u
         }
 
         std::vector<std::tuple<int, int, int, int, bool>> regions;
-        std::cout << "Longest increasing subsequences " << std::endl;
         int index = T[len];
         int indexPrvi = T[len];
         int indexZadnji = T[len];
@@ -200,6 +199,8 @@ static struct option long_options[] = {
     {"kmer_length", required_argument, NULL, 'k'},
     {"window_length", required_argument, NULL, 'w'},
     {"f", required_argument, NULL, 'f'},
+    {"cigar", required_argument, NULL, 'c'},
+    {"paralelization", required_argument, NULL, 'p'},
     {NULL, no_argument, NULL, 0}
 };
 
@@ -240,7 +241,10 @@ int main (int argc, char* argv[]) {
         unsigned int window_length = 5;
         double f = 0.001;
 
-        while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:f:", long_options, NULL)) != -1) {
+        bool cCigar = false;
+        int paralelization = 1;
+
+        while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:f:cp:", long_options, NULL)) != -1) {
             switch(c) {
                 case 'h':
                     std::cout << "You've asked for help.\n\nThis program implements 3 algorithms for pairwise alignment:" << std::endl
@@ -286,6 +290,12 @@ int main (int argc, char* argv[]) {
                     break;
                 case 'f':
                     f = atof(optarg);
+                    break;
+                case 'c':
+                    cCigar = true;
+                    break;
+                case 'p':
+                    paralelization = atoi(optarg);
                     break;
                 default:
                     std::cout << "The option you entered is unknown!" << std::endl;
@@ -425,16 +435,44 @@ int main (int argc, char* argv[]) {
                 std::string cigar1;
                 unsigned int target_begin1;
 
-                std::cout << blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1) << std::endl;
-                std::cout << cigar1 << std::endl;
-                std::cout << target_begin1 << std::endl;
+                blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
+
+                //PAF FORMAT
+                std::string paf = i->name + '\t' + std::to_string((i->sequence).size()) + '\t' + std::to_string(std::get<0>(position)) + '\t' + std::to_string(std::get<1>(position)) + '\t';
+                paf += std::get<4>(position) == 0 ? '+' : '-';
+                paf = paf + '\t' + second_object[0]->name + '\t' + std::to_string((second_object[0]->sequence).size()) + '\t' + std::to_string(std::get<2>(position));
+                paf = paf + '\t' + std::to_string(std::get<3>(position)) +'\t';
+
+                std::string number;
+                int noOfMatches = 0;
+                int blockLength = 0;
+
+                for(char c : cigar1) {
+                    if(isdigit(c)) {
+                        number += c;
+                    } else if(c == '=') {
+                        noOfMatches += stoi(number);
+                        blockLength += stoi(number);
+                        number = "";
+                    } else {
+                        blockLength += stoi(number);
+                        number = "";
+                    }
+                }
+                paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
+                // dodati quality
+
+                if(cCigar) {
+                    paf += "cg:Z:" + cigar1;
+                }
+
+                std::cout << paf << std::endl;
             }
         }
         return 0;
 }
 
 typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
-
 std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
     std::unordered_map<unsigned int, uubtuple> mapa;
     for(auto &i : genome) {
