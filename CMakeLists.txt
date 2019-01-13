@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.2)
 project (white_mapper)
 
 set (white_mapper_VERSION_MAJOR 1)
@@ -25,9 +25,10 @@ add_library(white_minimizers STATIC src/white_minimizers.cxx)
 include_directories("${PROJECT_BINARY_DIR}/bin")
 
 add_subdirectory (vendor/bioparser EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/thread_pool EXCLUDE_FROM_ALL)
 
 add_executable (white_mapper src/white_mapper.cxx)
-target_link_libraries (white_mapper bioparser white_alignment white_minimizers)
+target_link_libraries (white_mapper bioparser white_alignment white_minimizers thread_pool pthread)
 
 if (white_mapper_build_tests)
 	include_directories(${PROJECT_SOURCE_DIR}/src)

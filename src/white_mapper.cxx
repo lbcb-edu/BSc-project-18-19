@@ -10,11 +10,13 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <future>
 
 #include "white_minimizers.h"
 #include "white_alignment.h"
 #include "white_mapper.h"
 #include "bioparser/bioparser.hpp"
+#include "thread_pool/thread_pool.hpp"
 
 #define MATCH 2;
 #define MISMATCH -1;
@@ -22,6 +24,7 @@
 #define K_MER_LENGTH 15;
 #define WINDOW_SIZE 5;
 #define PERCENTAGE 0.001;
+#define NUMBER_OF_THREADS 5;
 
 class SequenceFormat
 {
@@ -162,6 +165,331 @@ std::vector<std::unique_ptr<SequenceFormat>> parse_file (std::string file_path)
 	return objects;
 }
 
+bool comp(std::pair<unsigned int, unsigned int> a, std::pair<unsigned int, unsigned int> b) {
+	return a.second < b.second;
+}
+
+std::vector<std::tuple<unsigned int, unsigned int, bool>> reference_genome_minimizers (std::unique_ptr<SequenceFormat> &ref, unsigned int k, unsigned int window_size, float f) {
+	std::unordered_map <unsigned int, unsigned int > minimizer_occurrences;
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> minimizers;
+
+	minimizers = white::minimizers(ref -> sequence.c_str(), ref -> sequence.size(), k, window_size);
+
+	for (auto minimizer_tuple : minimizers) {
+		minimizer_occurrences[std::get<0>(minimizer_tuple)]++;
+	}
+
+	unsigned int number_of_minimizers_to_disregard = (unsigned int) std::round(minimizer_occurrences.size() * f);
+
+	std::vector<std::pair<unsigned int, unsigned int>> elems (minimizer_occurrences.begin(), minimizer_occurrences.end());
+	std::sort(elems.begin(), elems.end(), comp);
+
+	for (unsigned int i = 0; i < number_of_minimizers_to_disregard; i++)
+		elems.pop_back();
+
+	std::vector <unsigned int> minimizers_to_keep;
+
+	for (auto pair : elems)
+		minimizers_to_keep.emplace_back(pair.first);
+
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> result;
+
+	for (auto tuple : minimizers)
+		if (std::find(minimizers_to_keep.begin(), minimizers_to_keep.end(), std::get<0>(tuple)) != minimizers_to_keep.end())
+			result.emplace_back(tuple);
+
+	return result;
+
+}
+
+bool compare_minimizers(std::tuple <unsigned int, unsigned int, bool> a, std::tuple <unsigned int, unsigned int, bool> b) {
+	return std::get<0>(a) < std::get<0>(b);
+}
+
+int my_binary_search(std::vector <std::tuple <unsigned int, unsigned int, bool>> &array, unsigned int number_to_find) {
+	int min = 0;
+	int max = (array.size() - 1);
+	int guess;
+	int result = -1;
+
+	while (min <= max)
+	{
+		guess = (int)(((max + min) / 2) + 0.5);
+
+		if (number_to_find == std::get<0>(array[guess]))
+		{
+
+			//posto moze biti vise istih minimizatora (samo na razlicitim pozicijama) moramo se vratiti natrag do prvoga
+			result = guess;
+
+			while (result > 0 && std::get<0>(array[result - 1]) == number_to_find)
+				result--;
+
+			return result;
+		}
+		else if (std::get<0>(array[guess]) < number_to_find) {
+			min = guess + 1;
+		}
+		else {
+			max = guess - 1;
+		}
+	}
+
+	return result;
+}
+
+void minimizer_matches(
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> &reference_genome_minimizers,
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> &sequence_minimizers,
+	std::vector <std::tuple <unsigned int, unsigned int>> &matches_original,
+	std::vector <std::tuple <unsigned int, unsigned int>> &matches_reverse_complement
+) {
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> reference_genome_minimizers_original;
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> reference_genome_minimizers_reverse_complement;
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> sequence_minimizers_original;
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> sequence_minimizers_reverse_complement;
+
+	for (auto tuple : reference_genome_minimizers) {
+		if (std::get<2>(tuple) == true)
+			reference_genome_minimizers_original.emplace_back(tuple);
+		else
+			reference_genome_minimizers_reverse_complement.emplace_back(tuple);
+	}
+
+	for (auto tuple : sequence_minimizers) {
+		if (std::get<2>(tuple) == true)
+			sequence_minimizers_original.emplace_back(tuple);
+		else
+			sequence_minimizers_reverse_complement.emplace_back(tuple);
+	}
+
+	//sortiram kako bi mogao radit binary_search
+	std::sort(reference_genome_minimizers_original.begin(), reference_genome_minimizers_original.end(), compare_minimizers);
+	std::sort(reference_genome_minimizers_reverse_complement.begin(), reference_genome_minimizers_reverse_complement.end(), compare_minimizers);
+
+	for (auto tuple : sequence_minimizers_original) {
+		int position;
+
+		if ((position = my_binary_search(reference_genome_minimizers_original, std::get<0>(tuple))) != -1) {
+
+			while (std::get<0>(reference_genome_minimizers_original[position]) == std::get<0>(tuple)) {
+				matches_original.emplace_back(std::make_tuple(std::get<1>(reference_genome_minimizers_original[position]), std::get<1>(tuple)));
+				position++;
+			}
+
+		}
+
+	}
+
+	for (auto tuple : sequence_minimizers_reverse_complement) {
+		int position;
+
+		if ((position = my_binary_search(reference_genome_minimizers_reverse_complement, std::get<0>(tuple))) != -1) {
+
+			while (std::get<0>(reference_genome_minimizers_reverse_complement[position]) == std::get<0>(tuple)) {
+				matches_reverse_complement.emplace_back(std::make_tuple(std::get<1>(reference_genome_minimizers_reverse_complement[position]), std::get<1>(tuple)));
+				position++;
+			}
+		}
+
+	}
+}
+
+bool compare_by_diagonal(std::tuple<unsigned int, unsigned int> a, std::tuple<unsigned int, unsigned int> b) {
+	return (int)std::get<1>(a) - (int)std::get<0>(a) < (int)std::get<1>(b) - (int)std::get<0>(b);
+}
+
+bool compare_q_t(std::tuple<unsigned int, unsigned int> a, std::tuple<unsigned int, unsigned int> b) {
+	if (std::get<0>(a) != std::get<0>(b))
+		return std::get<0>(a) < std::get<0>(b);
+	else
+		return std::get<1>(a) < std::get<1>(b);
+}
+
+std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_match_groups(std::vector <std::tuple <unsigned int, unsigned int>> &matches) {
+	std::sort(matches.begin(), matches.end(), compare_by_diagonal);
+	std::vector <std::tuple <unsigned int, unsigned int>> match_group;
+	std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> match_groups;
+
+	unsigned int size = matches.size();
+	int last_diagonal;
+	int next_diagonal;
+	unsigned int i = 0;
+	unsigned int match_group_size = 0;
+
+	if (size == 0) {
+		std::cerr << "\nWarning! No minimizer matches.\n";
+		return match_groups;
+	}
+
+	do {
+
+		match_group.emplace_back(matches[i]);
+		match_group_size = 1;
+		last_diagonal = std::get<1>(matches[i]) - std::get<0>(matches[i]);
+		i++;
+
+		if (i < size) {
+			for (next_diagonal = std::get<1>(matches[i]) - std::get<0>(matches[i]); last_diagonal + 500 > next_diagonal; next_diagonal = std::get<1>(matches[i]) - std::get<0>(matches[i])) {
+				match_group.emplace_back(matches[i]);
+				match_group_size++;
+				last_diagonal = next_diagonal;
+				if (++i == size)
+					break;
+			}
+
+			std::sort(match_group.begin(), match_group.end(), compare_q_t);
+
+		}
+
+		if (match_group_size > 10)
+			match_groups.emplace_back(match_group);
+
+		match_group.clear();
+
+	} while (i < size);
+
+	return match_groups;
+
+}
+
+//funkcija koja vraca indeks elementa koji je najmanji element veci ili jednak key (naravno funkcija funkcionira jedino ako je vektor
+//sortiran i provjerili smo da je key nije veci od najveceg elementa vektora (tj. ne vrijedi: key > najveci element))
+unsigned int CeilIndex(std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> &v, int l, int r, unsigned int key) {
+	while (r - l > 1) {
+		int m = l + (r - l) / 2;
+
+		if (std::get<2>(v[m]) >= key)
+			r = m;
+		else
+			l = m;
+	}
+
+	return r;
+}
+
+//funkcija koja trazi LIS za zadane matcheve minimizatora (funkcija pazi da u LIS-u ne budu matchevi s istom vrijednoscu query -> pomocno polje)
+std::pair<int, int> find_LIS(std::vector <std::tuple <unsigned int, unsigned int>> &minimizer_matches) {
+	std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> tail(minimizer_matches.size()); //polje za biljezit LIS-a
+	//polja su redom:
+	//	1. pozicija prvog matcha LIS-a u minimizer_matches
+	//	2. pozicija zadnjeg matcha LIS-a u minimizer_matches
+	//  3. zadnji element LIS-a
+
+	std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> auxiliary_tail(minimizer_matches.size()); //pomocno polje, ovo polje sluzi kako bi eliminirali
+														//pojavljivanje matcheva koji imaju istu vrijednost query
+
+	std::vector <unsigned int> changed_indexes; //vektor koji biljezi gdje su se dogodile promjene u tail tako da ih mozemo prepisati u auxiliary_tail
+						//umjesto uvijek da kad predemo sve matcheve koji imaju isti query_position prepisemo cijeli tail u
+						//auxiliary_tail mozemo samo prepisati promijenjene elemente
+	if (minimizer_matches.size() == 0)
+		return std::make_pair(-1, -1); //ako nema matcheva ne treba radit alignment
+
+	unsigned int length = 1; //broji duljinu LIS-a
+	unsigned int auxiliary_tail_length = 1; //velicina pomocnog polja
+
+	//minimizer_matches su sortirani po query_position(prva vrijednost) pa po target_position(druga vrijednost)
+	//kao prvi element LIS-a postavljamo match koji ima najmanju vrijednost target_position, ali
+	//gledamo samo one elemente s prvom (najmanjom) vrijednost query_position
+
+	unsigned int query_value_min = std::get<0>(minimizer_matches[0]);
+	unsigned int first_target_value_position = 0;
+
+	for (unsigned int i = 1; query_value_min == std::get<0>(minimizer_matches[i]); i++)
+		if (std::get<1>(minimizer_matches[first_target_value_position]) < std::get<1>(minimizer_matches[i]))
+			first_target_value_position = i;
+
+	tail[0] = std::make_tuple(first_target_value_position, first_target_value_position, std::get<1>(minimizer_matches[first_target_value_position]));
+	auxiliary_tail[0] = tail[0];
+
+	//	for (int i = 0; i < length; i++)
+	//		std::cout << std::get<0>(tail[i]) << std::get<1>(tail[i]) << std::get<2>(tail[i]) << std::endl;
+
+	std::cout << std::endl;
+
+	//sad prolazimo kroz ostale matcheve i racunamo LIS
+	//da bi eliminari pojavu elemenata s istom vrijednosti query koristimo pomocno polje
+
+	for (unsigned int i = 1; i < minimizer_matches.size(); i++) {
+
+		unsigned int target_position = std::get<1>(minimizer_matches[i]);
+
+		//manji od najmanjeg -> samo zamjenimo najmanji element
+		if (target_position <= std::get<2>(tail[0])) {
+			tail[0] = std::make_tuple(i, i, target_position);
+			changed_indexes.emplace_back(0);
+		}
+		//veci od najveceg: dvije opcije
+		//1 -> ako najveci element nema isti query_position kao i novi element, onda dodamo novi element u vektor
+		//2 -> ako najveci element ima isti query_position kao i novi element, onda provjerimo postoji li element na istoj poziciji 
+		//	-> kao i najveci element u pomocnom vektoru:
+		//	-> ako da, onda stvorimo novi element u tail ako je on veci od elemnta u pomocnom vektoru
+		//  -> ako ne, onda ne dodajemo nista
+		else if (target_position > std::get<2>(tail[length - 1])) {
+			if (std::get<0>(minimizer_matches[std::get<1>(tail[length - 1])]) != std::get<0>(minimizer_matches[i])) {
+				tail[length] = std::make_tuple(std::get<0>(tail[length - 1]), i, target_position);
+				changed_indexes.emplace_back(length);
+				length++;
+			}
+			else if (length == auxiliary_tail_length && std::get<2>(auxiliary_tail[length - 1]) < target_position) {
+				tail[length] = std::make_tuple(std::get<0>(auxiliary_tail[length - 1]), i, target_position);
+				changed_indexes.emplace_back(length);
+				length++;
+			}
+		}
+
+		//ako nije nista od prethodnog, onda trazimo indeks najmanjeg veceg ili jednakog broja od novog elementa -> dobijemo indeks
+		//promatramo element na indeks - 1
+		//dvije opcije:
+		//1 -> ako taj element nema isti query_position kao i novi element, onda zamijenimo element na indeksu: indeks sa novim elementom
+		//2 -> ako taj element ima isti query_position kao i novi element, onda pogledamo u pomocnom vektoru element na poziciji indeks - 1
+		//dvije opcije:
+		//1 -> ako je taj element manji od novog elementa, ako zamijenimo u vektoru tail element na indeksu: indeks s novim elementom
+		//2 -> ako ne, ne radimo nista
+
+		else {
+			unsigned int index = CeilIndex(tail, -1, length - 1, target_position);
+
+			if (std::get<0>(minimizer_matches[std::get<1>(tail[index - 1])]) != std::get<0>(minimizer_matches[i])) {
+				tail[index] = std::make_tuple(std::get<0>(tail[index - 1]), i, target_position);
+				changed_indexes.emplace_back(index);
+			}
+
+			else if (std::get<2>(auxiliary_tail[index - 1]) < target_position) {
+				tail[index] = std::make_tuple(std::get<0>(auxiliary_tail[index - 1]), i, target_position);
+				changed_indexes.emplace_back(index);
+			}
+
+		}
+
+		//nakon sto prodemo sve elemente s istim query_position moramo prekopirati tail u auxiliary_tail
+		if (i + 1 < minimizer_matches.size() && std::get<0>(minimizer_matches[i]) != std::get<0>(minimizer_matches[i + 1])) {
+			for (auto index : changed_indexes)
+				auxiliary_tail[index] = tail[index];
+
+			changed_indexes.clear();
+
+			auxiliary_tail_length = length;
+		}
+
+
+		/*		for (int i = 0; i < length; i++)
+					std::cout << std::get<0>(tail[i]) << std::get<1>(tail[i]) << std::get<2>(tail[i]) << std::endl;
+
+				std::cout << std::endl;
+
+				for (int i = 0; i < auxiliary_tail_length; i++)
+					std::cout << std::get<0>(auxiliary_tail[i]) << std::get<1>(auxiliary_tail[i]) << std::get<2>(auxiliary_tail[i]) << std::endl;
+
+				std::cout << std::endl;
+		*/
+	}
+
+
+	return std::make_pair(std::get<0>(tail[length - 1]), std::get<1>(tail[length - 1]));
+}
+
+
 void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequences, unsigned int k, unsigned int window_size, float f) {
 	std::unordered_map <unsigned int, unsigned int> minimizer_occurrences;
 	std::vector <std::tuple<unsigned int, unsigned int, bool>> current_minimizers;
@@ -217,6 +545,126 @@ void minimizer_occurrences (std::vector<std::unique_ptr<SequenceFormat>> &sequen
 		minimizer_occurrences.size(), number_of_minimizers_with_frequency_of_1, f, frequencies[frequencies.size() - 1 - number_of_minimizers_to_disregard]);
 }
 
+//pomocna funkcija koja obavlja racunanje LIS-a nad match group, radi alignment i ispisuje PAF
+void LIS_alignment_PAF(std::vector <std::tuple <unsigned int, unsigned int>> &match_group,
+						std::unique_ptr<SequenceFormat> &seq,
+						std::unique_ptr<SequenceFormat> &ref,
+						char strand,
+						int match,
+						int mismatch,
+						int gap,
+						int k,
+						std::string &cigar,
+						unsigned int &target_begin,
+						bool print_cigar) {
+
+	std::pair <unsigned int, unsigned int> LIS_begin_end; //ovo su pozicije prvog i zadnjeg minimizer match-a LIS-a u match_group-u
+	std::string query;
+	unsigned int q_begin;
+	unsigned int q_end;
+	unsigned int q_length;
+
+	std::string target;
+	unsigned int t_begin;
+	unsigned int t_end;
+	unsigned int t_length;
+
+	LIS_begin_end = find_LIS(match_group);
+
+	q_begin = std::get<1>(match_group[std::get<0>(LIS_begin_end)]);
+	q_end = std::get<1>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1); //za jedan i drugi end treba dodat jos "k-1" jer se
+																			//moramo pozicionirat na kraj zadnjeg minimizatora
+	q_length = q_end - q_begin + 1;
+
+	t_begin = std::get<0>(match_group[std::get<0>(LIS_begin_end)]);
+	t_end = std::get<0>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1);
+	t_length = t_end - t_begin + 1;
+
+	query = (seq->sequence).substr(q_begin, q_length);
+	target = (ref->sequence).substr(t_begin, t_length);
+
+	int value = white::pairwise_alignment(query.c_str(), q_length, target.c_str(), t_length,
+		white::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+
+	//stvaranje PAF
+
+	//izracun broja matcheva u alignmentu
+
+	int cigar_size = cigar.size();
+	int number_of_matches = 0;
+
+	for (int i = 0; i < cigar_size; i++)
+		if (cigar[i] == '=')
+			number_of_matches++;
+
+	//ispis PAF
+	printf("\n%s\t%lu\t%d\t%d\t%c\t%s\t%lu\t%d\t%d\t%d\t%d\t%d",
+		seq->name.c_str(),
+		seq->sequence.size(),
+		q_begin,
+		q_end,
+		strand,
+		ref -> name.c_str(),
+		ref -> sequence.size(),
+		t_begin,
+		t_end,
+		number_of_matches,
+		cigar_size,
+		255);
+
+	if (print_cigar)
+		printf("\tcg:Z:<%s>\n", cigar.c_str());
+	else
+		printf("\n");
+}
+
+//pomocna funkcija kako bi mogli napraviti efikasniji paralelizam
+
+void map_sequence_to_reference(
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> &reference_minimizer_index,
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> &sequence_minimizer_index,
+	std::vector <std::unique_ptr <SequenceFormat>> &sequences,
+	std::vector <std::unique_ptr <SequenceFormat>> &reference_genome,
+	int match,
+	int mismatch,
+	int gap,
+	int k,
+	int window_size,
+	std::string &cigar,
+	unsigned int &target_begin,
+	bool print_cigar,
+	unsigned int start,
+	unsigned int end
+) {
+
+	std::vector <std::tuple <unsigned int, unsigned int>> matches_original;
+	std::vector <std::tuple <unsigned int, unsigned int>> matches_reverse_complement;
+	std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> match_groups_original;
+	std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> match_groups_reverse_complement;
+
+	for (unsigned int i = start; i < end; i++) {
+		//za sekvencu racunamo minimizatore
+		sequence_minimizer_index = white::minimizers(sequences[i]->sequence.c_str(), sequences[i]->sequence.size(), k, window_size);
+
+		//radimo matcheve minimizatora (i za minimizatore koji dolaze iz originalnih sekvenci i reverznih komplementa)
+		//te ih spremamo u matches_original i matches_reverse_complement
+		minimizer_matches(reference_minimizer_index, sequence_minimizer_index, matches_original, matches_reverse_complement);
+
+		//prepare match_groups sortira matcheve najprije po dijagonali, zatim radi grupe nad kojima cemo traziti LIS (te grupe ce biti
+		//sortirane po poziciji untar target (reference) i poziciji unutar query (sort za matcheve s jednakim target position))
+		match_groups_original = prepare_match_groups(matches_original);
+		match_groups_reverse_complement = prepare_match_groups(matches_reverse_complement);
+
+		//za svaku match grupu racunamo LIS, zatim radimo alignment dobivenih regija i printamo PAF
+		for (auto match_group : match_groups_original)
+			LIS_alignment_PAF (match_group, sequences[i], reference_genome[0], '+', match, mismatch, gap, k, cigar, target_begin, print_cigar);
+
+		for (auto match_group : match_groups_reverse_complement)
+			LIS_alignment_PAF (match_group, sequences[i], reference_genome[0], '-', match, mismatch, gap, k, cigar, target_begin, print_cigar);
+
+	}
+}
+
 int main (int argc, char* argv[])
 {
 	int option = 0;
@@ -230,7 +678,10 @@ int main (int argc, char* argv[])
 	int window_size = WINDOW_SIZE;
 	float f = PERCENTAGE;
 
-        while ((option = getopt_long(argc, argv, "hvm:s:g:k:w:f:", long_options, NULL)) != -1) {
+	bool print_cigar = false;
+	unsigned int number_of_threads = NUMBER_OF_THREADS;
+
+        while ((option = getopt_long(argc, argv, "hvm:s:g:k:w:f:ct:", long_options, NULL)) != -1) {
                 switch (option) {
                         case 'h':
 				help();
@@ -262,6 +713,14 @@ int main (int argc, char* argv[])
 
 			case 'f':
 				f = std::stof (optarg, NULL);
+				break;
+
+			case 'c':
+				print_cigar = true;
+				break;
+
+			case 't':
+				number_of_threads = atoi(optarg);
 				break;
 
                         default:
@@ -318,7 +777,7 @@ int main (int argc, char* argv[])
 	sekvenceTest.push_back(std::move(p3));*/
 
 	//finding minimizers and making a csv file of their occurrences
-	minimizer_occurrences (sequences, k, window_size, f);
+/*	minimizer_occurrences (sequences, k, window_size, f);
 
 	//alignment of 2 random selected sequences
 	srand (time (NULL));
@@ -329,11 +788,11 @@ int main (int argc, char* argv[])
 	//printf("Sequences used:\n%d_%d", i1, i2);
 
 	int values[3];
-
+*/
 	std::string cigar;
 	unsigned int target_begin = 0;
-//	printf("\nFirst sequence (Length: %lu):\n%s\n\nSecond sequence (Length: %lu):\n%s\n\n", sequences[i1] -> sequence.size(), sequences[i1] -> sequence.c_str(),
-//						sequences[i2] -> sequence.size(), sequences[i2] -> sequence.c_str());
+/*	//printf("\nFirst sequence (Length: %lu):\n%s\n\nSecond sequence (Length: %lu):\n%s\n\n", sequences[i1] -> sequence.size(), sequences[i1] -> sequence.c_str(),
+	//					sequences[i2] -> sequence.size(), sequences[i2] -> sequence.c_str());
 
 	int value = white::pairwise_alignment(	sequences[i1] -> sequence.c_str(), sequences[i1] -> sequence.size(),
   	                                   	sequences[i2] -> sequence.c_str(), sequences[i2] -> sequence.size(),
@@ -400,5 +859,59 @@ int main (int argc, char* argv[])
 	std::cout << cigar << std::endl;
 	std::cout <<std::endl;
 */
+
+
+//-----------------------------------------------ZADNJI_ZADATAK-----------------------------------------------------------------------------------------------------------------------
+
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> reference_minimizer_index = reference_genome_minimizers(reference_genome[0], k, window_size, f);
+	std::vector <std::tuple <unsigned int, unsigned int, bool>> sequence_minimizer_index;
+
+	//std::string reference_name = reference_genome[0] -> name;
+	//int reference_size = reference_genome[0] -> sequence.size();
+
+	//stvorimo thread_pool kako bi paralelizirali izvodenje koda
+	std::shared_ptr < thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool();
+
+	std::vector<std::future<void>> thread_futures;
+
+	unsigned int size = sequences.size();
+
+	unsigned int sequences_per_thread = size / number_of_threads;
+	unsigned int residue_sequences = size % number_of_threads;
+
+	unsigned int start = 0;
+	unsigned int end;
+
+	for (unsigned int i = 0; i < number_of_threads; i++) {
+		if (residue_sequences > 0) {
+			end = start + sequences_per_thread + 1;
+			residue_sequences--;
+		}
+		else
+			end = start + sequences_per_thread;
+
+		thread_futures.emplace_back(thread_pool->submit_task(
+			map_sequence_to_reference,
+			std::ref(reference_minimizer_index),
+			std::ref(sequence_minimizer_index),
+			std::ref(sequences),
+			std::ref(reference_genome),
+			match,
+			mismatch,
+			gap,
+			k,
+			window_size,
+			std::ref(cigar),
+			std::ref(target_begin),
+			print_cigar,
+			start,
+			end));
+
+		start = end;
+	}
+
+	for (auto &it : thread_futures)
+		it.wait();
+
 	return 0;
 }
