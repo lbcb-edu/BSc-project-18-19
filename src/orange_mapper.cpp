@@ -377,15 +377,15 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 
 			unsigned int b = 0;
 
-			unsigned int query_start;
-			unsigned int query_end;
-			unsigned int ref_start;
-			unsigned int ref_end;
+			unsigned int query_start = 0;
+			unsigned int query_end = x -> sequence.length() - k;
+			unsigned int ref_start = 0;
+			unsigned int ref_end = y -> sequence.length() - k;
 
 			unsigned int max_len = 0;
 			for(unsigned int i = 0; i < vec.size(); ++i) {
 				if(i == vec.size() - 1 ||
-					//std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
+					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
 					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
 					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
@@ -425,7 +425,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			paf += std::to_string(len) + "\n";
 			paf += "255\n";
 			paf += cigar + "\n";
-			printf("%s\n", paf.c_str());
+			//printf("%s\n", paf.c_str());
 
 		}
 
