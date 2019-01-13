@@ -105,8 +105,6 @@ The final step is to align each of the inputed fragments to a given reference ge
 
 The mapper should print the found regions in [PAF](https://github.com/lh3/miniasm/blob/master/PAF.md) format to stdout. The CIGAR strings of the alignment should be included only if argument `c` is used at runtime. They ought to be stored in the 13th collumn in format `cg:Z:<CIGAR>`. In addition, the mapper should be parallelized with optional number of threads (determined over argument `t`). Parallelization can be done via [OpenMP](https://www.openmp.org/) or [thread_pool](https://github.com/rvaser/thread_pool).
 
-![alt text](https://github.com/lbcb-edu/BSc-project-18-19/blob/pink/misc/minimizer_occurences.png)
-
 ## Disclaimer
 
 Laboratory for Bioinformatics and Computational Biology cannot be held responsible for any copyright infringement caused by actions of students contributing to any of its repositories. Any case of copyright infringement will be promptly removed from the affected repositories and reported to appropriate faculty organs.
