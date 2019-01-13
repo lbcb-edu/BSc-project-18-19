@@ -354,8 +354,8 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
-	for(int j = 0; j < reference_gen_vec.size(); ++j) {
-		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, reference_gen_vec[j]);
+	for(auto const &y : reference_gen_vec) {
+		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y);
 		std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers;
 
@@ -385,7 +385,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			unsigned int max_len = 0;
 			for(unsigned int i = 0; i < vec.size(); ++i) {
 				if(i == vec.size() - 1 ||
-					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
+					//std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
 					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
 					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
@@ -396,7 +396,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			std::string cigar;
 			std::string sub;
 			std::string paf="";
-			orange::pairwise_alignment(x->sequence.substr(query_start, query_end-query_start).c_str(), query_end-query_start, reference_gen_vec[j]->sequence.substr(ref_start, ref_end-ref_start).c_str(), ref_end-ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
+			orange::pairwise_alignment(x->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
 			unsigned int len = cigar.length();
 			unsigned int count=0, e=0;
 			for(int i = 0; i < len; ++i) {
@@ -417,13 +417,15 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			paf += std::to_string(query_start) + "\n";
 			paf += std::to_string(query_end) + "\n";
 			paf += "+\n";
-			paf += reference_gen_vec[j]->name + "\n";
-			paf += std::to_string(reference_gen_vec[j]->sequence.length()) + "\n";
+			paf += y->name + "\n";
+			paf += std::to_string(y->sequence.length()) + "\n";
 			paf += std::to_string(ref_start) + "\n";
 			paf += std::to_string(ref_end) + "\n";
 			paf += std::to_string(count) + "\n";
 			paf += std::to_string(len) + "\n";
 			paf += "255\n";
+			paf += cigar + "\n";
+			printf("%s\n", paf.c_str());
 
 		}
 
