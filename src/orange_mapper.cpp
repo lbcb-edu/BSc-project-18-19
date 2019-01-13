@@ -415,16 +415,16 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 			paf += x->name + "\n";
 			paf += std::to_string(x->sequence.length()) + "\n";
 			paf += std::to_string(query_start) + "\n";
-			paf += std::to_string(query_end) + "\n";
+			paf += std::to_string(query_end+k) + "\n";
 			paf += "+\n";
 			paf += y->name + "\n";
 			paf += std::to_string(y->sequence.length()) + "\n";
 			paf += std::to_string(ref_start) + "\n";
-			paf += std::to_string(ref_end) + "\n";
+			paf += std::to_string(ref_end+k) + "\n";
 			paf += std::to_string(count) + "\n";
-			paf += std::to_string(len) + "\n";
+			paf += std::to_string(e) + "\n";
 			paf += "255\n";
-			paf += cigar + "\n";
+			paf += cigar + "\n"; 
 			//printf("%s\n", paf.c_str());
 
 		}
