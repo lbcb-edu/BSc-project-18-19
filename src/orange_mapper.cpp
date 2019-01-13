@@ -346,14 +346,16 @@ void findLongestLinearChain(std::vector<std::tuple<unsigned int, short, long int
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
 }
 
-void constructAndPrintPAF(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFASTA, int k, int window_lenght, double f, bool cigar) {
+void constructAndPrintPAF(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFASTA, int k, int window_lenght, double f, bool c, 
+							int match, int mismatch, int gap) {
 	alignment al;
+	unsigned int target_begin;
 	std::vector<std::unique_ptr<FASTAQEntity>> fastaq_objects = 
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
-	for(int i = 0; i < reference_gen_vec.size(); ++i) {
-		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, reference_gen_vec[i]);
+	for(int j = 0; j < reference_gen_vec.size(); ++j) {
+		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, reference_gen_vec[j]);
 		std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers;
 
@@ -390,6 +392,30 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 					b = i + 1;
 				}
 			}
+
+			std::string cigar;
+			std::string paf="";
+			orange::pairwise_alignment(x->sequence.substr(query_start, query_end-query_start).c_str(), query_end-query_start, reference_gen_vec[j]->sequence.substr(ref_start, ref_end-ref_start).c_str(), ref_end-ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
+			unsigned int len = cigar.length();
+			unsigned int count=0;
+			for(int i = 0; i < len; ++i) {
+				if(cigar[i]=='M')
+					count++;
+			}
+
+			paf += x->name + "\n";
+			paf += std::to_string(x->sequence.length()) + "\n";
+			paf += std::to_string(query_start) + "\n";
+			paf += std::to_string(query_end) + "\n";
+			paf += "+\n";
+			paf += reference_gen_vec[j]->name + "\n";
+			paf += std::to_string(reference_gen_vec[j]->sequence.length()) + "\n";
+			paf += std::to_string(ref_start) + "\n";
+			paf += std::to_string(ref_end) + "\n";
+			paf += std::to_string(count) + "\n";
+			paf += std::to_string(len) + "\n";
+			paf += "255\n";
+
 		}
 
 	}
@@ -477,7 +503,7 @@ int main(int argc, char** argv) {
 
 	//findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
 
-	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF);
+	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF, alignment.match, alignment.mismatch, alignment.gap);
 
 //	unsigned int a, b, c, d;
 //	unsigned int max = 0;
