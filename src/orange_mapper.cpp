@@ -11,9 +11,11 @@
 #include <functional>
 #include <algorithm>
 #include <iterator>
+#include <memory>
 
 #include "OrangeConfig.h"
 #include "bioparser/bioparser.hpp"
+#include "thread_pool/thread_pool.hpp"
 #include "orange_alignment.h"
 #include "orange_minimizers.h"
 
@@ -35,6 +37,7 @@ struct option options[] = {
 		{"window_lenght", required_argument, 0 ,'w'},
 		{"top_minimizers", required_argument, 0 ,'f'},
 		{"cigar", no_argument, 0, 'c'},
+		{"threads", required_argument, 0, 't'},
 		{0, 0, 0, 0}
 	};
 
@@ -290,9 +293,27 @@ void findMinimizers(std::string const &filePath, int k, int window_lenght, doubl
 	std::cout << "\nDone!\n";
 }
 
-std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> constructMinimizerIndex(double f, int k, int window_lenght, std::unique_ptr<FASTAQEntity> const &reference_gen) {
+std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> constructMinimizerIndex(double f, int k, int window_lenght, std::unique_ptr<FASTAQEntity> const &reference_gen, int threads) {
 	printf("Looking for reference minimizers...\n");
-	std::vector<std::tuple<unsigned int, unsigned int, bool>> ref_minimizers = orange::minimizers(reference_gen->sequence.c_str(), reference_gen->sequence.length(), k, window_lenght);
+
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> ref_minimizers;
+	std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool();
+	std::vector<std::future<std::vector<std::tuple<unsigned int, unsigned int, bool>>>> thread_futures;
+
+	for(int i = 0; i < threads; i++) {
+		thread_futures.emplace_back(thread_pool->submit_task(orange::minimizers, reference_gen->sequence.c_str() + i * reference_gen->sequence.size()/threads, reference_gen->sequence.size()/threads + k + window_lenght -2, k, window_lenght));
+	}
+
+	for (int i = 0; i < threads; ++i) {
+		thread_futures[i].wait();
+		unsigned int a = i * reference_gen->sequence.size()/threads;
+		for (auto& b: thread_futures[i].get()) {
+			std::get<1>(b)+=a;
+			ref_minimizers.push_back(b);
+		}
+	}
+
+	//std::vector<std::tuple<unsigned int, unsigned int, bool>> ref_minimizers = orange::minimizers(reference_gen->sequence.c_str(), reference_gen->sequence.length(), k, window_lenght);
 	printf("Reference minimizers found!\n");
 
 	printf("Creating reference index...\n");
@@ -346,97 +367,121 @@ void findLongestLinearChain(std::vector<std::tuple<unsigned int, short, long int
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
 }
 
-void constructAndPrintPAF(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFASTA, int k, int window_lenght, double f, bool c, 
-							int match, int mismatch, int gap) {
-	alignment al;
+std::string mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsigned int m, unsigned int n, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> &ref_index, std::unique_ptr<FASTAQEntity> &y, int gap, int mismatch, int match) {
+	std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
+	std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers;
+	std::string paf="";
 	unsigned int target_begin;
+	unsigned int j=0;
+	for(auto &x: fastaq_objects) {
+		if(!(j>m && j<n)) {
+			j++;
+			continue;
+		}
+		fragment_minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k,window_lenght);
+		vec.clear();
+		for(auto const &t : fragment_minimizers) {
+			for(auto const &rt : ref_index[std::get<0>(t)]) {
+				if(std::get<2>(t) == std::get<2>(rt)) {
+					vec.emplace_back(std::get<0>(rt), 0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
+				} else {
+					vec.emplace_back(std::get<0>(rt), 1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
+				}
+			}
+		}
+
+		std::sort(vec.begin(), vec.end(), custom_cmp);
+
+		unsigned int b = 0;
+
+		unsigned int query_start = 0;
+		unsigned int query_end = x -> sequence.length() - k;
+		unsigned int ref_start = 0;
+		unsigned int ref_end = y -> sequence.length() - k;
+
+		unsigned int max_len = 0;
+		for(unsigned int i = 0; i < vec.size(); ++i) {
+			if(i == vec.size() - 1 ||
+				//std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
+				std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
+				std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
+				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
+				b = i + 1;
+			}
+		}
+
+		std::string cigar;
+		std::string sub;
+		orange::pairwise_alignment(x->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
+		unsigned int len = cigar.length();
+		unsigned int count=0, e=0;
+		for(int i = 0; i < len; ++i) {
+			if(cigar[i]=='I' || cigar[i]=='D') {
+				e= i+1;
+			}
+			else {
+				if(cigar[i]=='X' || cigar[i]=='=') {
+					sub = cigar.substr(e, i-e);
+					e = i+1;
+					count += std::stoi(sub);
+				}
+			}
+		}
+
+		paf += x->name + "\n";
+		paf += std::to_string(x->sequence.length()) + "\n";
+		paf += std::to_string(query_start) + "\n";
+		paf += std::to_string(query_end+k) + "\n";
+		paf += "+\n";
+		paf += y->name + "\n";
+		paf += std::to_string(y->sequence.length()) + "\n";
+		paf += std::to_string(ref_start) + "\n";
+		paf += std::to_string(ref_end+k) + "\n";
+		paf += std::to_string(count) + "\n";
+		paf += std::to_string(e) + "\n";
+		paf += "255\n";
+		paf += "cg:Z:" + cigar + "\n"; 
+		//printf("%s\n", paf.c_str());
+		j++;
+	}
+	return paf;
+}
+
+void constructAndPrintPAF(std::string const &firstFilePath, std::string const &secondFilePath, bool isFirstFASTA, int k, int window_lenght, double f, bool c, 
+							int match, int mismatch, int gap, int threads) {
+	alignment al;
 	std::vector<std::unique_ptr<FASTAQEntity>> fastaq_objects = 
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
-	for(auto const &y : reference_gen_vec) {
-		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y);
-		std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
-		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers;
+	for(auto &y : reference_gen_vec) {
+		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y, threads);
 
-		for(auto const &x : fastaq_objects) {
-			fragment_minimizers = orange::minimizers(x->sequence.c_str(), x->sequence.length(), k,window_lenght);
-			vec.clear();
-
-			for(auto const &t : fragment_minimizers) {
-				for(auto const &rt : ref_index[std::get<0>(t)]) {
-					if(std::get<2>(t) == std::get<2>(rt)) {
-						vec.emplace_back(std::get<0>(rt), 0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
-					} else {
-						vec.emplace_back(std::get<0>(rt), 1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
-					}
-				}
-			}
-
-			std::sort(vec.begin(), vec.end(), custom_cmp);
-
-			unsigned int b = 0;
-
-			unsigned int query_start = 0;
-			unsigned int query_end = x -> sequence.length() - k;
-			unsigned int ref_start = 0;
-			unsigned int ref_end = y -> sequence.length() - k;
-
-			unsigned int max_len = 0;
-			for(unsigned int i = 0; i < vec.size(); ++i) {
-				if(i == vec.size() - 1 ||
-					std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
-					std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
-					std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
-					findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
-					b = i + 1;
-				}
-			}
-
-			std::string cigar;
-			std::string sub;
-			std::string paf="";
-			orange::pairwise_alignment(x->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
-			unsigned int len = cigar.length();
-			unsigned int count=0, e=0;
-			for(int i = 0; i < len; ++i) {
-				if(cigar[i]=='I' || cigar[i]=='D') {
-					e= i+1;
-				}
-				else {
-					if(cigar[i]=='X' || cigar[i]=='=') {
-						sub = cigar.substr(e, i-e);
-						e = i+1;
-						count += std::stoi(sub);
-					}
-				}
-			}
-
-			paf += x->name + "\n";
-			paf += std::to_string(x->sequence.length()) + "\n";
-			paf += std::to_string(query_start) + "\n";
-			paf += std::to_string(query_end+k) + "\n";
-			paf += "+\n";
-			paf += y->name + "\n";
-			paf += std::to_string(y->sequence.length()) + "\n";
-			paf += std::to_string(ref_start) + "\n";
-			paf += std::to_string(ref_end+k) + "\n";
-			paf += std::to_string(count) + "\n";
-			paf += std::to_string(e) + "\n";
-			paf += "255\n";
-			paf += cigar + "\n"; 
-			//printf("%s\n", paf.c_str());
-
+		std::shared_ptr<thread_pool::ThreadPool> thread_pool1 = thread_pool::createThreadPool();
+		std::vector<std::future<std::string>> thread_futures1;
+		int m, n;
+		for(unsigned i = 0; i < threads; i++) {
+			m = fastaq_objects.size()/threads*i;
+			n = fastaq_objects.size()/threads*(i+1);
+			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), m, n, k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match));
 		}
 
+		for (auto &it : thread_futures1) {
+			it.wait();
+			std::cout << it.get();
+		}
+
+		//mapThread(fastaq_objects, k , window_lenght, ref_index, y, gap, mismatch, match);
+
 	}
+
 }
 
 int main(int argc, char** argv) {
 
 	srand((unsigned)time(0)); 
 	alignment alignment;
-	int k=15, window_lenght= 5;
+	int k=15, window_lenght= 5, threads = 4;
 	double f = 0.001;
 
 	bool includeCIGARInPAF = false;
@@ -485,6 +530,9 @@ int main(int argc, char** argv) {
 			case 'c':
 				includeCIGARInPAF = true;
 				break;
+			case 't':
+				threads = atoi(optarg);
+				break;
 			default:
 				fprintf(stderr, "Entered option is not valid.\n");
 				fprintf(stderr, "Use \"-h\" or \"--help\" for more information.\n");
@@ -514,7 +562,7 @@ int main(int argc, char** argv) {
 
 	//findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
 
-	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF, alignment.match, alignment.mismatch, alignment.gap);
+	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF, alignment.match, alignment.mismatch, alignment.gap, threads);
 
 //	unsigned int a, b, c, d;
 //	unsigned int max = 0;
