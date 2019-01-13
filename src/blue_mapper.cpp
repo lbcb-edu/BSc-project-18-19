@@ -13,6 +13,7 @@
 #include <map>
 #include <set>
 #include <unordered_map>
+#include <cmath>
 #include "bioparser/bioparser.hpp"
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
@@ -59,7 +60,7 @@ int ceilIndex(uubtuple input, int T[], int end, int s) {
         return -1;
 }
 
-std::pair<std::vector<unsigned int>, std::vector<unsigned int>> longestIncreasingSubSequence(uubtuple input){
+std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(uubtuple input){
         int T[input.size()];
         int R[input.size()];
 
@@ -80,9 +81,9 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> longestIncreasin
         for(int i=1; i < input.size(); i++){
 
             if(std::get<2>(input[i]) == 0) {
-                if(std::get<1>(input[T[0]]) > std::get<1>(input[i]) || std::get<0>(input[T[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.
+                if(std::get<1>(input[T[0]]) > std::get<1>(input[i]) || std::get<0>(input[T[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.*/
                     T[0] = i;
-                }else if(std::get<1>(input[T[len]]) < std::get<1>(input[i]) &&  std::get<0>(input[T[len]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T
+                }else if(std::get<1>(input[T[len]]) < std::get<1>(input[i]) &&  std::get<0>(input[T[len]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T*/
                     len = len + 1;
                     T[len] = i;
                     R[T[len]] = T[len-1];
@@ -109,35 +110,59 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> longestIncreasin
             }
         }
 
+        std::vector<std::tuple<int, int, int, int, bool>> regions;
         std::cout << "Longest increasing subsequences " << std::endl;
         int index = T[len];
         int indexPrvi = T[len];
         int indexZadnji = T[len];
 
+        /*std::cout << "gledaj mene" << std::endl;
         while(index != -1) {
+           std::cout << std::get<0>(input[index]) <<"," << std::get<1>(input[index]) << "," << std::get<2>(input[index]) << std::endl;
+            index = R[index];
+        }*/
+
+        index = T[len];
+
+        while(index != -1) {
+            if (R[index] != -1 && std::abs((std::get<0>(input[index]) - std::get<0>(input[R[index]])) - (std::get<1>(input[index]) - std::get<1>(input[R[index]])) > 500))
+                {
+                    if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
+                        regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 0);
+                    }
+                    indexPrvi = R[index];
+                }
             indexZadnji = index;
             index = R[index];
         }
 
-        std::vector<unsigned int> regija = {std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0};
+        if(index != indexPrvi) {
+            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+        }
+
+        /*std::cout << "tu smo" << std::endl;
+        for(auto& j : regions) {
+            std::cout << "(" << std::get<0>(j) << "," << std::get<1>(j) << "," << std::get<2>(j) << "," << std::get<3>(j) << "," << std::get<4>(j) << ") " <<std::endl;
+        }*/
 
         index = T2[len2];
         indexPrvi = T2[len2];
         indexZadnji = T2[len2];
 
-        while(index != -1) {
+         while(index != -1) {
+            if (R2[index] != -1 && std::abs((std::get<0>(input[index]) - std::get<0>(input[R2[index]])) - (std::get<1>(input[index]) - std::get<1>(input[R2[index]])) > 500))
+                {
+                    if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
+                        regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 1);
+                    }
+                    indexPrvi = R2[index];
+                }
             indexZadnji = index;
             index = R2[index];
         }
 
-        std::vector<unsigned int> regija2 = {std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 1};
-
-        std::pair<std::vector<unsigned int>, std::vector<unsigned int>> retPair;
-        retPair.first = regija;
-        retPair.second = regija2;
-        return retPair;
+        return regions;
 }
-
 
 class InputFile {
     public:
@@ -343,10 +368,6 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
-        query.clear();
-        target.clear();
-        cigar.clear();
-
 /*      std::unordered_map<unsigned int, int> occurences;
         int j = 0;
         for(auto& i : first_object) {
@@ -384,56 +405,30 @@ int main (int argc, char* argv[]) {
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
         std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
 
-        genomeMinimizers.clear();
-
-        int j = 0;
         for(auto& i : first_object) {
-            std::cout << "j = " << j++ << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
 
             sort(result.begin(), result.end(), comparator);
-            std::pair<std::vector<unsigned int>, std::vector<unsigned int>> positions = longestIncreasingSubSequence(result);
+            std::vector<std::tuple<int, int, int, int, bool>> positions = longestIncreasingSubSequence(result);
 
-            result.clear();
-            sequenceMinimizers.clear();
+            for(auto& position : positions){
+                unsigned int querySize = std::get<1>(position)-std::get<0>(position)+1;
+                unsigned int targetSize = std::get<3>(position)-std::get<2>(position)+1;
 
-            unsigned int querySize = positions.first[1]-positions.first[0]+1;
-            unsigned int targetSize = positions.first[3]-positions.first[2]+1;
+                std::string& aq = i->sequence;
+                std::string& tq = (second_object[0]->sequence);
 
-            std::string& aq = (i-> sequence);
-            std::string& tq = (second_object[0]->sequence);
+                std::string queryString = aq.substr(std::get<0>(position), querySize);
+                std::string targetString = tq.substr(std::get<2>(position), targetSize);
 
-            std::string queryString = aq.substr(positions.first[0], querySize);
-            std::string targetString = tq.substr(positions.first[2], targetSize);
+                std::string cigar1;
+                unsigned int target_begin1;
 
-            std::cout<< queryString << std::endl;
-            std::cout<< targetString << std::endl;
-
-            std::cout << "query len " << querySize << std::endl;
-            std::cout << "target len " << targetSize << std::endl;
-            std::string cigar1;
-            unsigned int target_begin1;
-
-            std::cout << blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1) << std::endl;
-            std::cout << cigar1 << std::endl;
-            std::cout << target_begin1 << std::endl;
-
-            std::cout << "me here" << std::endl;
-
-
-            querySize = positions.second[1]-positions.second[0]+1;
-            targetSize = positions.second[3]-positions.second[2]+1;
-
-            std::string queryString2 = (i->sequence).substr(positions.second[0], querySize);
-            std::string targetString2 = (second_object[0]->sequence).substr(positions.second[2], targetSize);
-
-            std::string cigar2;
-            unsigned int target_begin2;
-
-            std::cout << blue::pairwise_alignment(queryString2.c_str(), querySize, targetString2.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar2, target_begin2) << std::endl;
-            std::cout << cigar2 << std::endl;
-            std::cout << target_begin2 << std::endl;
+                std::cout << blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1) << std::endl;
+                std::cout << cigar1 << std::endl;
+                std::cout << target_begin1 << std::endl;
+            }
         }
         return 0;
 }
