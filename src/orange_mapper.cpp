@@ -356,7 +356,7 @@ void findLongestLinearChain(std::vector<std::tuple<unsigned int, short, long int
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
 }
 
-void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j) {
+void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j, int ref_num) {
 
 	unsigned int target_begin;
 	for(unsigned int i = j; i < fastaq_objects.size(); i += threads) {
@@ -366,9 +366,9 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsi
 			if(ref_index.count(std::get<0>(t)) == 0) continue;
 			for(auto const &rt : ref_index.at(std::get<0>(t))) {
 				if(std::get<2>(t) == std::get<2>(rt)) {
-					vec.emplace_back(std::get<0>(rt), 0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
+					vec.emplace_back(ref_num, 0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
 				} else {
-					vec.emplace_back(std::get<0>(rt), 1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
+					vec.emplace_back(ref_num, 1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
 				}
 			}
 		}
@@ -399,16 +399,19 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsi
 		std::string sub;
 		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
 		unsigned int len = cigar.length();
-		unsigned int count=0, e=0;
+		unsigned int count=0, e=0, sum=0;
 		for(int i = 0; i < len; ++i) {
 			if(cigar[i]=='I' || cigar[i]=='D') {
+				sub = cigar.substr(e, i-e);
 				e= i+1;
+				sum += std::stoi(sub);
 			}
 			else {
 				if(cigar[i]=='X' || cigar[i]=='=') {
 					sub = cigar.substr(e, i-e);
 					e = i+1;
 					count += std::stoi(sub);
+					sum += std::stoi(sub);
 				}
 			}
 		}
@@ -424,7 +427,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsi
 		paf += std::to_string(ref_start) + "\n";
 		paf += std::to_string(ref_end+k) + "\n";
 		paf += std::to_string(count) + "\n";
-		paf += std::to_string(e) + "\n";
+		paf += std::to_string(sum) + "\n";
 		paf += "255\n";
 		paf += "cg:Z:" + cigar + "\n"; 
 		//printf("%s\n", paf.c_str());
@@ -438,6 +441,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
+	unsigned int ref_num = 0;
 	for(auto &y : reference_gen_vec) {
 		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y);
 
@@ -445,7 +449,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		std::vector<std::future<void>> thread_futures1;
 		int m, n;
 		for(unsigned i = 0; i < threads; i++) {
-			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i));
+			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i, ref_num));
 		}
 
 		for (auto &it : thread_futures1) {
@@ -453,6 +457,8 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		}
 
 		//mapThread(fastaq_objects, k , window_lenght, ref_index, y, gap, mismatch, match);
+
+		ref_num++;
 
 	}
 
