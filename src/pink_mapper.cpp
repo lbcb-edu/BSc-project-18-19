@@ -17,20 +17,20 @@
 #include "pink_minimizers.hpp"
 
 static struct option options[] = {
-    {"help",          no_argument,       0, 'h'},
-    {"version",       no_argument,       0, 'v'},
-    {"global",        no_argument,       0, 'G'},
-    {"semi_global",   no_argument,       0, 'S'},
-    {"local",         no_argument,       0, 'L'},
-    {"match",         required_argument, 0, 'm'},
-    {"mismatch",      required_argument, 0, 's'},
-    {"gap",           required_argument, 0, 'g'},
-    {"k",             required_argument, 0, 'k'},
-    {"window_length", required_argument, 0, 'w'},
-    {"f",             required_argument, 0, 'f'},
-    {"cigar",         no_argument,       0, 'c'},
-    {"thread",        required_argument, 0, 't'},
-    {NULL,            no_argument,       0, 0}
+        {"help",          no_argument,       0, 'h'},
+        {"version",       no_argument,       0, 'v'},
+        {"global",        no_argument,       0, 'G'},
+        {"semi_global",   no_argument,       0, 'S'},
+        {"local",         no_argument,       0, 'L'},
+        {"match",         required_argument, 0, 'm'},
+        {"mismatch",      required_argument, 0, 's'},
+        {"gap",           required_argument, 0, 'g'},
+        {"k",             required_argument, 0, 'k'},
+        {"window_length", required_argument, 0, 'w'},
+        {"f",             required_argument, 0, 'f'},
+        {"cigar",         no_argument,       0, 'c'},
+        {"thread",        required_argument, 0, 't'},
+        {NULL,            no_argument,       0, 0}
 };
 
 class Fast {
@@ -40,18 +40,18 @@ public:
     std::string quality;
 
     Fast(
-        const char *name, uint32_t name_length,
-        const char *sequence, uint32_t sequence_length) :
-        name{std::string(name, name_length)},
-        sequence{std::string(sequence, sequence_length)} {}
+            const char *name, uint32_t name_length,
+            const char *sequence, uint32_t sequence_length) :
+            name{std::string(name, name_length)},
+            sequence{std::string(sequence, sequence_length)} {}
 
     Fast(
-        const char *name, uint32_t name_length,
-        const char *sequence, uint32_t sequence_length,
-        const char *quality, uint32_t quality_length) :
-        name{std::string(name, name_length)},
-        sequence{std::string(sequence, sequence_length)},
-        quality{std::string(quality, quality_length)} {}
+            const char *name, uint32_t name_length,
+            const char *sequence, uint32_t sequence_length,
+            const char *quality, uint32_t quality_length) :
+            name{std::string(name, name_length)},
+            sequence{std::string(sequence, sequence_length)},
+            quality{std::string(quality, quality_length)} {}
 };
 
 std::vector<std::unique_ptr<Fast>> parse_fasta(std::string fastaFile) {
@@ -237,7 +237,8 @@ bool sortbysec(const std::pair<int, int> &a,
 }
 
 //create minimizer index from the reference genome
-std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> createTargetIndex(const char* target, unsigned int k, unsigned int w, float f) {
+std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>
+createTargetIndex(const char *target, unsigned int k, unsigned int w, float f) {
     std::cout << "\nCreating minimizer index from the reference genome..." << std::endl;
 
     std::vector<std::tuple<unsigned int, unsigned int, bool>> t_minimizer_vector;
@@ -261,19 +262,23 @@ std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> cre
         }
     }
 
-    std::vector<std::pair<unsigned int, std::vector<std::pair<unsigned int, bool>>>> temp_index(t_minimizer_index.begin(),
-                                                                                                t_minimizer_index.end());
+    std::vector<std::pair<unsigned int, std::vector<std::pair<unsigned int, bool>>>> temp_index(
+            t_minimizer_index.begin(),
+            t_minimizer_index.end());
 
     std::sort(temp_index.begin(), temp_index.end(), comparator);
 
     unsigned int x = std::round(f * t_minimizer_index.size());
     temp_index.erase(temp_index.begin(), temp_index.begin() + x);
 
-    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index(temp_index.begin(), temp_index.end());
+    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index(temp_index.begin(),
+                                                                                         temp_index.end());
     return t_index;
 }
 
-std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool> matchSequences(std::vector<std::pair<unsigned int, unsigned int>> same, std::vector<std::pair<unsigned int, unsigned int>> different) {
+std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool>
+matchSequences(std::vector<std::pair<unsigned int, unsigned int>> same,
+               std::vector<std::pair<unsigned int, unsigned int>> different) {
     sort(same.begin(), same.end(), sortbysec);
     sort(different.begin(), different.end(), sortbysec);
 
@@ -297,7 +302,7 @@ std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool> matchSe
 
 }
 
-const char* align(const char* q, const char* t, int match, int mismatch, int gap) {
+const char *align(const char *q, const char *t, int match, int mismatch, int gap) {
     pink::AlignmentType type = pink::local;
     std::string cigar;
     unsigned int target_begin = 0;
@@ -306,21 +311,24 @@ const char* align(const char* q, const char* t, int match, int mismatch, int gap
     return (std::string(cigar.rbegin(), cigar.rend())).c_str(); //cigar
 }
 
-void printPAF(std::unique_ptr<Fast> query, std::unique_ptr<Fast> target, unsigned int k, std::string cigar, bool c, bool s) {
+void
+printPAF(std::unique_ptr<Fast> query, std::unique_ptr<Fast> target, unsigned int k, std::string cigar, bool c, bool s) {
     //PAF
-    std::string pafFormat = query->name + '\n' + std::to_string((query->sequence).size()) + '\n' + '0' + '\n' + std::to_string(query -> sequence.length() - k) + '\n';
+    std::string pafFormat = query->name + '\n' + std::to_string((query->sequence).size()) + '\n' + '0' + '\n' +
+                            std::to_string(query->sequence.length() - k) + '\n';
     if (s) {
         pafFormat += "+\n";
     } else {
         pafFormat += "-\n";
     }
 
-    pafFormat += target->name + '\n' + std::to_string((target->sequence).size()) + '\n' + '0' + '\n' + std::to_string((target->sequence).length() - k) + '\n';
+    pafFormat += target->name + '\n' + std::to_string((target->sequence).size()) + '\n' + '0' + '\n' +
+                 std::to_string((target->sequence).length() - k) + '\n';
 
     int numberOfMatches = 0;
     int blockLength = cigar.size();
 
-    for (char c: cigar){
+    for (char c: cigar) {
         if (c == '=')
             numberOfMatches++;
     }
@@ -330,12 +338,14 @@ void printPAF(std::unique_ptr<Fast> query, std::unique_ptr<Fast> target, unsigne
     if (c)
         pafFormat += cigar;
 
-    std::cout<<pafFormat<<std::endl;
+    std::cout << pafFormat << std::endl;
 }
 
 //create minimizer index for each fragment
-void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1, const std::unique_ptr<Fast> target, unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c) {
-    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index = createTargetIndex((target->sequence).c_str(), k, w, f);
+void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1, const std::unique_ptr<Fast> target,
+                      unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c) {
+    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index = createTargetIndex(
+            (target->sequence).c_str(), k, w, f);
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
 
     std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector;
@@ -367,7 +377,9 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1, c
         same.clear(); //očisti skroz!
         different.clear();
 
-        std::string cigar = align((query->sequence).substr(std::get<0>(data), std::get<1>(data)).c_str(), (target->sequence).substr(std::get<2>(data), std::get<3>(data)).c_str(), match, mismatch, gap);
+        std::string cigar = align((query->sequence).substr(std::get<0>(data), std::get<1>(data)).c_str(),
+                                  (target->sequence).substr(std::get<2>(data), std::get<3>(data)).c_str(), match,
+                                  mismatch, gap);
         printPAF(query, target, k, cigar, c, std::get<4>(data));
     }
 }
@@ -477,7 +489,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    //FINAL TASK!
+        //FINAL TASK!
         createQueryIndex(fast_objects1, fast_objects2.front(), k, window_length, f, match, mismatch, gap, c);
 
     } else {
