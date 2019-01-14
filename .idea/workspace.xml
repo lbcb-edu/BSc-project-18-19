@@ -2,15 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="lbcb-mapper" targetName="example64" />
-      <config projectName="lbcb-mapper" targetName="zlibstatic" />
-      <config projectName="lbcb-mapper" targetName="zlib" />
       <config projectName="lbcb-mapper" targetName="pink_mapper" />
-      <config projectName="lbcb-mapper" targetName="pink_alignment" />
       <config projectName="lbcb-mapper" targetName="minigzip64" />
+      <config projectName="lbcb-mapper" targetName="zlibstatic" />
       <config projectName="lbcb-mapper" targetName="example" />
       <config projectName="lbcb-mapper" targetName="minigzip" />
+      <config projectName="lbcb-mapper" targetName="zlib" />
       <config projectName="lbcb-mapper" targetName="pink_minimizers" />
+      <config projectName="lbcb-mapper" targetName="example64" />
+      <config projectName="lbcb-mapper" targetName="pink_alignment" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -20,9 +20,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ae629b6-41c2-4cfe-9b5c-baa72cd62968" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pink_mapper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/pink_mapper.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pink_minimizers.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/pink_minimizers.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vendor/bioparser" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/bioparser" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/build/" />
@@ -34,24 +33,15 @@
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Default" />
   <component name="FileEditorManager">
-    <leaf>
-      <file pinned="false" current-in-tab="false">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6902">
-              <caret line="480" column="61" selection-start-line="480" selection-start-column="61" selection-end-line="480" selection-end-column="61" />
+            <state relative-caret-position="-180">
+              <caret line="354" column="45" selection-start-line="354" selection-start-column="45" selection-end-line="354" selection-end-column="45" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="118">
-              <caret line="13" column="15" selection-start-line="13" selection-start-column="15" selection-end-line="13" selection-end-column="15" />
             </state>
           </provider>
         </entry>
@@ -62,6 +52,7 @@
     <findStrings>
       <find>query</find>
       <find>debug</find>
+      <find>orange</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -79,7 +70,7 @@
     </option>
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="77" />
     <option name="y" value="47" />
     <option name="width" value="1279" />
@@ -90,7 +81,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -107,6 +97,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -178,13 +169,13 @@
       </method>
     </configuration>
     <list>
+      <item itemvalue="Application.example64" />
+      <item itemvalue="Application.example" />
+      <item itemvalue="Application.minigzip64" />
+      <item itemvalue="Application.minigzip" />
       <item itemvalue="Application.pink_alignment" />
       <item itemvalue="Application.pink_mapper" />
       <item itemvalue="Application.pink_minimizers" />
-      <item itemvalue="Application.example" />
-      <item itemvalue="Application.example64" />
-      <item itemvalue="Application.minigzip" />
-      <item itemvalue="Application.minigzip64" />
       <item itemvalue="Application.zlib" />
       <item itemvalue="Application.zlibstatic" />
     </list>
@@ -209,6 +200,9 @@
       <workItem from="1547406248219" duration="470000" />
       <workItem from="1547414475051" duration="1055000" />
       <workItem from="1547418812993" duration="16240000" />
+      <workItem from="1547438106451" duration="531000" />
+      <workItem from="1547439049050" duration="263000" />
+      <workItem from="1547464604849" duration="1168000" />
     </task>
     <task id="LOCAL-00001" summary="Working on the final task">
       <created>1547399086852</created>
@@ -217,17 +211,23 @@
       <option name="project" value="LOCAL" />
       <updated>1547399086852</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="pink_mapper divided into functions">
+      <created>1547438615319</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1547438615319</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="25026000" />
+    <option name="totallyTimeSpent" value="26988000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1299" height="743" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21947326" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23144454" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -238,7 +238,7 @@
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Database Changes" order="7" />
-      <window_info anchor="bottom" id="Messages" order="8" visible="true" weight="0.32899022" />
+      <window_info active="true" anchor="bottom" id="Messages" order="8" visible="true" weight="0.32899022" />
       <window_info anchor="bottom" id="Terminal" order="9" weight="0.12703583" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.32899022" />
@@ -276,7 +276,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Working on the final task" />
-    <option name="LAST_COMMIT_MESSAGE" value="Working on the final task" />
+    <MESSAGE value="pink_mapper divided into functions" />
+    <option name="LAST_COMMIT_MESSAGE" value="pink_mapper divided into functions" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -347,40 +348,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/orange.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/pink_alignment.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="76" selection-start-line="76" selection-end-line="76" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/orange.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="385" column="55" lean-forward="true" selection-start-line="385" selection-start-column="55" selection-end-line="385" selection-end-column="55" />
-          <folding>
-            <element signature="e#22#41#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/orange.h" />
+    <entry file="file://$PROJECT_DIR$/src/orange.cpp" />
     <entry file="file://$PROJECT_DIR$/src/pink_minimizers.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="194">
+        <state relative-caret-position="3480">
           <caret line="232" selection-start-line="232" selection-end-line="232" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6902">
-          <caret line="480" column="61" selection-start-line="480" selection-start-column="61" selection-end-line="480" selection-end-column="61" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
@@ -389,8 +362,39 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="118">
-          <caret line="13" column="15" selection-start-line="13" selection-start-column="15" selection-end-line="13" selection-end-column="15" />
+        <state relative-caret-position="-17">
+          <caret line="13" column="23" selection-start-line="13" selection-start-column="23" selection-end-line="13" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="15">
+          <caret line="1" column="4" lean-forward="true" selection-start-line="1" selection-start-column="4" selection-end-line="1" selection-end-column="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/pink_alignment.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="35">
+          <caret line="76" selection-start-line="76" selection-end-line="76" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="128">
+          <caret line="10" column="80" selection-start-line="10" selection-start-column="80" selection-end-line="10" selection-end-column="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-180">
+          <caret line="354" column="45" selection-start-line="354" selection-start-column="45" selection-end-line="354" selection-end-column="45" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
