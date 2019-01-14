@@ -8,8 +8,8 @@
       <config projectName="lbcb-mapper" targetName="example" />
       <config projectName="lbcb-mapper" targetName="minigzip" />
       <config projectName="lbcb-mapper" targetName="zlib" />
-      <config projectName="lbcb-mapper" targetName="pink_minimizers" />
       <config projectName="lbcb-mapper" targetName="example64" />
+      <config projectName="lbcb-mapper" targetName="pink_minimizers" />
       <config projectName="lbcb-mapper" targetName="pink_alignment" />
     </generated>
   </component>
@@ -20,8 +20,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1ae629b6-41c2-4cfe-9b5c-baa72cd62968" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pink_mapper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/pink_mapper.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vendor/bioparser" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/bioparser" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/build/" />
@@ -37,8 +35,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-180">
-              <caret line="354" column="45" selection-start-line="354" selection-start-column="45" selection-end-line="354" selection-end-column="45" />
+            <state relative-caret-position="4740">
+              <caret line="316" lean-forward="true" selection-start-line="316" selection-end-line="316" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
@@ -81,6 +79,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -97,7 +96,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -203,6 +201,7 @@
       <workItem from="1547438106451" duration="531000" />
       <workItem from="1547439049050" duration="263000" />
       <workItem from="1547464604849" duration="1168000" />
+      <workItem from="1547468374062" duration="233000" />
     </task>
     <task id="LOCAL-00001" summary="Working on the final task">
       <created>1547399086852</created>
@@ -218,16 +217,24 @@
       <option name="project" value="LOCAL" />
       <updated>1547438615319</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="pink_mapper divided into functions - minor fixes">
+      <created>1547468579286</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1547468579286</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="26988000" />
+    <option name="totallyTimeSpent" value="27221000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1299" height="743" extended-state="6" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23144454" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23543495" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -277,7 +284,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Working on the final task" />
     <MESSAGE value="pink_mapper divided into functions" />
-    <option name="LAST_COMMIT_MESSAGE" value="pink_mapper divided into functions" />
+    <MESSAGE value="pink_mapper divided into functions - minor fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="pink_mapper divided into functions - minor fixes" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -390,8 +398,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-180">
-          <caret line="354" column="45" selection-start-line="354" selection-start-column="45" selection-end-line="354" selection-end-column="45" />
+        <state relative-caret-position="4740">
+          <caret line="316" lean-forward="true" selection-start-line="316" selection-end-line="316" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>

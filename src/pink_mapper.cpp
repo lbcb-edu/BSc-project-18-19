@@ -360,7 +360,7 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
     std::vector<std::pair<unsigned int, unsigned int>> different;
 
     for (auto const &query_object : fast_objects1) {
-        auto query = fast_objects1[0] -> sequence;
+        auto query = query_object -> sequence;
         q_minimizer_vector = pink::minimizers(query.c_str(), query.length(), k, w);
 
         for (auto const &minimizer: q_minimizer_vector) {
@@ -393,7 +393,7 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
         std::string cigar = "";
 
         //std::string cigar = align(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), match, mismatch, gap);
-        printPAF((fast_objects1[0]->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
+        printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
                  target.length(), k, cigar, c, std::get<4>(data));
     }
 }
