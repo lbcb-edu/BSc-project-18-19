@@ -53,24 +53,17 @@ auto cmp_def = [](std::pair<unsigned int,unsigned int> const & a, std::pair<unsi
  		return a.second != b.second?  a.second > b.second : a.first > b.first;
 	};
 
-auto custom_cmp_1 = [](std::tuple<unsigned int, short, long int, long int> const & a, std::tuple<unsigned int, short, long int, long int> const & b) { 
-			if(std::get<1>(a) == 1) return std::get<2>(a) - std::get<3>(a) < std::get<2>(b) - std::get<3>(b);
-			return std::get<2>(a) + std::get<3>(a) < std::get<2>(b) + std::get<3>(b);
+auto custom_cmp_1 = [](std::tuple<short, long int, long int> const & a, std::tuple<short, long int, long int> const & b) { 
+			if(std::get<0>(a) == 1) return std::get<1>(a) - std::get<2>(a) < std::get<1>(b) - std::get<2>(b);
+			return std::get<1>(a) + std::get<2>(a) < std::get<1>(b) + std::get<2>(b);
 	};// ???
 
-auto custom_lis_cmp = [](long int a, std::tuple<unsigned int, short, long int, unsigned int> const & b) { 
-				return a < std::get<3>(b);
-			};// ???
-
-//auto custom_cmp_2 = [](unsigned int a, std::tuple<unsigned int, short, long int, unsigned int> const &b) { 
-//				return std::get<3>(b) < a;
-//			};// ???
-
-auto custom_cmp = [](std::tuple<unsigned int, short, long int, unsigned int> const & a, std::tuple<unsigned int, short, long int, unsigned int> const & b) { 
-				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);		
-				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
-				if(std::get<2>(a) != std::get<2>(b)) return std::get<2>(a) < std::get<2>(b);
-				return std::get<3>(a) < std::get<3>(b);
+auto custom_cmp = [](std::tuple<short, long int, unsigned int> const & a, std::tuple<short, long int, unsigned int> const & b) { 
+				//if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);		
+				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);
+				//if(std::get<2>(a) != std::get<2>(b))
+				return std::get<1>(a) < std::get<1>(b);
+				//return std::get<3>(a) < std::get<3>(b);
 			};// ???
 
 struct statsStruct {
@@ -293,25 +286,25 @@ void findMinimizers(std::string const &filePath, int k, int window_lenght, doubl
 	std::cout << "\nDone!\n";
 }
 
-std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> constructMinimizerIndex(double f, int k, int window_lenght, std::unique_ptr<FASTAQEntity> const &reference_gen) {
+std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> constructMinimizerIndex(double f, int k, int window_lenght, std::unique_ptr<FASTAQEntity> const &reference_gen) {
 	printf("Looking for reference minimizers...\n");
 
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> ref_minimizers = orange::minimizers(reference_gen->sequence.c_str(), reference_gen->sequence.length(), k, window_lenght);
 	printf("Reference minimizers found!\n");
 
 	printf("Creating reference index...\n");
-	std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index;
+	std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> ref_index;
 
 	for(auto const &t : ref_minimizers) {
-		ref_index[std::get<0>(t)].emplace_back(t);
+		ref_index[std::get<0>(t)].emplace_back(std::get<1>(t), std::get<2>(t));
 	}
 	printf("Reference index created!\n");
 
 	printf("Removing too frequent minimizers from reference index...\n");
-	auto cmp = [](std::pair<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> const & a, std::pair<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> const & b) { 
+	auto cmp = [](std::pair<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const & a, std::pair<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const & b) { 
  		return a.second.size() > b.second.size();
 	};
-	std::vector<std::pair<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>>> temp_vec(ref_index.begin(), ref_index.end());
+	std::vector<std::pair<unsigned int, std::vector<std::tuple<unsigned int, bool>>>> temp_vec(ref_index.begin(), ref_index.end());
 
 	std::sort(temp_vec.begin(), temp_vec.end(), cmp);
 
@@ -324,51 +317,73 @@ std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned i
 	return ref_index;
 }
 
-void LISAlgorithm(std::vector<std::tuple<unsigned int, short, long int, long int>> const &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
-	if(end == start && max_len == 0) {
-		max_len = 1;
-		query_end = query_start = std::get<1>(vec[start]) == 0 ? std::get<2>(vec[start]) + std::get<3>(vec[start]) : std::get<2>(vec[start]) - std::get<3>(vec[start]);
-		ref_end = ref_start = std::get<3>(vec[start]);
+void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+	int pArr[end - start + 1];
+	int mArr[end - start + 2];
+
+	int l = 0;
+
+	for(int i = 0; i < end - start + 1; ++i) {
+		int lo = 1;
+		int hi = l;
+
+		while(lo <= hi) {
+			int mid = (lo + hi)/2;
+			if(std::get<2>(vec[start + mArr[mid]]) < std::get<2>(vec[start + i]))
+				lo = mid + 1;
+			else
+				hi = mid - 1;
+
+		}
+
+		int newL = lo;
+
+		pArr[i] = mArr[newL - 1];
+		mArr[newL] = i;
+
+		if(newL > l) l = newL;
 	}
 
-	std::vector<std::tuple<unsigned int, short, long int, long int>> temp_vec;
+	if(max_len > l) return;
 
-	for(int i = start; i <= end; i++) {
-		auto it = std::upper_bound(temp_vec.begin(), temp_vec.end(), std::get<3>(vec[i]), custom_lis_cmp);
-		if(it == temp_vec.end())
-			temp_vec.push_back(vec[i]);
-		else
-			*it = vec[i];
-	}
+	max_len = l;
 
-	if(temp_vec.size() > max_len) {
-		max_len = temp_vec.size();
-		query_start = std::get<1>(temp_vec[0]) == 0 ? std::get<2>(temp_vec[0]) + std::get<3>(temp_vec[0]) : std::get<2>(temp_vec[0]) - std::get<3>(temp_vec[0]);
-		ref_start = std::get<3>(temp_vec[0]);
-		query_end = std::get<1>(temp_vec[temp_vec.size() - 1]) == 0 ? std::get<2>(temp_vec[temp_vec.size() - 1]) + std::get<3>(temp_vec[temp_vec.size() - 1]) : std::get<2>(temp_vec[temp_vec.size() - 1]) - std::get<3>(temp_vec[temp_vec.size() - 1]);
-		ref_end = std::get<3>(temp_vec[temp_vec.size() - 1]);
+	int k = mArr[l];
+
+	for(int i = l - 1; i >= 0; --i) {
+		if(i == l - 1) {
+			query_end = std::get<0>(vec[start + k]) == 0 ? std::get<1>(vec[start + k]) + std::get<2>(vec[start + k]) : std::get<1>(vec[start + k]) - std::get<2>(vec[start + k]);
+			ref_end = std::get<2>(vec[start + k]);
+		}
+
+		if(i == 0) {
+			query_start = std::get<0>(vec[start + k]) == 0 ? std::get<1>(vec[start + k]) + std::get<2>(vec[start + k]) : std::get<1>(vec[start + k]) - std::get<2>(vec[start + k]);
+			ref_start = std::get<2>(vec[start + k]);
+		}
+	
+		k = pArr[k];
 	}
 }
 
-void findLongestLinearChain(std::vector<std::tuple<unsigned int, short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
 	std::sort(vec.begin() + start, vec.begin() + end + 1, custom_cmp_1);
 
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
 }
 
-void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j, int ref_num) {
+void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j) {
 
 	unsigned int target_begin;
 	for(unsigned int i = j; i < fastaq_objects.size(); i += threads) {
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers = orange::minimizers(fastaq_objects[i]->sequence.c_str(), fastaq_objects[i]->sequence.length(), k,window_lenght);
-		std::vector<std::tuple<unsigned int, short, long int, long int>> vec;
+		std::vector<std::tuple<short, long int, long int>> vec;
 		for(auto const &t : fragment_minimizers) {
 			if(ref_index.count(std::get<0>(t)) == 0) continue;
 			for(auto const &rt : ref_index.at(std::get<0>(t))) {
-				if(std::get<2>(t) == std::get<2>(rt)) {
-					vec.emplace_back(ref_num, 0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
+				if(std::get<2>(t) == std::get<1>(rt)) {
+					vec.emplace_back(0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
 				} else {
-					vec.emplace_back(ref_num, 1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
+					vec.emplace_back(1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
 				}
 			}
 		}
@@ -388,8 +403,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> &fastaq_objects, unsi
 		for(unsigned int i = 0; i < vec.size(); ++i) {
 			if(i == vec.size() - 1 ||
 				std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
-				std::get<1>(vec[i + 1]) != std::get<1>(vec[i]) ||
-				std::get<2>(vec[i + 1]) - std::get<2>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
+				std::get<1>(vec[i + 1]) - std::get<1>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
 				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
 				b = i + 1;
 			}
@@ -441,15 +455,15 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		isFirstFASTA ? readFASTAFile(firstFilePath, al, false) : readFASTQFile(firstFilePath, al, false);
 
 	std::vector<std::unique_ptr<FASTAQEntity>> reference_gen_vec = readFASTAFile(secondFilePath, al, false);
-	unsigned int ref_num = 0;
+
 	for(auto &y : reference_gen_vec) {
-		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y);
+		std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> ref_index = constructMinimizerIndex(f, k, window_lenght, y);
 
 		std::shared_ptr<thread_pool::ThreadPool> thread_pool1 = thread_pool::createThreadPool(threads);
 		std::vector<std::future<void>> thread_futures1;
-		int m, n;
+
 		for(unsigned i = 0; i < threads; i++) {
-			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i, ref_num));
+			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i));
 		}
 
 		for (auto &it : thread_futures1) {
@@ -457,8 +471,6 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		}
 
 		//mapThread(fastaq_objects, k , window_lenght, ref_index, y, gap, mismatch, match);
-
-		ref_num++;
 
 	}
 
@@ -550,45 +562,6 @@ int main(int argc, char** argv) {
 	//findMinimizers(firstFilePath, k, window_lenght, f, isFirstFASTA);
 
 	constructAndPrintPAF(firstFilePath, secondFilePath, isFirstFASTA, k, window_lenght, f, includeCIGARInPAF, alignment.match, alignment.mismatch, alignment.gap, threads);
-
-//	unsigned int a, b, c, d;
-//	unsigned int max = 0;
-//	std::vector<std::tuple<unsigned int, short, long int, long int>> vect;
-//	vect.emplace_back(11, 1, 19, 15);//25
-//	vect.emplace_back(11, 1, 37, 15);//5
-//	vect.emplace_back(11, 0, 99, 31);
-//	vect.emplace_back(11, 1, 18, 8);//10
-//	vect.emplace_back(11, 1, 26, 11);//15
-//	vect.emplace_back(11, 1, 29, 11);
-//	vect.emplace_back(2, 1, 153, 51);
-//	vect.emplace_back(11, 1, 33, 13);//20
-//	vect.emplace_back(2, 1, 45, 22);
-	
-//	for(int i = 0; i < vect.size(); i++) {
-//		printf("%d %d %ld %ld \n", std::get<0>(vect[i]), std::get<1>(vect[i]), std::get<2>(vect[i]), std::get<3>(vect[i]));
-//	}
-//	printf("sort\n");
-
-//	std::sort(vect.begin(), vect.end(), custom_cmp);
-
-//	for(int i = 0; i < vect.size(); i++) {
-//		printf("%d %d %ld %ld \n", std::get<0>(vect[i]), std::get<1>(vect[i]), std::get<2>(vect[i]), std::get<3>(vect[i]));
-//	}
-//	printf("rr\n");
-//	int br = 0;
-//	for(unsigned int i = 0; i < vect.size(); ++i) {
-//				if(i == vect.size() - 1 ||
-//					std::get<0>(vect[i + 1]) != std::get<0>(vect[i]) ||
-//					std::get<1>(vect[i + 1]) != std::get<1>(vect[i]) ||
-//					std::get<2>(vect[i + 1]) - std::get<2>(vect[i]) >= DEFAULT_BAND_OF_WIDTH) {
-//					findLongestLinearChain(vect, br, i, a, b, c, d, max);
-//					printf("max je %d\n", max);
-//					br = i + 1;
-//				}
-//			}
-
-	
-//	printf("%d %d %d %d %d \n", a, b, c, d, max);
 
 	return 0;
 }
