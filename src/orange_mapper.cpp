@@ -368,6 +368,12 @@ void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec,
 void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
 	std::sort(vec.begin() + start, vec.begin() + end + 1, custom_cmp_1);
 
+	//for(int i  = 0; i < vec.size(); i++) {
+	//	printf("++ %d, %d, %d ++ \n", std::get<0>(vec[i]), std::get<1>(vec[i]), std::get<2>(vec[i]));
+	//}
+	//printf("\n\n");
+
+
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
 }
 
@@ -378,40 +384,50 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		std::vector<std::tuple<unsigned int, unsigned int, bool>> fragment_minimizers = orange::minimizers(fastaq_objects[i]->sequence.c_str(), fastaq_objects[i]->sequence.length(), k,window_lenght);
 		std::vector<std::tuple<short, long int, long int>> vec;
 		for(auto const &t : fragment_minimizers) {
-			if(ref_index.count(std::get<0>(t)) == 0) continue;
+			if(ref_index.find(std::get<0>(t)) == ref_index.end()) continue;
 			for(auto const &rt : ref_index.at(std::get<0>(t))) {
 				if(std::get<2>(t) == std::get<1>(rt)) {
-					vec.emplace_back(0, std::get<1>(t) - std::get<1>(rt), std::get<1>(rt));
+					vec.emplace_back(0, std::get<1>(t) - std::get<0>(rt), std::get<0>(rt));
 				} else {
-					vec.emplace_back(1, std::get<1>(t) + std::get<1>(rt), std::get<1>(rt));
+					vec.emplace_back(1, std::get<1>(t) + std::get<0>(rt), std::get<0>(rt));
 				}
 			}
 		}
 
-		if(vec.size() == 0) continue;
+		if(vec.size() == 0) continue;//no matches found
 
 		std::sort(vec.begin(), vec.end(), custom_cmp);
 
+		//for(int i  = 0; i < vec.size(); i++) {
+		//	printf("++ %d, %d, %d ++ \n", std::get<0>(vec[i]), std::get<1>(vec[i]), std::get<2>(vec[i]));
+		//}
+		//printf("\n\n");
+
 		unsigned int b = 0;
 
-		unsigned int query_start = 0;
-		unsigned int query_end = fastaq_objects[i] -> sequence.length() - k;
-		unsigned int ref_start = 0;
-		unsigned int ref_end = y -> sequence.length() - k;
+		unsigned int query_start;
+		unsigned int query_end ;
+		unsigned int ref_start;
+		unsigned int ref_end;
 
 		unsigned int max_len = 0;
 		for(unsigned int i = 0; i < vec.size(); ++i) {
 			if(i == vec.size() - 1 ||
 				std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
-				std::get<1>(vec[i + 1]) - std::get<1>(vec[i]) >= DEFAULT_BAND_OF_WIDTH) {
+				std::abs(std::get<1>(vec[i + 1]) - std::get<1>(vec[i])) >= DEFAULT_BAND_OF_WIDTH) {
+				//printf("b = %d, i = %d\n", b, i);
 				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
 				b = i + 1;
+				//printf("maxlen = %d\n", max_len);
 			}
 		}
 
 		std::string cigar;
 		std::string sub;
-		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);		
+		//printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
+		return;
+		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+		continue;
 		unsigned int len = cigar.length();
 		unsigned int count=0, e=0, sum=0;
 		for(int i = 0; i < len; ++i) {
@@ -430,7 +446,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 			}
 		}
 
-		std::string paf="";
+		std::string paf;
 		paf += fastaq_objects[i]->name + "\n";
 		paf += std::to_string(fastaq_objects[i]->sequence.length()) + "\n";
 		paf += std::to_string(query_start) + "\n";
@@ -444,7 +460,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		paf += std::to_string(sum) + "\n";
 		paf += "255\n";
 		paf += "cg:Z:" + cigar + "\n"; 
-		//printf("%s\n", paf.c_str());
+		printf("%s\n", paf.c_str());
 	}
 }
 
