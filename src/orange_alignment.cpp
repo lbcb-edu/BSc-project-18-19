@@ -229,6 +229,14 @@ namespace orange {
 
 		cigar = constructCIGAR(matrix, target_cell_row, target_cell_column, target_begin, query, target, query_length, target_length);
 
+		for (int i = 0; i<matrix.size(); ++i) {
+			matrix[i].clear();
+			matrix[i].shrink_to_fit();
+		}
+
+		matrix.clear();
+		matrix.shrink_to_fit();
+
 		return score;
 	}
 
