@@ -16,6 +16,8 @@
 #include "pink_alignment.hpp"
 #include "pink_minimizers.hpp"
 
+#define OFFSET 500
+
 static struct option options[] = {
         {"help",          no_argument,       0, 'h'},
         {"version",       no_argument,       0, 'v'},
@@ -217,6 +219,7 @@ std::vector<E> lis(const std::vector<E> &n) {
         else
             pileTops.push_back(node);
     }
+
     // extract LIS from piles
     std::vector<E> result;
     for (NodePtr node = pileTops.back(); node != NULL; node = node->pointer)
@@ -237,8 +240,8 @@ bool sortbysec(const std::pair<int, int> &a,
 }
 
 //create minimizer index from the reference genome
-std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>
-createTargetIndex(const char *target, unsigned int t_len, unsigned int k, unsigned int w, float f) {
+void createTargetIndex(const char *target, unsigned int t_len, unsigned int k, unsigned int w, float f,
+                       std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> *t_index) {
     std::cout << "\nCreating minimizer index from the reference genome..." << std::endl;
 
     std::vector<std::tuple<unsigned int, unsigned int, bool>> t_minimizer_vector;
@@ -271,21 +274,22 @@ createTargetIndex(const char *target, unsigned int t_len, unsigned int k, unsign
     unsigned int x = std::round(f * t_minimizer_index.size());
     temp_index.erase(temp_index.begin(), temp_index.begin() + x);
 
-    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index(temp_index.begin(),
-                                                                                         temp_index.end());
-    return t_index;
+    for (auto temp: temp_index) {
+        (*t_index).insert(temp);
+    }
 }
 
-std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool>
-matchSequences(std::vector<std::pair<unsigned int, unsigned int>> same,
-               std::vector<std::pair<unsigned int, unsigned int>> different) {
+void
+matchSequences(std::vector<std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool>> *regions,
+               std::vector<std::pair<unsigned int, unsigned int>> *same,
+               std::vector<std::pair<unsigned int, unsigned int>> *different) {
 
-    sort(same.begin(), same.end(), sortbysec);
-    sort(different.begin(), different.end(), sortbysec);
+    sort((*same).begin(), (*same).end(), sortbysec);
+    sort((*different).begin(), (*different).end(), sortbysec);
 
     //LIS
-    std::vector<std::pair<unsigned int, unsigned int>> s_locations = lis(same);
-    std::vector<std::pair<unsigned int, unsigned int>> d_locations = lis(different);
+    std::vector<std::pair<unsigned int, unsigned int>> s_locations = lis(*same);
+    std::vector<std::pair<unsigned int, unsigned int>> d_locations = lis(*different);
 
     bool s = true;
 
@@ -294,23 +298,28 @@ matchSequences(std::vector<std::pair<unsigned int, unsigned int>> same,
         s = false;
     }
 
-    unsigned int q_begin = std::get<1>(s_locations.at(0));
-    unsigned int t_begin = std::get<0>(s_locations.at(0));
-    unsigned int q_len = std::get<1>(s_locations.at(s_locations.size() - 1)) - q_begin + 1;
-    unsigned int t_len = std::get<0>(s_locations.at(s_locations.size() - 1)) - t_begin + 1;
+    std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool> region;
+    bool first = true;
 
-    return std::make_tuple(q_begin, q_len, t_begin, t_len, s);
+    for (unsigned i = 0; i < s_locations.size() - 1; i++) {
+        if (first) {
+            region = std::make_tuple(std::get<1>(s_locations[i]), 0, std::get<0>(s_locations[i]), 0, s);
+            first = false;
+            continue;
+        }
 
-}
+        int tmp = std::get<1>(s_locations[i]) - std::get<1>(s_locations[i-1]);
+        if (tmp > OFFSET) {
+            if (std::get<1>(region) != 0) {
+                (*regions).emplace_back(region);
+                first = true;
+            }
 
-const char *
-align(const char *q, unsigned int q_len, const char *t, unsigned int t_len, int match, int mismatch, int gap) {
-    pink::AlignmentType type = pink::local;
-    std::string cigar;
-    unsigned int target_begin = 0;
-
-    pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
-    return (std::string(cigar.rbegin(), cigar.rend())).c_str(); //cigar
+        } else {
+            std::get<1>(region) += tmp;
+            std::get<3>(region) += std::get<0>(s_locations[i]) - std::get<0>(s_locations[i-1]);
+        }
+    }
 }
 
 void
@@ -351,17 +360,18 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
     int i = 0;
     auto target = fast_objects2.front()->sequence;
 
-    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index = createTargetIndex(
-            target.c_str(), target.length(), k, w, f);
+    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index;
+    createTargetIndex(target.c_str(), target.length(), k, w, f, &t_index);
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
 
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector;
-    std::vector<std::pair<unsigned int, unsigned int>> same;
-    std::vector<std::pair<unsigned int, unsigned int>> different;
 
     for (auto const &query_object : fast_objects1) {
-        auto query = query_object -> sequence;
-        q_minimizer_vector = pink::minimizers(query.c_str(), query.length(), k, w);
+        auto query = query_object->sequence;
+        std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector = pink::minimizers(query.c_str(),
+                                                                                                        query.length(),
+                                                                                                        k, w);
+        std::vector<std::pair<unsigned int, unsigned int>> same;
+        std::vector<std::pair<unsigned int, unsigned int>> different;
 
         for (auto const &minimizer: q_minimizer_vector) {
             it = t_index.find(std::get<0>(minimizer));
@@ -380,21 +390,40 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
             }
         }
 
-        auto data = matchSequences(same, different);
+        std::vector<std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool>> regions;
+        matchSequences(&regions, &same, &different);
 
         same.clear();
+        same.shrink_to_fit();
         different.clear();
-
-        std::string q_sub = query.substr(std::get<0>(data), std::get<1>(data));
-        std::string t_sub = target.substr(std::get<2>(data), std::get<3>(data));
+        different.shrink_to_fit();
+        q_minimizer_vector.clear();
+        q_minimizer_vector.shrink_to_fit();
 
         std::cout << "NO. of query: " << i << std::endl;
         i++;
-        std::string cigar = "";
 
-        //std::string cigar = align(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), match, mismatch, gap);
-        printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
-                 target.length(), k, cigar, c, std::get<4>(data));
+        //std::string cigar = "";
+        pink::AlignmentType type = pink::local;
+        std::string cigar;
+        unsigned int target_begin = 0;
+
+        for (auto const &region : regions) {
+            std::cout << "q_len: " << std::get<1>(region) << std::endl;
+            std::cout << "t_len: " << std::get<3>(region) << std::endl;
+
+            std::string q_sub = query.substr(std::get<0>(region), std::get<1>(region));
+            std::string t_sub = target.substr(std::get<2>(region), std::get<3>(region));
+
+            pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
+            cigar = std::string(cigar.rbegin(), cigar.rend());
+
+            printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
+                     target.length(), k, cigar.c_str(), c, std::get<4>(region));
+        }
+
+        regions.clear();
+        regions.shrink_to_fit();
     }
 }
 
@@ -413,7 +442,7 @@ int main(int argc, char *argv[]) {
     unsigned int window_length = 5;
     float f = 0.001;
 
-    bool c = false;
+    bool c = true;
     //int thread = 1;
 
     while ((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:f:ct:", options, NULL)) != -1) {
