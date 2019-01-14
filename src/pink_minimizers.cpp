@@ -80,8 +80,7 @@ unsigned int get_first_value_reversed(const char *sequence, unsigned int positio
 }
 
 
-unsigned int
-get_value_reversed(const char *sequence, unsigned int position, unsigned int k, unsigned int temp_value_reversed) {
+unsigned int get_value_reversed(const char *sequence, unsigned int position, unsigned int k, unsigned int temp_value_reversed) {
     unsigned int value = 0b0;
     value = ((get_complement_letter_value(sequence[position + k - 1]) << 2 * k) | temp_value_reversed) >> 2;
     return value;
@@ -192,8 +191,7 @@ void get_beginning_minimizers(const char *sequence, unsigned int sequence_length
 
 }
 
-void
-get_end_minimizers(const char *sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length,
+void get_end_minimizers(const char *sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length,
                    std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> &minimizers_set) {
 
     unsigned int last_beginning = sequence_length - k;
