@@ -54,17 +54,15 @@ auto cmp_def = [](std::pair<unsigned int,unsigned int> const & a, std::pair<unsi
 	};
 
 auto custom_cmp_1 = [](std::tuple<short, long int, long int> const & a, std::tuple<short, long int, long int> const & b) { 
-			if(std::get<0>(a) == 1) return std::get<1>(a) - std::get<2>(a) < std::get<1>(b) - std::get<2>(b);
-			return std::get<1>(a) + std::get<2>(a) < std::get<1>(b) + std::get<2>(b);
-	};// ???
+			if(std::get<0>(a) == 1) return (std::get<1>(a) - std::get<2>(a)) < (std::get<1>(b) - std::get<2>(b));
+			return (std::get<1>(a) + std::get<2>(a)) < (std::get<1>(b) + std::get<2>(b));
+	};
 
-auto custom_cmp = [](std::tuple<short, long int, unsigned int> const & a, std::tuple<short, long int, unsigned int> const & b) { 
-				//if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);		
+auto custom_cmp = [](std::tuple<short, long int, unsigned int> const & a, std::tuple<short, long int, unsigned int> const & b) { 	
 				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);
-				//if(std::get<2>(a) != std::get<2>(b))
-				return std::get<1>(a) < std::get<1>(b);
-				//return std::get<3>(a) < std::get<3>(b);
-			};// ???
+				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
+				return std::get<2>(a) < std::get<2>(b);
+			};
 
 struct statsStruct {
 	uint32_t max;
@@ -422,12 +420,15 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 			}
 		}
 
+		printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
+
+		continue;
+
+		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap);
+	
 		std::string cigar;
 		std::string sub;
-		//printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
-		return;
-		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
-		continue;
+
 		unsigned int len = cigar.length();
 		unsigned int count=0, e=0, sum=0;
 		for(int i = 0; i < len; ++i) {
