@@ -207,6 +207,12 @@ namespace pink {
             make_cigar(matrix, type, cigar, target_begin, row, col);
         }
 
+        for (unsigned i = 0; i < rows; i++) {
+            delete[] matrix[i];
+        }
+
+        delete[] matrix;
+
         return cost;
     }
 

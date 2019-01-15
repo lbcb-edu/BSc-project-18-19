@@ -245,5 +245,3 @@ minimizers(const char *sequence, unsigned int sequence_length, unsigned int k, u
 
 }
 }
-
-
