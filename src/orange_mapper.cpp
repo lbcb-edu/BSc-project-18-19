@@ -60,7 +60,11 @@ auto custom_cmp_1 = [](std::tuple<short, long int, long int> const & a, std::tup
 
 auto custom_cmp = [](std::tuple<short, long int, unsigned int> const & a, std::tuple<short, long int, unsigned int> const & b) { 	
 				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);
-				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
+				if(std::get<1>(a) != std::get<1>(b)) {
+					if(std::get<0>(a) == 0)
+						return std::get<1>(a) < std::get<1>(b);
+					return std::get<1>(a) > std::get<1>(b);
+				}
 				return std::get<2>(a) < std::get<2>(b);
 			};
 
@@ -315,7 +319,7 @@ std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> co
 	return ref_index;
 }
 
-void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len, char &rel_strand) {
 	int pArr[end - start + 1];
 	int mArr[end - start + 2];
 
@@ -352,6 +356,7 @@ void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec,
 		if(i == l - 1) {
 			query_end = std::get<0>(vec[start + k]) == 0 ? std::get<1>(vec[start + k]) + std::get<2>(vec[start + k]) : std::get<1>(vec[start + k]) - std::get<2>(vec[start + k]);
 			ref_end = std::get<2>(vec[start + k]);
+			rel_strand = std::get<0>(vec[start + k]) == 0 ? '-' : '+';
 		}
 
 		if(i == 0) {
@@ -363,7 +368,7 @@ void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec,
 	}
 }
 
-void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len) {
+void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len, char &rel_strand) {
 	std::sort(vec.begin() + start, vec.begin() + end + 1, custom_cmp_1);
 
 	//for(int i  = 0; i < vec.size(); i++) {
@@ -372,7 +377,7 @@ void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &
 	//printf("\n\n");
 
 
-	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len);
+	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 }
 
 void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j) {
@@ -407,6 +412,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		unsigned int query_end ;
 		unsigned int ref_start;
 		unsigned int ref_end;
+		char rel_strand;
 
 		unsigned int max_len = 0;
 		for(unsigned int i = 0; i < vec.size(); ++i) {
@@ -414,19 +420,18 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 				std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 				std::abs(std::get<1>(vec[i + 1]) - std::get<1>(vec[i])) >= DEFAULT_BAND_OF_WIDTH) {
 				//printf("b = %d, i = %d\n", b, i);
-				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len);
+				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 				b = i + 1;
 				//printf("maxlen = %d\n", max_len);
 			}
 		}
 
-		printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
+		//printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
 
-		continue;
-
-		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap);
-	
 		std::string cigar;
+
+		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+	
 		std::string sub;
 
 		unsigned int len = cigar.length();
@@ -452,7 +457,8 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		paf += std::to_string(fastaq_objects[i]->sequence.length()) + "\n";
 		paf += std::to_string(query_start) + "\n";
 		paf += std::to_string(query_end+k) + "\n";
-		paf += "+\n";
+		paf += rel_strand;
+		paf += "\n";
 		paf += y->name + "\n";
 		paf += std::to_string(y->sequence.length()) + "\n";
 		paf += std::to_string(ref_start) + "\n";
@@ -462,6 +468,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		paf += "255\n";
 		paf += "cg:Z:" + cigar + "\n"; 
 		printf("%s\n", paf.c_str());
+		return;
 	}
 }
 
