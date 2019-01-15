@@ -376,7 +376,7 @@ void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 }
 
-void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j) {
+void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j, bool includeCIGAR) {
 
 	unsigned int target_begin;
 	for(unsigned int i = j; i < fastaq_objects.size(); i += threads) {
@@ -433,38 +433,38 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		unsigned int len = cigar.length();
 		unsigned int count=0, e=0, sum=0;
 		for(int i = 0; i < len; ++i) {
-			if(cigar[i]=='I' || cigar[i]=='D') {
+			if(cigar[i]=='I' || cigar[i]=='D' || cigar[i]=='X') {
 				sub = cigar.substr(e, i-e);
 				e= i+1;
 				sum += std::stoi(sub);
-			}
-			else {
-				if(cigar[i]=='X' || cigar[i]=='=') {
-					sub = cigar.substr(e, i-e);
-					e = i+1;
-					count += std::stoi(sub);
-					sum += std::stoi(sub);
-				}
+			} else if(cigar[i]=='=') {
+				sub = cigar.substr(e, i-e);
+				e = i+1;
+				count += std::stoi(sub);
+				sum += std::stoi(sub);
 			}
 		}
 
 		std::string paf;
-		paf += fastaq_objects[i]->name + "\n";
-		paf += std::to_string(fastaq_objects[i]->sequence.length()) + "\n";
-		paf += std::to_string(query_start) + "\n";
-		paf += std::to_string(query_end+k) + "\n";
+		paf += fastaq_objects[i]->name + "\t";
+		paf += std::to_string(fastaq_objects[i]->sequence.length()) + "\t";
+		paf += std::to_string(query_start) + "\t";
+		paf += std::to_string(query_end+k) + "\t";
 		paf += rel_strand;
+		paf += "\t";
+		paf += y->name + "\t";
+		paf += std::to_string(y->sequence.length()) + "\t";
+		paf += std::to_string(ref_start) + "\t";
+		paf += std::to_string(ref_end+k) + "\t";
+		paf += std::to_string(count) + "\t";
+		paf += std::to_string(sum) + "\t";
+		paf += "255";
+
+		if(includeCIGAR) paf += "\tcg:Z:" + cigar;
+
 		paf += "\n";
-		paf += y->name + "\n";
-		paf += std::to_string(y->sequence.length()) + "\n";
-		paf += std::to_string(ref_start) + "\n";
-		paf += std::to_string(ref_end+k) + "\n";
-		paf += std::to_string(count) + "\n";
-		paf += std::to_string(sum) + "\n";
-		paf += "255\n";
-		paf += "cg:Z:" + cigar + "\n"; 
+
 		printf("%s\n", paf.c_str());
-		return;
 	}
 }
 
@@ -483,7 +483,7 @@ void constructAndPrintPAF(std::string const &firstFilePath, std::string const &s
 		std::vector<std::future<void>> thread_futures1;
 
 		for(unsigned i = 0; i < threads; i++) {
-			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i));
+			thread_futures1.emplace_back(thread_pool1->submit_task(mapThread, std::ref(fastaq_objects), k, window_lenght, std::ref(ref_index), std::ref(y), gap, mismatch, match, threads, i, c));
 		}
 
 		for (auto &it : thread_futures1) {
