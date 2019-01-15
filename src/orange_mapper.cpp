@@ -60,11 +60,7 @@ auto custom_cmp_1 = [](std::tuple<short, long int, long int> const & a, std::tup
 
 auto custom_cmp = [](std::tuple<short, long int, unsigned int> const & a, std::tuple<short, long int, unsigned int> const & b) { 	
 				if(std::get<0>(a) != std::get<0>(b)) return std::get<0>(a) < std::get<0>(b);
-				if(std::get<1>(a) != std::get<1>(b)) {
-					if(std::get<0>(a) == 0)
-						return std::get<1>(a) < std::get<1>(b);
-					return std::get<1>(a) > std::get<1>(b);
-				}
+				if(std::get<1>(a) != std::get<1>(b)) return std::get<1>(a) < std::get<1>(b);
 				return std::get<2>(a) < std::get<2>(b);
 			};
 
