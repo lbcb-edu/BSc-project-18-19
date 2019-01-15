@@ -41,16 +41,6 @@ namespace orange {
 		}
 	}
 
-	std::string convertVectorToCIGARString(std::vector<std::pair<char, unsigned int>> const &temp_vec) {
-		std::string CIGAR;
-
-		for(auto it = temp_vec.rbegin(); it != temp_vec.rend(); ++it) {
-			CIGAR += std::to_string((*it).second) + (*it).first;
-		}
-
-		return CIGAR;
-	}
-
 	std::string constructCIGAR(std::vector<std::vector<cell>> const &matrix, unsigned int target_cell_row, unsigned int target_cell_column, unsigned int &target_begin, const char *query, const char *target, unsigned int query_length, unsigned int target_length) {
 		unsigned int i = target_cell_row;
 		unsigned int j = target_cell_column;
@@ -62,8 +52,8 @@ namespace orange {
 
 		if(i != query_length) 
 			suffix = std::to_string(query_length - i) + 'S';
-	
-		std::vector<std::pair<char, unsigned int>> temp_vec;	
+
+		std::string cigar;
 
 		while(matrix[i][j].parent != STOP) {
 			if(matrix[i][j].parent==MATCH) {
@@ -80,7 +70,7 @@ namespace orange {
 				counter++;
 			} else {
 				if(firstIdentified) {
-					temp_vec.emplace_back(lastChar, counter);
+					cigar = std::to_string(counter) + lastChar + cigar;
 				} else {
 					firstIdentified = true;
 				}
@@ -97,9 +87,9 @@ namespace orange {
 
 		target_begin=j;
 
-		temp_vec.emplace_back(lastChar, counter);
+		cigar = std::to_string(counter) + lastChar + cigar;
 
-		return prefix + convertVectorToCIGARString(temp_vec) + suffix;
+		return prefix + cigar + suffix;
 	}
 
 	void initMatrix (std::vector<std::vector<cell>> &matrix, int query_length, int target_length, int cost, AlignmentType type) {
