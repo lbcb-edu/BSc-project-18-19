@@ -4,7 +4,6 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
-#include <list>
 #include <utility>
 
 #define STOP -1
@@ -42,11 +41,11 @@ namespace orange {
 		}
 	}
 
-	std::string convertListToCIGARString(std::list<std::pair<char, unsigned int>> const &temp_list) {
+	std::string convertVectorToCIGARString(std::vector<std::pair<char, unsigned int>> const &temp_vec) {
 		std::string CIGAR;
 
-		for(auto const &pair : temp_list) {
-			CIGAR += std::to_string(pair.second) + pair.first;
+		for(auto it = temp_vec.rbegin(); it != temp_vec.rend(); ++it) {
+			CIGAR += std::to_string((*it).second) + (*it).first;
 		}
 
 		return CIGAR;
@@ -64,7 +63,7 @@ namespace orange {
 		if(i != query_length) 
 			suffix = std::to_string(query_length - i) + 'S';
 	
-		std::list<std::pair<char, unsigned int>> temp_list;	
+		std::vector<std::pair<char, unsigned int>> temp_vec;	
 
 		while(matrix[i][j].parent != STOP) {
 			if(matrix[i][j].parent==MATCH) {
@@ -81,7 +80,7 @@ namespace orange {
 				counter++;
 			} else {
 				if(firstIdentified) {
-					temp_list.emplace_front(lastChar, counter);
+					temp_vec.emplace_back(lastChar, counter);
 				} else {
 					firstIdentified = true;
 				}
@@ -98,9 +97,9 @@ namespace orange {
 
 		target_begin=j;
 
-		temp_list.emplace_front(lastChar, counter);
+		temp_vec.emplace_back(lastChar, counter);
 
-		return prefix + convertListToCIGARString(temp_list) + suffix;
+		return prefix + convertVectorToCIGARString(temp_vec) + suffix;
 	}
 
 	void initMatrix (std::vector<std::vector<cell>> &matrix, int query_length, int target_length, int cost, AlignmentType type) {
@@ -206,7 +205,17 @@ namespace orange {
 		unsigned int temp_i;
 		unsigned int temp_j;
 
-		return populateMatrix(matrix, query, target, query_length, target_length, match , mismatch, gap, type, temp_i, temp_j);
+		int score = populateMatrix(matrix, query, target, query_length, target_length, match , mismatch, gap, type, temp_i, temp_j);
+
+		for (int i = 0; i<matrix.size(); ++i) {
+			matrix[i].clear();
+			matrix[i].shrink_to_fit();
+		}
+
+		matrix.clear();
+		matrix.shrink_to_fit();
+
+		return score;
 	}
 
 	int pairwise_alignment(const char* query, unsigned int query_length,
