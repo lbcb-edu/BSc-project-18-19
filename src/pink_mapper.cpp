@@ -422,9 +422,8 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
         q_minimizer_vector.shrink_to_fit();
 
         // std::string cigar = "";
-//        pink::AlignmentType type = pink::local;
-        std::string cigar2;
-//        unsigned int target_begin = 0;
+        pink::AlignmentType type = pink::local;
+        unsigned int target_begin = 0;
 
         for (auto const &region : regions) {
 //            std::cout << "region!!!" << std::endl;
@@ -444,10 +443,14 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
 //            std::cout << "q_sub.c_str() " << q_sub.c_str() << std::endl;
 //            std::cout << "t_sub.c_str() " << t_sub.c_str() << std::endl;
 
-            //pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
-            //cigar = std::string(cigar.rbegin(), cigar.rend());
+            if (q_sub.length() == 0 || t_sub.length() == 0) {
+                continue;
+            }
 
-            //std::cout << cigar << std::endl;
+            pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
+            cigar = std::string(cigar.rbegin(), cigar.rend());
+
+            std::cout << cigar << std::endl;
 
 //             printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
 //                      target.length(), k, cigar.c_str(), c, std::get<4>(region));
