@@ -205,9 +205,9 @@ template<typename E>
 std::vector<E> lis(const std::vector<E> &n) {
     typedef std::shared_ptr<Node<E>> NodePtr;
 
-    std::cout << "n.size() " << n.size() << std::endl;
+//    std::cout << "n.size() " << n.size() << std::endl;
 
-    std::cout << "lis " << std::endl;
+//    std::cout << "lis " << std::endl;
 
     std::vector<NodePtr> pileTops;
     // sort into piles
@@ -224,9 +224,9 @@ std::vector<E> lis(const std::vector<E> &n) {
             pileTops.push_back(node);
     }
 
-    std::cout << "for lis " << std::endl;
+//    std::cout << "for lis " << std::endl;
 
-    std::cout << pileTops.size() << std::endl;
+//    std::cout << pileTops.size() << std::endl;
 
     // extract LIS from piles
     std::vector<E> result;
@@ -234,7 +234,7 @@ std::vector<E> lis(const std::vector<E> &n) {
         result.push_back(node->value);
     std::reverse(result.begin(), result.end());
 
-    std::cout << "end lis " << std::endl;
+//    std::cout << "end lis " << std::endl;
 
     return result;
 }
@@ -388,9 +388,7 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
 
     for (auto const &query_object : fast_objects1) {
-        if (i == 219) {
-            continue;
-        }
+        std::cout << "/nNo. of query sequence : " << i << std::endl;
         auto query = query_object->sequence;
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector = pink::minimizers(query.c_str(),
@@ -426,9 +424,6 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
         q_minimizer_vector.clear();
         q_minimizer_vector.shrink_to_fit();
 
-        std::cout << "NO. of query: " << i << std::endl;
-        i++;
-
         // std::string cigar = "";
 //        pink::AlignmentType type = pink::local;
         std::string cigar2;
@@ -449,8 +444,8 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
 
             std::string cigar;
 
-            std::cout << q_sub.c_str() << std::endl;
-            std::cout << t_sub.c_str() << std::endl;
+            std::cout << "q_sub.c_str() " << q_sub.c_str() << std::endl;
+            std::cout << "t_sub.c_str() " << t_sub.c_str() << std::endl;
 
             //pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
             //cigar = std::string(cigar.rbegin(), cigar.rend());
@@ -463,6 +458,8 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
 
         regions.clear();
         regions.shrink_to_fit();
+
+        i++;
     }
 }
 
@@ -470,12 +467,12 @@ int main(int argc, char *argv[]) {
     char optchr;
     srand(time(NULL));
 
-    pink::AlignmentType type = pink::global;
+//    pink::AlignmentType type = pink::global;
     int match = 2;
     int mismatch = -1;
     int gap = -2;
     std::string cigar;
-    unsigned int target_begin = 0;
+//    unsigned int target_begin = 0;
 
     unsigned int k = 15;
     unsigned int window_length = 5;
@@ -554,20 +551,20 @@ int main(int argc, char *argv[]) {
 
 
 
-        int query = rand() % fast_objects1.size();
-        int target = rand() % fast_objects1.size();
-
-        const char *q = (fast_objects1[query]->sequence).c_str();
-        const char *t = (fast_objects1[target]->sequence).c_str();
-        unsigned int q_len = (fast_objects1[query]->sequence).length();
-        unsigned int t_len = (fast_objects1[target]->sequence).length();
-
-        int cost = pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap);
-        std::cout << "\nFinal cost: " << cost << std::endl;
-
-        pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
-        cigar = std::string(cigar.rbegin(), cigar.rend());
-        std::cout << "\nCigar: " << cigar << std::endl;
+//        int query = rand() % fast_objects1.size();
+//        int target = rand() % fast_objects1.size();
+//
+//        const char *q = (fast_objects1[query]->sequence).c_str();
+//        const char *t = (fast_objects1[target]->sequence).c_str();
+//        unsigned int q_len = (fast_objects1[query]->sequence).length();
+//        unsigned int t_len = (fast_objects1[target]->sequence).length();
+//
+//        int cost = pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap);
+//        std::cout << "\nFinal cost: " << cost << std::endl;
+//
+//        pink::pairwise_alignment(q, q_len, t, t_len, type, match, mismatch, gap, cigar, target_begin);
+//        cigar = std::string(cigar.rbegin(), cigar.rend());
+//        std::cout << "\nCigar: " << cigar << std::endl;
 
 
         //FINAL TASK!
