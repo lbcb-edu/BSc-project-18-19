@@ -2,15 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="lbcb-mapper" targetName="example64" />
-      <config projectName="lbcb-mapper" targetName="zlibstatic" />
-      <config projectName="lbcb-mapper" targetName="zlib" />
       <config projectName="lbcb-mapper" targetName="pink_mapper" />
-      <config projectName="lbcb-mapper" targetName="pink_alignment" />
-      <config projectName="lbcb-mapper" targetName="minigzip64" />
       <config projectName="lbcb-mapper" targetName="example" />
+      <config projectName="lbcb-mapper" targetName="zlibstatic" />
+      <config projectName="lbcb-mapper" targetName="minigzip64" />
       <config projectName="lbcb-mapper" targetName="minigzip" />
+      <config projectName="lbcb-mapper" targetName="zlib" />
       <config projectName="lbcb-mapper" targetName="pink_minimizers" />
+      <config projectName="lbcb-mapper" targetName="example64" />
+      <config projectName="lbcb-mapper" targetName="pink_alignment" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -21,7 +21,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1ae629b6-41c2-4cfe-9b5c-baa72cd62968" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pink_alignment.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/pink_alignment.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pink_mapper.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/pink_mapper.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/vendor/bioparser" beforeDir="false" afterPath="$PROJECT_DIR$/vendor/bioparser" afterDir="false" />
     </list>
@@ -38,20 +37,11 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="73">
-              <caret line="445" column="17" selection-start-line="445" selection-start-column="17" selection-end-line="445" selection-end-column="17" />
+            <state relative-caret-position="674">
+              <caret line="437" column="50" selection-start-line="437" selection-start-column="50" selection-end-line="437" selection-end-column="50" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="7" column="1" selection-start-line="7" selection-start-column="1" selection-end-line="7" selection-end-column="1" />
             </state>
           </provider>
         </entry>
@@ -68,6 +58,11 @@
       <find>t_index</find>
       <find>500</find>
       <find>lis</find>
+      <find>same</find>
+      <find>219</find>
+      <find>matchSeq</find>
+      <find>regions</find>
+      <find>cout</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -224,6 +219,11 @@
       <workItem from="1547497076791" duration="806000" />
       <workItem from="1547500537397" duration="4207000" />
       <workItem from="1547507296364" duration="1738000" />
+      <workItem from="1547509388904" duration="131000" />
+      <workItem from="1547555244742" duration="1619000" />
+      <workItem from="1547796086081" duration="766000" />
+      <workItem from="1547815983326" duration="6970000" />
+      <workItem from="1547908641039" duration="1853000" />
     </task>
     <task id="LOCAL-00001" summary="Working on the final task">
       <created>1547399086852</created>
@@ -253,27 +253,34 @@
       <option name="project" value="LOCAL" />
       <updated>1547468809449</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Continue work on final task">
+      <created>1547509508547</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1547509508547</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="37391000" />
+    <option name="totallyTimeSpent" value="48730000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1299" height="743" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2434158" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18355946" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32899022" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3257329" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.13192183" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.49185666" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.47882736" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Database Changes" order="7" />
-      <window_info anchor="bottom" id="Messages" order="8" weight="0.50651467" />
+      <window_info anchor="bottom" id="Messages" order="8" weight="0.24592833" />
       <window_info anchor="bottom" id="Terminal" order="9" weight="0.12703583" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="11" weight="0.32899022" />
@@ -314,18 +321,8 @@
     <MESSAGE value="pink_mapper divided into functions" />
     <MESSAGE value="pink_mapper divided into functions - minor fixes" />
     <MESSAGE value="minor fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="minor fixes" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/pink_alignment.cpp</url>
-          <line>54</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="Continue work on final task" />
+    <option name="LAST_COMMIT_MESSAGE" value="Continue work on final task" />
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="breakpointCondition">
@@ -346,9 +343,6 @@
           <caret line="203" column="10" selection-start-line="203" selection-start-column="10" selection-end-line="203" selection-end-column="10" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/pink_alignment.hpp">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file:///usr/include/c++/7/bits/move.h">
       <provider selected="true" editor-type-id="text-editor">
@@ -380,27 +374,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/orange.h" />
     <entry file="file://$PROJECT_DIR$/src/orange.cpp" />
-    <entry file="file://$PROJECT_DIR$/src/pink_minimizers.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3480">
-          <caret line="232" selection-start-line="232" selection-end-line="232" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
           <caret line="1" column="4" lean-forward="true" selection-start-line="1" selection-start-column="4" selection-end-line="1" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/pink_alignment.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="35">
-          <caret line="76" selection-start-line="76" selection-end-line="76" />
         </state>
       </provider>
     </entry>
@@ -418,6 +395,19 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/pink_alignment.hpp">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/pink_minimizers.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3480">
+          <caret line="232" selection-start-line="232" selection-end-line="232" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="105">
@@ -425,10 +415,23 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/pink_alignment.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-108">
+          <caret line="58" selection-start-line="58" selection-end-line="58" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/single_read.fasta">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ref2.fasta">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/pink_mapper.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="73">
-          <caret line="445" column="17" selection-start-line="445" selection-start-column="17" selection-end-line="445" selection-end-column="17" />
+        <state relative-caret-position="674">
+          <caret line="437" column="50" selection-start-line="437" selection-start-column="50" selection-end-line="437" selection-end-column="50" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
           </folding>
