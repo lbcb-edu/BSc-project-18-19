@@ -140,10 +140,10 @@ namespace pink {
     void switch_cell(char letter, unsigned *row, unsigned *col) {
         switch (letter) {
             case 'I':
-                (*row)--;
+                (*col)--;
                 break;
             case 'D':
-                (*col)--;
+                (*row)--;
                 break;
             default:
                 (*row)--;
@@ -181,6 +181,8 @@ namespace pink {
                     cigar.push_back('I');
                 }
         }
+        
+            
     }
 
     int pairwise_alignment_connect(const char *query, unsigned int query_length,
@@ -238,3 +240,5 @@ namespace pink {
                                           target_begin, true);
     }
 }
+
+
