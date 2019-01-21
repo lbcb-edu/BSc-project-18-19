@@ -15,11 +15,40 @@
 #include <unordered_map>
 #include <cmath>
 #include "bioparser/bioparser.hpp"
+#include "thread_pool/thread_pool.hpp"
 #include "blue_alignment.hpp"
 #include "blue_minimizers.hpp"
 
+class InputFile {
+    public:
+        std::string name;
+        std::string sequence;
+        std::string quality;
+
+     InputFile(
+       const char* name_, uint32_t name_length_,
+       const char* sequence_, uint32_t sequence_length_,
+       const char* quality_, uint32_t quality_length_
+    ) :
+         name(name_, name_length_),
+         sequence(sequence_, sequence_length_),
+         quality(quality_, quality_length_)
+
+     { }
+
+     InputFile(
+       const char* name_, uint32_t name_length_,
+        const char* sequence_, uint32_t sequence_length_
+    ) :
+         name(name_, name_length_),
+         sequence(sequence_, sequence_length_)
+     { }
+};
+
 typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
 uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome);
+void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
+            std::string type);
 std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome);
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
@@ -31,7 +60,7 @@ template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
 }
 
 
- typedef std::function<bool(std::tuple<unsigned int, unsigned int, bool>, std::tuple<unsigned int, unsigned int, bool>)> Comparator;
+typedef std::function<bool(std::tuple<unsigned int, unsigned int, bool>, std::tuple<unsigned int, unsigned int, bool>)> Comparator;
             Comparator comparator =
                 [](std::tuple<unsigned int, unsigned int, bool> elem1, std::tuple<unsigned int, unsigned int, bool> elem2)
                 {
@@ -163,31 +192,6 @@ std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(u
         return regions;
 }
 
-class InputFile {
-    public:
-        std::string name;
-        std::string sequence;
-        std::string quality;
-
-     InputFile(
-       const char* name_, uint32_t name_length_,
-       const char* sequence_, uint32_t sequence_length_,
-       const char* quality_, uint32_t quality_length_
-    ) :
-         name(name_, name_length_),
-         sequence(sequence_, sequence_length_),
-         quality(quality_, quality_length_)
-
-     { }
-
-     InputFile(
-       const char* name_, uint32_t name_length_,
-        const char* sequence_, uint32_t sequence_length_
-    ) :
-         name(name_, name_length_),
-         sequence(sequence_, sequence_length_)
-     { }
-};
 
 static struct option long_options[] = {
     {"help", no_argument, NULL, 'h'},
@@ -229,20 +233,21 @@ void fastaq_stat(std::vector<std::unique_ptr<T>>& fq_objects) {
     std::cout << "Number of sequences is: "<< fq_objects.size() << '\n' << std::endl;
 };
 
+int c;
+int match = 0;
+int mismatch = -1;
+int gap = -1;
+char* align_type = "global";
+
+unsigned int kmer_length = 15;
+unsigned int window_length = 5;
+double f = 0.001;
+
+bool cCigar = false;
+int paralelization = 1;
+
 int main (int argc, char* argv[]) {
 
-        int c;
-        int match = 0;
-        int mismatch = -1;
-        int gap = -1;
-        char* align_type = "global";
-
-        unsigned int kmer_length = 15;
-        unsigned int window_length = 5;
-        double f = 0.001;
-
-        bool cCigar = false;
-        int paralelization = 1;
 
         while ((c = getopt_long (argc, argv, "hvm:s:g:t:k:w:f:cp:", long_options, NULL)) != -1) {
             switch(c) {
@@ -415,14 +420,65 @@ int main (int argc, char* argv[]) {
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
         std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
 
-        int j = 0;
-        for(auto& i : first_object) {
+        std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool(paralelization);
+        std::vector<std::future<void>> thread_futures;
+
+        for (int i = 0; i < 1; ++i) {
+            thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), mapByValue, type));
+        }
+        for (auto& it: thread_futures) {
+            it.wait();
+        }
+
+
+        return 0;
+}
+
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
+    std::unordered_map<unsigned int, uubtuple> mapa;
+    for(auto &i : genome) {
+        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapa.find(std::get<0>(i));
+        if ( got == mapa.end() ) {
+            uubtuple novi;
+            novi.push_back(i);
+            mapa[std::get<0>(i)] = novi;
+
+        } else {
+            uubtuple novi2 = got->second;
+            novi2.push_back(i);
+            mapa[std::get<0>(i)] = novi2;
+        }
+    }
+    return mapa;
+}
+
+uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome) {
+    uubtuple result;
+    for(auto& i : sequenceMinimizers) {
+        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapGenome.find(std::get<0>(i));
+        if(got == mapGenome.end()) {
+            continue;
+
+        } else {
+            for(auto& j : got->second) {
+                result.emplace_back(std::get<1>(i), std::get<1>(j), std::get<2>(i) ^ std::get<2>(j));
+            }
+        }
+    }
+    return result;
+}
+
+void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
+                        std::string type) {
+    int j=0;
+    for(auto& i : first_object) {
+            ++j;
             std::cout << j << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
 
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
 
-            if (result.size() ==0) {
+            if (result.size() == 0) {
                 continue;
             }
 
@@ -474,44 +530,8 @@ int main (int argc, char* argv[]) {
                     paf += "cg:Z:" + cigar1;
                 }
 
-                std::cout << paf << std::endl;
+                //std::cout << paf << std::endl;
             }
 
         }
-        return 0;
-}
-
-typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
-std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
-    std::unordered_map<unsigned int, uubtuple> mapa;
-    for(auto &i : genome) {
-        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapa.find(std::get<0>(i));
-        if ( got == mapa.end() ) {
-            uubtuple novi;
-            novi.push_back(i);
-            mapa[std::get<0>(i)] = novi;
-
-        } else {
-            uubtuple novi2 = got->second;
-            novi2.push_back(i);
-            mapa[std::get<0>(i)] = novi2;
-        }
-    }
-    return mapa;
-}
-
-uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome) {
-    uubtuple result;
-    for(auto& i : sequenceMinimizers) {
-        std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapGenome.find(std::get<0>(i));
-        if(got == mapGenome.end()) {
-            continue;
-
-        } else {
-            for(auto& j : got->second) {
-                result.emplace_back(std::get<1>(i), std::get<1>(j), std::get<2>(i) ^ std::get<2>(j));
-            }
-        }
-    }
-    return result;
 }
