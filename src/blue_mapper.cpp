@@ -415,12 +415,20 @@ int main (int argc, char* argv[]) {
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
         std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
 
+        int j = 0;
         for(auto& i : first_object) {
+            std::cout << j << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
+
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
+
+            if (result.size() ==0) {
+                continue;
+            }
 
             sort(result.begin(), result.end(), comparator);
             std::vector<std::tuple<int, int, int, int, bool>> positions = longestIncreasingSubSequence(result);
+
 
             for(auto& position : positions){
                 unsigned int querySize = std::get<1>(position)-std::get<0>(position)+1;
@@ -460,7 +468,7 @@ int main (int argc, char* argv[]) {
                     }
                 }
                 paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
-                // dodati quality
+                paf += (i->quality).empty() ? "255" : i->quality;
 
                 if(cCigar) {
                     paf += "cg:Z:" + cigar1;
@@ -468,6 +476,7 @@ int main (int argc, char* argv[]) {
 
                 std::cout << paf << std::endl;
             }
+
         }
         return 0;
 }
