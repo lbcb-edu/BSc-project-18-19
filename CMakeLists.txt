@@ -18,7 +18,7 @@ add_library(blue_minimizers STATIC src/blue_minimizers.cpp)
 
 add_executable(blue_mapper src/blue_mapper.cpp)
 
-target_link_libraries(blue_mapper bioparser blue_alignment blue_minimizers thread_pool)
+target_link_libraries(blue_mapper bioparser blue_alignment blue_minimizers thread_pool pthread)
 
 if(blue_mapper_build_tests)
 	include_directories(${PROJECT_SOURCE_DIR}/src)
