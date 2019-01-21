@@ -12,6 +12,7 @@ option(pink_mapper_build_tests "Build pink mapper unit tests" OFF)
 file (GLOB source_files "${source_dir}/*.cpp")
 
 add_subdirectory(vendor/bioparser EXCLUDE_FROM_ALL)
+add_subdirectory(vendor/thread_pool EXCLUDE_FROM_ALL)
 
 add_library(pink_alignment src/pink_alignment.cpp)
 add_library(pink_minimizers src/pink_minimizers.cpp)
@@ -25,12 +26,12 @@ if (pink_mapper_build_tests)
 
    add_subdirectory(vendor/googletest/googletest EXCLUDE_FROM_ALL)
 
-   target_link_libraries(pink_mapper_test pink_alignment pink_minimizers gtest_main)
+   target_link_libraries(pink_mapper_test pink_alignment pink_minimizers thread_pool pthread gtest_main)
 
 endif (pink_mapper_build_tests)
 
 add_executable (pink_mapper ${source_files})
 
-target_link_libraries(pink_mapper bioparser pink_alignment pink_minimizers)
+target_link_libraries(pink_mapper bioparser pink_alignment pink_minimizers thread_pool pthread)
    
 

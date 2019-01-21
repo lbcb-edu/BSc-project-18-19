@@ -346,16 +346,16 @@ void
 printPAF(const char *q_name, unsigned int q_len, const char *t_name, unsigned int t_len, unsigned int k,
          std::string cigar, bool c, bool s) {
 
-    std::string pafFormat = std::string(q_name) + '\n' + std::to_string(q_len) + '\n' + '0' + '\n' +
-                            std::to_string(q_len - k) + '\n';
+    std::string pafFormat = std::string(q_name) + '\t' + std::to_string(q_len) + '\t' + '0' + '\t' +
+                            std::to_string(q_len - k) + '\t';
     if (s) {
-        pafFormat += "+\n";
+        pafFormat += "+\t";
     } else {
-        pafFormat += "-\n";
+        pafFormat += "-\t";
     }
 
-    pafFormat += std::string(t_name) + '\n' + std::to_string(t_len) + '\n' + '0' + '\n' +
-                 std::to_string(t_len - k) + '\n';
+    pafFormat += std::string(t_name) + '\t' + std::to_string(t_len) + '\t' + '0' + '\t' +
+                 std::to_string(t_len - k) + '\t';
 
     int numberOfMatches = 0;
     int blockLength = cigar.size();
@@ -365,27 +365,29 @@ printPAF(const char *q_name, unsigned int q_len, const char *t_name, unsigned in
             numberOfMatches++;
     }
 
-    pafFormat += std::to_string(numberOfMatches) + '\n' + std::to_string(blockLength) + '\n' + "255" + '\n';
+    pafFormat += std::to_string(numberOfMatches) + '\t' + std::to_string(blockLength) + '\t' + "255";
 
     if (c)
-        pafFormat += cigar;
+        pafFormat += '\t' + cigar;
 
-//    std::cout << pafFormat << std::endl;
+    std::cout << pafFormat << std::endl;
 }
 
 //create minimizer index for each fragment
 void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                       const std::vector<std::unique_ptr<Fast>> &fast_objects2,
                       unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c) {
-    int i = 0;
+//    int i = 0;
     auto target = fast_objects2.front()->sequence;
+    pink::AlignmentType type = pink::local;
+    unsigned int target_begin = 0;
 
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index;
     createTargetIndex(target.c_str(), target.length(), k, w, f, &t_index);
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
 
     for (auto const &query_object : fast_objects1) {
-        std::cout << "No. of query sequence : " << i << std::endl;
+//        std::cout << "No. of query sequence : " << i << std::endl;
         auto query = query_object->sequence;
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector = pink::minimizers(query.c_str(),
@@ -422,8 +424,6 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
         q_minimizer_vector.shrink_to_fit();
 
         // std::string cigar = "";
-        pink::AlignmentType type = pink::local;
-        unsigned int target_begin = 0;
 
         for (auto const &region : regions) {
 //            std::cout << "region!!!" << std::endl;
@@ -450,16 +450,16 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
             pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
             cigar = std::string(cigar.rbegin(), cigar.rend());
 
-            std::cout << cigar << std::endl;
+//            std::cout << cigar << std::endl;
 
-//             printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
-//                      target.length(), k, cigar.c_str(), c, std::get<4>(region));
+            printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
+                      target.length(), k, cigar.c_str(), c, std::get<4>(region));
         }
 
         regions.clear();
         regions.shrink_to_fit();
 
-        i++;
+//        i++;
     }
 }
 
