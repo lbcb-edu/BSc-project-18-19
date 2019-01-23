@@ -70,11 +70,12 @@ void interior_minimizers_fill(
   unsigned int foriginal;
   unsigned int frev_com;
 
-  std::priority_queue<triplet_t, std::vector<triplet_t>, triplet_ordering> cache;
+  bool cache_empty = true;
+  triplet_t cache;
   for (unsigned int i = 0; i <= sequence_length - window_length - k + 1; ++i) {
     unsigned int m = std::numeric_limits<unsigned int>::max();
 
-    if (cache.empty()) {
+    if (cache_empty) {
       foriginal = value(sequence, i, k) >> 2;
       frev_com = (value_reverse_complement(sequence, i, k) << 2) & mask;
     } else {
@@ -85,7 +86,7 @@ void interior_minimizers_fill(
     rev_com = frev_com;
 
     unsigned int start;
-    start = cache.empty() ? 0 : window_length - 1;
+    start = cache_empty ? 0 : window_length - 1;
 
     for (unsigned int j = start; j < window_length; ++j) {
       original = ((original << 2) | char_to_val[sequence[k - 1 + i + j]]) & mask;
@@ -95,15 +96,12 @@ void interior_minimizers_fill(
       }
     }
 
-    if (!cache.empty()) {
-      std::priority_queue<triplet_t, std::vector<triplet_t>, triplet_ordering> temp_queue;
-      triplet_t temp_trip = cache.top();
-      unsigned int cache_m = std::get<0>(temp_trip);
-      if (std::get<1>(temp_trip) >= i && cache_m <= m) {
-        temp_queue.push(temp_trip);
-        m = cache_m;
+    if (!cache_empty) {
+      if (std::get<1>(cache) >= i && std::get<0>(cache) <= m) {
+        m = std::get<0>(cache);
+      } else {
+        cache_empty = true;
       }
-      std::swap(cache, temp_queue);
     }
 
     original = foriginal;
@@ -114,10 +112,12 @@ void interior_minimizers_fill(
       rev_com = ((rev_com >> 2) | ((~char_to_val[sequence[k - 1 + i + j]] & 3) << (2 * (k - 1)))) & mask;
       if (original < rev_com && original == m) {
         minimizers_set.emplace(m, i + j, 0);
-        cache.emplace(m, i + j, 0);
+        cache = std::make_tuple(m, i + j, 0);
+        cache_empty = false;
       } else if (rev_com < original && rev_com == m) {
         minimizers_set.emplace(m, i + j, 1);
-        cache.emplace(m, i + j, 1);
+        cache = std::make_tuple(m, i + j, 1);
+        cache_empty = false;
       }
     }
   }
