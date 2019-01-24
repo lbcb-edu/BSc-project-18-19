@@ -13,6 +13,7 @@
 #include <iterator>
 
 #include <bioparser/bioparser.hpp>
+#include <thread_pool/thread_pool.hpp>
 #include "pink_alignment.hpp"
 #include "pink_minimizers.hpp"
 
@@ -316,62 +317,69 @@ matchSequences(std::vector<std::tuple<unsigned int, unsigned int, unsigned int, 
         s = false;
     }
 
-//    std::cout << "s_locations!!!" << std::endl;
-//    std::cout << s_locations.size() << std::endl;
-
-//    for (auto sl : s_locations) {
-//        std::cout << std::get<0>(sl) << ", " << std::get<1>(sl) << std::endl;
-//    }
-
     std::tuple<unsigned int, unsigned int, unsigned int, unsigned int, bool> region = std::make_tuple(
             std::get<1>(s_locations[0]), 0, std::get<0>(s_locations[0]), 0, s);
 
     for (unsigned i = 1; i < s_locations.size(); i++) {
-        int tmp = std::get<0>(s_locations[i]) - std::get<0>(s_locations[i - 1]);
+        int q_tmp = std::get<0>(s_locations[i]) - std::get<0>(s_locations[i - 1]);
+        int t_tmp = std::get<1>(s_locations[i]) - std::get<1>(s_locations[i - 1]);
 
-        if (tmp > OFFSET) {
+        if (q_tmp > OFFSET) {
             if (std::get<3>(region) != 0) {
                 (*regions).emplace_back(region);
             }
             region = std::make_tuple(std::get<1>(s_locations[i]), 0, std::get<0>(s_locations[i]), 0, s);
 
         } else {
-            std::get<3>(region) += tmp;
-            std::get<1>(region) += std::get<1>(s_locations[i]) - std::get<1>(s_locations[i - 1]);
+            std::get<3>(region) += q_tmp;
+            std::get<1>(region) += t_tmp;
         }
     }
 }
 
 void
-printPAF(const char *q_name, unsigned int q_len, const char *t_name, unsigned int t_len, unsigned int k,
-         std::string cigar, bool c, bool s) {
+printPAF(const char *query_name, unsigned int query_len, const char *target_name, unsigned int target_len,
+         unsigned int q_begin, unsigned int q_len, unsigned int t_begin, unsigned int t_len, bool s,
+         unsigned int k, bool c, int match, int mismatch, int gap,
+         const char *q_sub, const char *t_sub) {
 
-    std::string pafFormat = std::string(q_name) + '\t' + std::to_string(q_len) + '\t' + '0' + '\t' +
-                            std::to_string(q_len - k) + '\t';
-    if (s) {
-        pafFormat += "+\t";
+    std::string paf = std::string(query_name)             + '\t' +
+                      std::to_string(query_len)           + '\t' +
+                      std::to_string(q_begin)             + '\t' +
+                      std::to_string(q_begin + q_len + k) + '\t' +
+                      std::to_string(s ? '+' : '-')       + '\t' +
+                      std::string(target_name)            + '\t' +
+                      std::to_string(target_len)          + '\t' +
+                      std::to_string(t_begin)             + '\t' +
+                      std::to_string(t_begin + t_len + k) + '\t';
+
+    if (c) {
+        std::string cigar;
+        unsigned int target_begin = 0;
+        pink::pairwise_alignment(q_sub, std::string(q_sub).size(), t_sub, std::string(t_sub).size(),
+                                 pink::local, match, mismatch, gap, cigar, target_begin);
+        cigar = std::string(cigar.rbegin(), cigar.rend());
+
+        int numberOfMatches = 0;
+        for (char c: cigar) {
+            if (c == '=')
+                numberOfMatches++;
+        }
+
+        paf += std::to_string(numberOfMatches) + '\t' +
+               std::to_string(cigar.size())    + '\t' +
+               "255"                           + '\t' +
+               cigar;
+
     } else {
-        pafFormat += "-\t";
+        paf += std::to_string(q_len) + '\t' +
+               std::to_string(t_len) + '\t' +
+               "255";
     }
 
-    pafFormat += std::string(t_name) + '\t' + std::to_string(t_len) + '\t' + '0' + '\t' +
-                 std::to_string(t_len - k) + '\t';
-
-    int numberOfMatches = 0;
-    int blockLength = cigar.size();
-
-    for (char c: cigar) {
-        if (c == '=')
-            numberOfMatches++;
-    }
-
-    pafFormat += std::to_string(numberOfMatches) + '\t' + std::to_string(blockLength) + '\t' + "255";
-
-    if (c)
-        pafFormat += '\t' + cigar;
-
-    std::cout << pafFormat << std::endl;
+    std::cout << paf << std::endl;
 }
+
 
 //create minimizer index for each fragment
 void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
@@ -379,8 +387,6 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                       unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c) {
 //    int i = 0;
     auto target = fast_objects2.front()->sequence;
-    pink::AlignmentType type = pink::local;
-    unsigned int target_begin = 0;
 
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index;
     createTargetIndex(target.c_str(), target.length(), k, w, f, &t_index);
@@ -423,37 +429,18 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
         q_minimizer_vector.clear();
         q_minimizer_vector.shrink_to_fit();
 
-        // std::string cigar = "";
-
         for (auto const &region : regions) {
-//            std::cout << "region!!!" << std::endl;
-//            std::cout << "q_len: " << std::get<1>(region) << std::endl;
-//            std::cout << "t_len: " << std::get<3>(region) << std::endl;
-
             std::string q_sub = query.substr(std::get<0>(region), std::get<1>(region));
             std::string t_sub = target.substr(std::get<2>(region), std::get<3>(region));
 
-//            std:: cout << "std::get<0>(region) " << std::get<0>(region) << std::endl;
-//            std:: cout << "std::get<1>(region) " << std::get<1>(region) << std::endl;
-//            std:: cout << "std::get<2>(region) " << std::get<2>(region) << std::endl;
-//            std:: cout << "std::get<3>(region) " << std::get<3>(region) << std::endl;
-
-            std::string cigar;
-
-//            std::cout << "q_sub.c_str() " << q_sub.c_str() << std::endl;
-//            std::cout << "t_sub.c_str() " << t_sub.c_str() << std::endl;
-
-            if (q_sub.length() == 0 || t_sub.length() == 0) {
+            if (q_sub.size() == 0 || t_sub.size() == 0) {
                 continue;
             }
 
-            pink::pairwise_alignment(q_sub.c_str(), q_sub.size(), t_sub.c_str(), t_sub.size(), type, match, mismatch, gap, cigar, target_begin);
-            cigar = std::string(cigar.rbegin(), cigar.rend());
-
-//            std::cout << cigar << std::endl;
-
-            printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(),
-                      target.length(), k, cigar.c_str(), c, std::get<4>(region));
+            printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(), target.length(),
+                     std::get<0>(region), std::get<1>(region), std::get<2>(region), std::get<3>(region), std::get<4>(region),
+                     k, c, match, mismatch, gap,
+                     q_sub.c_str(), t_sub.c_str());
         }
 
         regions.clear();
@@ -478,7 +465,7 @@ int main(int argc, char *argv[]) {
     unsigned int window_length = 5;
     float f = 0.001;
 
-    bool c = true;
+    bool c = false;
     //int thread = 1;
 
     while ((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:f:ct:", options, NULL)) != -1) {
