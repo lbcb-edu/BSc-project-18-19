@@ -243,7 +243,6 @@ bool sortbysec(const std::pair<int, int> &a,
 //create minimizer index from the reference genome
 void createTargetIndex(const char *target, unsigned int t_len, unsigned int k, unsigned int w, float f,
                        std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> *t_index) {
-    std::cout << "\nCreating minimizer index from the reference genome..." << std::endl;
 
     std::vector<std::tuple<unsigned int, unsigned int, bool>> t_minimizer_vector;
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_minimizer_index;
@@ -337,7 +336,7 @@ matchSequences(std::vector<std::tuple<unsigned int, unsigned int, unsigned int, 
     }
 }
 
-void
+std::string
 printPAF(const char *query_name, unsigned int query_len, const char *target_name, unsigned int target_len,
          unsigned int q_begin, unsigned int q_len, unsigned int t_begin, unsigned int t_len, bool s,
          unsigned int k, bool c, int match, int mismatch, int gap,
@@ -369,29 +368,28 @@ printPAF(const char *query_name, unsigned int query_len, const char *target_name
         paf += std::to_string(numberOfMatches) + '\t' +
                std::to_string(cigar.size())    + '\t' +
                "255"                           + '\t' +
-               cigar;
+               cigar                           + '\n';
 
     } else {
         paf += std::to_string(q_len) + '\t' +
                std::to_string(t_len) + '\t' +
-               "255";
+               "255"                 + '\n';
     }
 
-    std::cout << paf << std::endl;
+    return paf.c_str();
 }
 
 
 //create minimizer index for each fragment
-void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
+std::string createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                       const std::vector<std::unique_ptr<Fast>> &fast_objects2,
+                      std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> &t_index,
                       unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c,
                       int thread_begin, int thread_end) {
 //    int i = 0;
     auto target = fast_objects2.front()->sequence;
-
-    std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index;
-    createTargetIndex(target.c_str(), target.length(), k, w, f, &t_index);
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
+    std::string paf;
 
     for (int i = thread_begin; i < thread_end; i++) {
 //        std::cout << "No. of query sequence : " << i << std::endl;
@@ -438,10 +436,10 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                 continue;
             }
 
-            printPAF((fast_objects1[i]->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(), target.length(),
-                     std::get<0>(region), std::get<1>(region), std::get<2>(region), std::get<3>(region), std::get<4>(region),
-                     k, c, match, mismatch, gap,
-                     q_sub.c_str(), t_sub.c_str());
+            paf += printPAF((fast_objects1[i]->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(), target.length(),
+                            std::get<0>(region), std::get<1>(region), std::get<2>(region), std::get<3>(region), std::get<4>(region),
+                            k, c, match, mismatch, gap,
+                            q_sub.c_str(), t_sub.c_str());
         }
 
         regions.clear();
@@ -449,6 +447,8 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
 
 //        i++;
     }
+
+    return paf;
 }
 
 int main(int argc, char *argv[]) {
@@ -555,9 +555,19 @@ int main(int argc, char *argv[]) {
 //        std::cout << "\nCigar: " << cigar << std::endl;
 
 
+
         //FINAL TASK!
+        std::cout << "\nCreating minimizer index from the reference genome..." << std::endl;
+
+        std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> t_index;
+        createTargetIndex(fast_objects2.front()->sequence.c_str(), fast_objects2.front()->sequence.length(),
+                          k, window_length, f, &t_index);
+
+
+        std::cout << "\nMapping queries onto reference genome..." << std::endl;
+
         std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool(thread);
-        std::vector<std::future<void>> thread_futures;
+        std::vector<std::future<std::string>> thread_futures;
 
         int work_per_thread = fast_objects1.size() / thread;
         int extra_work = fast_objects1.size() % thread;
@@ -568,19 +578,20 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < thread; i++) {
             thread_futures.emplace_back(thread_pool->submit_task(createQueryIndex,
                                                                  std::ref(fast_objects1), std::ref(fast_objects2),
+                                                                 std::ref(t_index),
                                                                  k, window_length, f, match, mismatch, gap, c,
                                                                  thread_begin, thread_end));
             thread_begin = thread_end;
             thread_end += work_per_thread;
-
         }
 
         for (auto& it: thread_futures) {
             it.wait();
+            std::cout << it.get();
         }
 
 //        createQueryIndex(fast_objects1, fast_objects2, k, window_length, f, match, mismatch, gap, c);
-        std::cout << "Done! :)" << std::endl;
+        std::cout << "\n\nDone! :)" << std::endl;
 
     } else {
         printError();
