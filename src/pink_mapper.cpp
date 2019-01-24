@@ -384,7 +384,8 @@ printPAF(const char *query_name, unsigned int query_len, const char *target_name
 //create minimizer index for each fragment
 void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                       const std::vector<std::unique_ptr<Fast>> &fast_objects2,
-                      unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c) {
+                      unsigned int k, unsigned int w, float f, int match, int mismatch, int gap, bool c,
+                      int thread_begin, int thread_end) {
 //    int i = 0;
     auto target = fast_objects2.front()->sequence;
 
@@ -392,9 +393,9 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
     createTargetIndex(target.c_str(), target.length(), k, w, f, &t_index);
     std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>>::iterator it;
 
-    for (auto const &query_object : fast_objects1) {
+    for (int i = thread_begin; i < thread_end; i++) {
 //        std::cout << "No. of query sequence : " << i << std::endl;
-        auto query = query_object->sequence;
+        auto query = fast_objects1[i]->sequence;
 
         std::vector<std::tuple<unsigned int, unsigned int, bool>> q_minimizer_vector = pink::minimizers(query.c_str(),
                                                                                                         query.length(),
@@ -437,7 +438,7 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
                 continue;
             }
 
-            printPAF((query_object->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(), target.length(),
+            printPAF((fast_objects1[i]->name).c_str(), query.length(), (fast_objects2.front()->name).c_str(), target.length(),
                      std::get<0>(region), std::get<1>(region), std::get<2>(region), std::get<3>(region), std::get<4>(region),
                      k, c, match, mismatch, gap,
                      q_sub.c_str(), t_sub.c_str());
@@ -452,13 +453,13 @@ void createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_objects1,
 
 int main(int argc, char *argv[]) {
     char optchr;
-    srand(time(NULL));
+//    srand(time(NULL));
 
 //    pink::AlignmentType type = pink::global;
     int match = 2;
     int mismatch = -1;
     int gap = -2;
-    std::string cigar;
+//    std::string cigar;
 //    unsigned int target_begin = 0;
 
     unsigned int k = 15;
@@ -466,7 +467,7 @@ int main(int argc, char *argv[]) {
     float f = 0.001;
 
     bool c = false;
-    //int thread = 1;
+    int thread = 4;
 
     while ((optchr = getopt_long(argc, argv, "hvGSLm:s:g:k:w:f:ct:", options, NULL)) != -1) {
         switch (optchr) {
@@ -507,7 +508,7 @@ int main(int argc, char *argv[]) {
                 c = true;
                 break;
             case 't':
-                //thread = checkInput(optarg);
+                thread = checkInput(optarg);
                 break;
             default:
                 printError();
@@ -531,10 +532,10 @@ int main(int argc, char *argv[]) {
 
         fast_objects2 = parse_fasta(argv[optind + 1]);
 
-        std::cerr << "~FIRST FILE~" << std::endl;
-        print_stats(fast_objects1);
-        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
-        print_stats(fast_objects2);
+//        std::cerr << "~FIRST FILE~" << std::endl;
+//        print_stats(fast_objects1);
+//        std::cerr << "\n" << "~SECOND FILE~" << std::endl;
+//        print_stats(fast_objects2);
 
 
 
@@ -555,7 +556,30 @@ int main(int argc, char *argv[]) {
 
 
         //FINAL TASK!
-        createQueryIndex(fast_objects1, fast_objects2, k, window_length, f, match, mismatch, gap, c);
+        std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool(thread);
+        std::vector<std::future<void>> thread_futures;
+
+        int work_per_thread = fast_objects1.size() / thread;
+        int extra_work = fast_objects1.size() % thread;
+
+        int thread_begin = 0;
+        int thread_end = work_per_thread + extra_work;
+
+        for (int i = 0; i < thread; i++) {
+            thread_futures.emplace_back(thread_pool->submit_task(createQueryIndex,
+                                                                 std::ref(fast_objects1), std::ref(fast_objects2),
+                                                                 k, window_length, f, match, mismatch, gap, c,
+                                                                 thread_begin, thread_end));
+            thread_begin = thread_end;
+            thread_end += work_per_thread;
+
+        }
+
+        for (auto& it: thread_futures) {
+            it.wait();
+        }
+
+//        createQueryIndex(fast_objects1, fast_objects2, k, window_length, f, match, mismatch, gap, c);
         std::cout << "Done! :)" << std::endl;
 
     } else {
