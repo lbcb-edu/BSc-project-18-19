@@ -245,6 +245,21 @@ bool sortbysec_reverse(const std::pair<int, int> &a,
     return (a.second > b.second);
 }
 
+unsigned int get_complement_letter_value(char letter) {
+    switch (letter) {
+        case 'C':
+            return 'G';
+        case 'A':
+            return 'T';
+        case 'T':
+            return 'A';
+        case 'G':
+            return 'C';
+        default:
+            return 4;
+    }
+}
+
 //create minimizer index from the reference genome
 void createTargetIndex(const char *target, unsigned int t_len, unsigned int k, unsigned int w, float f,
                        std::unordered_map<unsigned int, std::vector<std::pair<unsigned int, bool>>> &t_index) {
@@ -373,9 +388,14 @@ printPAF(const char *query_name, unsigned int query_len, const char *target_name
     if (c) {
         std::string cigar;
         unsigned int target_begin = 0;
-        pink::pairwise_alignment(q_sub, std::string(q_sub).size(), t_sub, std::string(t_sub).size(),
+        char q_sub_reverse [std::string(q_sub).size()];
+        for(unsigned i = 0; i<std::string(q_sub).size(); i++){
+            q_sub_reverse[i] = get_complement_letter_value(q_sub[i]);
+        }
+        pink::pairwise_alignment(&q_sub_reverse[0], std::string(q_sub).size(), t_sub, std::string(t_sub).size(),
                                  pink::local, match, mismatch, gap, cigar, target_begin);
         cigar = std::string(cigar.rbegin(), cigar.rend());
+        
 
         int numberOfMatches = 0;
         for (char c: cigar) {
@@ -413,7 +433,7 @@ std::string createQueryIndex(const std::vector<std::unique_ptr<Fast>> &fast_obje
 //        std::cout << "No. of query sequence : " << i << std::endl;
 
         //TODO otkomentirati za probu
-//        if (i > 5) continue;
+//       if (i > 0) continue;
 
         auto query = fast_objects1[i]->sequence;
 
