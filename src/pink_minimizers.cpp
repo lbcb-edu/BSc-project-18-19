@@ -8,6 +8,9 @@
 
 #include "pink_minimizers.hpp"
 
+//minimizer, location, strand
+typedef std::tuple<unsigned int, unsigned int, bool> minimizer_t;
+
 namespace std {
     template<>
     struct hash<tuple<unsigned int, unsigned int, bool >> {
@@ -89,7 +92,7 @@ unsigned int get_value_reversed(const char *sequence, unsigned int position, uns
 
 void get_interior_minimizers(const char *sequence, unsigned int sequence_length, unsigned int k,
                              unsigned int window_length,
-                             std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> &minimizers_set) {
+                             std::unordered_set<minimizer_t> &minimizers_set) {
 
     unsigned int l = window_length + k - 1;
     unsigned int last_beginning = sequence_length - l;
@@ -99,7 +102,7 @@ void get_interior_minimizers(const char *sequence, unsigned int sequence_length,
     unsigned int temp_value;
     unsigned int temp_value_reversed;
 
-    std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
+    std::deque<minimizer_t> red;
 
     first_min_value = get_first_value(sequence, 0, k);
     first_min_value_reversed = get_first_value_reversed(sequence, 0, k);
@@ -131,11 +134,11 @@ void get_interior_minimizers(const char *sequence, unsigned int sequence_length,
         int min_orientation_tmp = temp_value < temp_value_reversed ? 0 : 1;
         int min_value_tmp = temp_value < temp_value_reversed ? temp_value : temp_value_reversed;
 
-        std::tuple<unsigned int, unsigned int, bool> tmp_elem = std::make_tuple(min_value_tmp, beginning_position,
+        minimizer_t tmp_elem = std::make_tuple(min_value_tmp, beginning_position,
                                                                                 min_orientation_tmp);
 
         while (!red.empty()) {
-            std::tuple<unsigned int, unsigned int, bool> current_elemn = red.back();
+            minimizer_t current_elemn = red.back();
             if (std::get<0>(current_elemn) >= std::get<0>(tmp_elem)) {
                 red.pop_back();
             } else {
@@ -146,7 +149,7 @@ void get_interior_minimizers(const char *sequence, unsigned int sequence_length,
         red.push_back(tmp_elem);
 
 
-        std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+        minimizer_t tmp_rez = red.front();
         minimizers_set.insert(tmp_rez);
 
         if (std::get<1>(tmp_rez) + (window_length - 1) <= beginning_position) {
@@ -157,7 +160,7 @@ void get_interior_minimizers(const char *sequence, unsigned int sequence_length,
 
 void get_beginning_minimizers(const char *sequence, unsigned int sequence_length, unsigned int k,
                               unsigned int window_length,
-                              std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> &minimizers_set) {
+                              std::unordered_set<minimizer_t> &minimizers_set) {
 
     unsigned int temp_value;
     unsigned int temp_value_reversed;
@@ -165,7 +168,7 @@ void get_beginning_minimizers(const char *sequence, unsigned int sequence_length
     unsigned int first_min_value = get_first_value(sequence, 0, k);
     unsigned int first_min_value_reversed = get_first_value_reversed(sequence, 0, k);
 
-    std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
+    std::deque<minimizer_t> red;
 
 
     if (first_min_value < first_min_value_reversed) {
@@ -186,13 +189,13 @@ void get_beginning_minimizers(const char *sequence, unsigned int sequence_length
         }
     }
 
-    std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+    minimizer_t tmp_rez = red.front();
     minimizers_set.insert(tmp_rez);
 
 }
 
 void get_end_minimizers(const char *sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length,
-                   std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> &minimizers_set) {
+                   std::unordered_set<minimizer_t> &minimizers_set) {
 
     unsigned int last_beginning = sequence_length - k;
     unsigned int last_window = sequence_length - window_length;
@@ -202,7 +205,7 @@ void get_end_minimizers(const char *sequence, unsigned int sequence_length, unsi
     unsigned int temp_value;
     unsigned int temp_value_reversed;
 
-    std::deque<std::tuple<unsigned int, unsigned int, bool>> red;
+    std::deque<minimizer_t> red;
 
 
     if (first_min_value < first_min_value_reversed) {
@@ -224,15 +227,15 @@ void get_end_minimizers(const char *sequence, unsigned int sequence_length, unsi
         }
     }
 
-    std::tuple<unsigned int, unsigned int, bool> tmp_rez = red.front();
+    minimizer_t tmp_rez = red.front();
     minimizers_set.insert(tmp_rez);
 
 }
 
-std::vector<std::tuple<unsigned int, unsigned int, bool>>
+std::vector<minimizer_t>
 minimizers(const char *sequence, unsigned int sequence_length, unsigned int k, unsigned int window_length) {
-    std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers_vector;
-    std::unordered_set<std::tuple<unsigned int, unsigned int, bool>> minimizers_set;
+    std::vector<minimizer_t> minimizers_vector;
+    std::unordered_set<minimizer_t> minimizers_set;
 
     get_interior_minimizers(sequence, sequence_length, k, window_length, minimizers_set);
     get_beginning_minimizers(sequence, sequence_length, k, window_length, minimizers_set);
