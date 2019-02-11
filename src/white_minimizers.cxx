@@ -50,6 +50,9 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 		exit(1);
 	}
 
+	if (sequence_length >= 4294967295)
+		exit(1);
+
 	std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers;
 	minimizers.reserve(sequence_length);
 	unsigned int current_kmer_original = 0;
@@ -99,10 +102,10 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 	}
 
 	unsigned int last_minimizer = 0;
-	int position_of_last_minimizer = -1;
+	long long int position_of_last_minimizer = -1;
 	bool isOriginal = true;
 
-	for (int i = 0; (unsigned) i < sequence_length - (window_length - 1 + k) + 1; i++) { // i mi treba kao int zbog pocetne pozicije koja je -1
+	for (long long int i = 0; (unsigned) i < sequence_length - (window_length - 1 + k) + 1; i++) { // i mi treba kao int zbog pocetne pozicije koja je -1
 
 		//pocetni kmeri za slijedeci prozor
 
