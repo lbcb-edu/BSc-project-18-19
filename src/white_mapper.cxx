@@ -270,7 +270,7 @@ void minimizer_matches(
 }
 
 bool compare_by_diagonal(std::tuple<unsigned int, unsigned int> a, std::tuple<unsigned int, unsigned int> b) {
-	return (int)std::get<1>(a) - (int)std::get<0>(a) < (int)std::get<1>(b) - (int)std::get<0>(b);
+	return ((int)std::get<1>(a) - (int)std::get<0>(a)) < ((int)std::get<1>(b) - (int)std::get<0>(b));
 }
 
 bool compare_q_t(std::tuple<unsigned int, unsigned int> a, std::tuple<unsigned int, unsigned int> b) {
@@ -280,7 +280,7 @@ bool compare_q_t(std::tuple<unsigned int, unsigned int> a, std::tuple<unsigned i
 		return std::get<1>(a) < std::get<1>(b);
 }
 
-std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_match_groups(std::vector <std::tuple <unsigned int, unsigned int>> &matches) {
+std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_match_groups(std::vector <std::tuple <unsigned int, unsigned int>> &matches/*, unsigned int &no_matches*/) {
 	std::sort(matches.begin(), matches.end(), compare_by_diagonal);
 	std::vector <std::tuple <unsigned int, unsigned int>> match_group;
 	std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> match_groups;
@@ -293,6 +293,7 @@ std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_matc
 
 	if (size == 0) {
 		//std::cerr << "\nWarning! No minimizer matches.\n";
+		//no_matches++;
 		return match_groups;
 	}
 
@@ -311,13 +312,12 @@ std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_matc
 				if (++i == size)
 					break;
 			}
-
-			std::sort(match_group.begin(), match_group.end(), compare_q_t);
-
 		}
 
-		if (match_group_size > 4)
+		if (match_group_size > 4) {
+			std::sort(match_group.begin(), match_group.end(), compare_q_t);
 			match_groups.emplace_back(match_group);
+		}
 
 		match_group.clear();
 
@@ -649,6 +649,10 @@ void map_sequence_to_reference(
 	std::vector <std::string> &ispis_za_pojedinu_dretvu
 ) {
 
+	//unsigned int no_matches = 0;
+	//unsigned int no_match_groups_original = 0;
+	//unsigned int no_match_groups_reverse_complement = 0;
+
 	for (unsigned int i = start; i < end; i++) {
 
 		std::vector <std::tuple <unsigned int, unsigned int, bool>> sequence_minimizer_index;
@@ -675,19 +679,25 @@ void map_sequence_to_reference(
 
 		//prepare match_groups sortira matcheve najprije po dijagonali, zatim radi grupe nad kojima cemo traziti LIS (te grupe ce biti
 		//sortirane po poziciji untar target (reference) i poziciji unutar query (sort za matcheve s jednakim target position))
-		match_groups_original = prepare_match_groups(matches_original);
-		match_groups_reverse_complement = prepare_match_groups(matches_reverse_complement);
+		match_groups_original = prepare_match_groups(matches_original/*, no_matches*/);
+		match_groups_reverse_complement = prepare_match_groups(matches_reverse_complement/*, no_matches*/);
 
 		//za svaku match grupu racunamo LIS, zatim radimo alignment dobivenih regija i printamo PAF
 		if (!match_groups_original.empty())
 			for (auto match_group : match_groups_original)
 				ispis_za_pojedinu_dretvu.emplace_back (LIS_alignment_PAF (match_group, sequences[i], reference_genome[0], '+', match, mismatch, gap, k, print_cigar));
+		//else
+		//	no_match_groups_original++;
 
 		if(!match_groups_reverse_complement.empty())
 			for (auto match_group : match_groups_reverse_complement)
 				ispis_za_pojedinu_dretvu.emplace_back (LIS_alignment_PAF (match_group, sequences[i], reference_genome[0], '-', match, mismatch, gap, k, print_cigar));
-
+		//else
+		//	no_match_groups_reverse_complement++;
 	}
+
+		//std::cout << no_matches << std::endl;
+		//std::cout << no_match_groups_original << " " << no_match_groups_reverse_complement << std::endl;
 }
 
 //funkcija koja razdvaja minimizatore reference u one s originalnog stranda i reverznog stranda
@@ -894,7 +904,7 @@ int main (int argc, char* argv[])
         //std::cout << value << std::endl;
         //std::cout << target_begin << std::endl;
 	printf ("%s\n", cigar.c_str());
-
+*/
 
 /*	std::string q = {"TCCG"};
 	std::string t = {"ACTCCGAT"};
