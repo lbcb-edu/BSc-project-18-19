@@ -149,7 +149,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 			}
 			else {
 				last_minimizer = current_kmer_reverse_complement;
-				position_of_last_minimizer = i;
+				position_of_last_minimizer = (sequence_length - 1) - i - (k - 1);
 				isOriginal = false;
 			}
 
@@ -195,7 +195,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 				}
 				if (last_minimizer >= current_kmer_reverse_complement) {
 					last_minimizer = current_kmer_reverse_complement;
-					position_of_last_minimizer = j - (k - 1); //jednako kao gore jer bi trebali gledat obrnuto
+					position_of_last_minimizer = (sequence_length - 1) - j /*+ (k - 1) - (k - 1)*/; //jednako kao gore jer bi trebali gledat obrnuto
 					isOriginal = false;
 				}
 			}
@@ -250,7 +250,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 			}
 			if (last_minimizer >= current_kmer_reverse_complement) {
 				last_minimizer = current_kmer_reverse_complement;
-				position_of_last_minimizer = start;
+				position_of_last_minimizer = (sequence_length - 1) - start - (k - 1);
 				isOriginal = false;
 			}
 		}

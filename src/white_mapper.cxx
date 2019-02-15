@@ -320,7 +320,7 @@ std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_matc
 			}
 		}
 
-		if (match_group_size > 4) {
+		if (match_group_size > 5) {
 			std::sort(match_group.begin(), match_group.end(), compare_q_t);
 			match_groups.emplace_back(match_group);
 		}
