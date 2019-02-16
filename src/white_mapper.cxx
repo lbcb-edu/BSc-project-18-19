@@ -320,7 +320,7 @@ std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_matc
 			}
 		}
 
-		if (match_group_size > 5) {
+		if (match_group_size > 4) {
 			std::sort(match_group.begin(), match_group.end(), compare_q_t);
 			match_groups.emplace_back(match_group);
 		}
@@ -465,8 +465,10 @@ std::pair<int, int> find_LIS(std::vector <std::tuple <unsigned int, unsigned int
 		*/
 	}
 
-
-	return std::make_pair(std::get<0>(tail[length - 1]), std::get<1>(tail[length - 1]));
+	if (length >= 4)
+		return std::make_pair(std::get<0>(tail[length - 1]), std::get<1>(tail[length - 1]));
+	else
+		return std::make_pair(-1, -1);
 }
 
 
@@ -537,7 +539,7 @@ std::string/* void */ LIS_alignment_PAF(std::vector <std::tuple <unsigned int, u
 						bool print_cigar
 ) {
 
-	std::pair <unsigned int, unsigned int> LIS_begin_end; //ovo su pozicije prvog i zadnjeg minimizer match-a LIS-a u match_group-u
+	std::pair <long long int, long long int> LIS_begin_end; //ovo su pozicije prvog i zadnjeg minimizer match-a LIS-a u match_group-u
 	std::string query;
 	unsigned int q_begin;
 	unsigned int q_end;
@@ -549,6 +551,9 @@ std::string/* void */ LIS_alignment_PAF(std::vector <std::tuple <unsigned int, u
 	unsigned int t_length;
 
 	LIS_begin_end = find_LIS(match_group);
+
+	if (std::get<0>(LIS_begin_end) == -1 && std::get<1>(LIS_begin_end) == -1)
+		return "Empty";
 
 	q_begin = std::get<1>(match_group[std::get<0>(LIS_begin_end)]);
 	q_end = std::get<1>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1); //za jedan i drugi end treba dodat jos "k-1" jer se
@@ -658,7 +663,6 @@ void map_sequence_to_reference(
 	//unsigned int no_match_groups_reverse_complement = 0;
 
 	for (unsigned int i = start; i < end; i++) {
-
 		std::vector <std::tuple <unsigned int, unsigned int, bool>> sequence_minimizer_index;
 
         	std::vector <std::tuple <unsigned int, unsigned int>> matches_same_strand;
@@ -699,7 +703,6 @@ void map_sequence_to_reference(
 		//else
 		//	no_match_groups_reverse_complement++;
 	}
-
 		//std::cout << no_matches << std::endl;
 		//std::cout << no_match_groups_original << " " << no_match_groups_reverse_complement << std::endl;
 }
@@ -1001,8 +1004,10 @@ int main (int argc, char* argv[])
 		it.wait();
 
 	for (auto ispis_za_pojedinu_dretvu : ispis)
-		for (auto paf_sekvence : ispis_za_pojedinu_dretvu)
-			printf("%s\n", paf_sekvence.c_str());
+		for (auto paf_sekvence : ispis_za_pojedinu_dretvu){
+			if (paf_sekvence.compare("Empty") != 0)
+				printf("%s\n", paf_sekvence.c_str());
+		}
 
 	return 0;
 }
