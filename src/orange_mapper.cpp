@@ -374,6 +374,30 @@ void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 }
 
+void updateTotalAndNumberOfMatchesBasedOnCIGAR(unsigned int &num_of_matches, unsigned int &total_num, std::string const &cigar) {
+	std::string sub;
+
+	unsigned int len = cigar.length();
+
+	num_of_matches = 0;
+	total_num = 0;
+
+	unsigned int e=0;
+
+	for(int i = 0; i < len; ++i) {
+		if(cigar[i]=='I' || cigar[i]=='D' || cigar[i]=='X') {
+			sub = cigar.substr(e, i-e);
+			e= i+1;
+			total_num += std::stoi(sub);
+		} else if(cigar[i]=='=') {
+			sub = cigar.substr(e, i-e);
+			e = i+1;
+			num_of_matches += std::stoi(sub);
+			total_num += std::stoi(sub);
+		}
+	}
+}
+
 void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects, unsigned int k, unsigned int window_lenght, std::unordered_map<unsigned int, std::vector<std::tuple<unsigned int, bool>>> const &ref_index, std::unique_ptr<FASTAQEntity> const &y, int gap, int mismatch, int match, int threads, int j, bool includeCIGAR) {
 
 	unsigned int target_begin;
@@ -416,23 +440,13 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 
 		std::string cigar;
 
-		orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
-	
-		std::string sub;
+		unsigned int total_num = query_end + k - query_start;
+		unsigned int num_of_matches = max_len * k;
 
-		unsigned int len = cigar.length();
-		unsigned int count=0, e=0, sum=0;
-		for(int i = 0; i < len; ++i) {
-			if(cigar[i]=='I' || cigar[i]=='D' || cigar[i]=='X') {
-				sub = cigar.substr(e, i-e);
-				e= i+1;
-				sum += std::stoi(sub);
-			} else if(cigar[i]=='=') {
-				sub = cigar.substr(e, i-e);
-				e = i+1;
-				count += std::stoi(sub);
-				sum += std::stoi(sub);
-			}
+		if(includeCIGAR) {
+			orange::pairwise_alignment(fastaq_objects[i]->sequence.c_str() + query_start, query_end + k - query_start, y->sequence.c_str() + ref_start, ref_end + k - ref_start, orange::AlignmentType::global, match, mismatch, gap, cigar, target_begin);
+		
+			updateTotalAndNumberOfMatchesBasedOnCIGAR(num_of_matches, total_num, cigar);
 		}
 
 		std::string paf;
@@ -446,15 +460,13 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 		paf += std::to_string(y->sequence.length()) + "\t";
 		paf += std::to_string(ref_start) + "\t";
 		paf += std::to_string(ref_end+k) + "\t";
-		paf += std::to_string(count) + "\t";
-		paf += std::to_string(sum) + "\t";
+		paf += std::to_string(num_of_matches) + "\t";
+		paf += std::to_string(total_num) + "\t";
 		paf += "255";
 
 		if(includeCIGAR) paf += "\tcg:Z:" + cigar;
 
-		paf += "\n";
-
-		continue;
+		printf("%s\n", paf.c_str());
 	}
 }
 
