@@ -1,2 +1,3 @@
 #define orange_mapper_VERSION_MAJOR @orange_mapper_VERSION_MAJOR@
 #define orange_mapper_VERSION_MINOR @orange_mapper_VERSION_MINOR@
+#define orange_mapper_VERSION_PATCH @orange_mapper_VERSION_PATCH@

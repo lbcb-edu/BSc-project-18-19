@@ -123,7 +123,7 @@ bool isExtensionMemberOfVector(std::string const &str, std::vector<std::string> 
 void help() {
     printf(
         "\n"
-        "The program accepts two files as floating arguments and outputts number of sequences, average length, minimal and maximal length.\n"
+        "The program accepts two files as floating arguments and outputs file statistics(number of sequences, average length, minimal and maximal length) and PAF outputs.\n"
         "Supported formats are .fasta, .fa, .fastq, .fq, .fasta.gz, .fa.gz, .fastq.gz, .fq.gz\n"
         "\n"
         "usage: orange_mapper <file_name> <file_name>\n"
@@ -136,16 +136,20 @@ void help() {
 		"	-s, --semi-global - alongside statistics, prints CIGAR string gotten as result of semi-global alignment of 2 random sequences in the first file\n"
 		"	--match (arg) - sets match score parameter that is used in alignments(default value is 1)\n"
 		"	--mismatch (arg) - sets mismatch score parameter that is used in alignments(default value is -1)\n"
-		"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n\n"
-		"	-k (arg) - sets size of minimizer"
-		"	-w (arg) - sets window length for minimizers"
-		"	-f (arg) - sets number of ignored minimizers in promille");
+		"	--gap (arg) - sets gap score parameter that is used in alignments(default value is -1)\n"
+		"	-k (arg) - sets size of minimizer\n"
+		"	-w (arg) - sets window length for minimizers\n"
+		"	-f (arg) - sets number of ignored minimizers in promille\n"
+		"	-t (arg) - sets number of threads that will be used when constructing PAF outputs\n"
+		"	-c - includes cigar string in PAF output(if you decide not to use this option column 10 and 11 in PAF output may be highly inaccurate)\n"
+		"\n");
 }
 
 void version() {
-    printf("v%d.%d.0\n",
+    printf("v%d.%d.%d\n",
         orange_mapper_VERSION_MAJOR,
-		orange_mapper_VERSION_MINOR
+		orange_mapper_VERSION_MINOR,
+			orange_mapper_VERSION_PATCH
     );
 }
 
@@ -367,12 +371,6 @@ void LISAlgorithm(std::vector<std::tuple<short, long int, long int>> const &vec,
 void findLongestLinearChain(std::vector<std::tuple<short, long int, long int>> &vec, unsigned int start, unsigned int end, unsigned int &query_start, unsigned int &query_end, unsigned int &ref_start, unsigned int &ref_end, unsigned int &max_len, char &rel_strand) {
 	std::sort(vec.begin() + start, vec.begin() + end + 1, custom_cmp_1);
 
-	//for(int i  = 0; i < vec.size(); i++) {
-	//	printf("++ %d, %d, %d ++ \n", std::get<0>(vec[i]), std::get<1>(vec[i]), std::get<2>(vec[i]));
-	//}
-	//printf("\n\n");
-
-
 	LISAlgorithm(vec, start, end, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 }
 
@@ -397,11 +395,6 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 
 		std::sort(vec.begin(), vec.end(), custom_cmp);
 
-		//for(int i  = 0; i < vec.size(); i++) {
-		//	printf("++ %d, %d, %d ++ \n", std::get<0>(vec[i]), std::get<1>(vec[i]), std::get<2>(vec[i]));
-		//}
-		//printf("\n\n");
-
 		unsigned int b = 0;
 
 		unsigned int query_start;
@@ -415,14 +408,11 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 			if(i == vec.size() - 1 ||
 				std::get<0>(vec[i + 1]) != std::get<0>(vec[i]) ||
 				std::abs(std::get<1>(vec[i + 1]) - std::get<1>(vec[i])) >= DEFAULT_BAND_OF_WIDTH) {
-				//printf("b = %d, i = %d\n", b, i);
+
 				findLongestLinearChain(vec, b, i, query_start, query_end, ref_start, ref_end, max_len, rel_strand);
 				b = i + 1;
-				//printf("maxlen = %d\n", max_len);
 			}
 		}
-
-		//printf("%d %d %d %d %d\n", query_start, query_end, ref_start, ref_end, fastaq_objects[i]->sequence.length());
 
 		std::string cigar;
 
@@ -464,7 +454,7 @@ void mapThread (std::vector<std::unique_ptr<FASTAQEntity>> const &fastaq_objects
 
 		paf += "\n";
 
-		printf("%s\n", paf.c_str());
+		continue;
 	}
 }
 

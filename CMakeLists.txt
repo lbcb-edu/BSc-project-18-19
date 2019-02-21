@@ -8,8 +8,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 option(mapper_build_tests "Unit tests for mapper" OFF)
 
 #The version number.
-set (orange_mapper_VERSION_MAJOR 0)
-set (orange_mapper_VERSION_MINOR 1)
+set (orange_mapper_VERSION_MAJOR 1)
+set (orange_mapper_VERSION_MINOR 0)
 set (orange_mapper_VERSION_PATCH 0)
 
 set(CMAKE_CXX_STANDARD 11)
