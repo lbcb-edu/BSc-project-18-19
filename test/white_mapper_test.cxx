@@ -64,9 +64,9 @@ namespace {
         window_length = 4;
 
 	minimizers.clear();
-        minimizers.push_back(std::make_tuple(1, 3, false));
+        minimizers.push_back(std::make_tuple(1, 9, false));
         minimizers.push_back(std::make_tuple(6, 7, true));
-        minimizers.push_back(std::make_tuple(14, 10, false));
+        minimizers.push_back(std::make_tuple(14, 2, false));
 
         EXPECT_EQ (minimizers, white::minimizers(s2.c_str(), s2.size(), k, window_length));
 
@@ -76,8 +76,8 @@ namespace {
         window_length = 5;
 
 	minimizers.clear();
-        minimizers.push_back(std::make_tuple(110, 3, false));
-        minimizers.push_back(std::make_tuple(441, 4, false));
+        minimizers.push_back(std::make_tuple(110, 6, false));
+        minimizers.push_back(std::make_tuple(441, 5, false));
 	minimizers.push_back(std::make_tuple(445, 7, true));
 
         EXPECT_EQ (minimizers, white::minimizers(s3.c_str(), s3.size(), k, window_length));
