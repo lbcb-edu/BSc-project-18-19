@@ -140,7 +140,7 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 		}
 
 		//pomakom na slijedeci prozor minimizator ispada -> treba proci cijeli prozor
-		if (position_of_last_minimizer < i) {
+		if ((isOriginal && position_of_last_minimizer < i) || (!isOriginal && position_of_last_minimizer > (sequence_length-1) - i - (k-1))) {
 			//postavimo prvi kmer kao minimizator
 			if (current_kmer_original <= current_kmer_reverse_complement) {
 				last_minimizer = current_kmer_original;
@@ -275,3 +275,4 @@ std::vector<std::tuple<unsigned int, unsigned int, bool>> minimizers(
 }
 
 }
+

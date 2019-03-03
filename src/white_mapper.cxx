@@ -252,24 +252,13 @@ void minimizer_matches(
 ) {
 
 	for (auto tuple : sequence_minimizers) {
-		if (std::get<2>(tuple) == true) {
-			if (reference_genome_minimizers_positions_in_vector.find(std::get<0>(tuple)) != reference_genome_minimizers_positions_in_vector.end())
-				for (auto tupleR : reference_genome_minimizers[reference_genome_minimizers_positions_in_vector[std::get<0>(tuple)] - 1]) {
-					if (std::get<2>(tupleR) == true)
-						matches_same_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
-					else
-						matches_different_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
-				}
-		}
-		else {
-			if (reference_genome_minimizers_positions_in_vector.find(std::get<0>(tuple)) != reference_genome_minimizers_positions_in_vector.end())
-				for (auto tupleR : reference_genome_minimizers[reference_genome_minimizers_positions_in_vector[std::get<0>(tuple)] - 1]) {
-					if (std::get<2>(tupleR) == true)
-                                                matches_different_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
-                                        else
-                                                matches_same_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
-				}
-		}
+		if (reference_genome_minimizers_positions_in_vector.find(std::get<0>(tuple)) != reference_genome_minimizers_positions_in_vector.end())
+			for (auto tupleR : reference_genome_minimizers[reference_genome_minimizers_positions_in_vector[std::get<0>(tuple)] - 1]) {
+				if (std::get<2>(tupleR) == std::get<2>(tuple))
+					matches_same_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
+				else
+					matches_different_strand.emplace_back(std::make_tuple(std::get<1>(tupleR), std::get<1>(tuple)));
+			}
 
 	}
 
@@ -335,7 +324,7 @@ std::vector <std::vector <std::tuple <unsigned int, unsigned int>>> prepare_matc
 
 //funkcija koja vraca indeks elementa koji je najmanji element veci ili jednak key (naravno funkcija funkcionira jedino ako je vektor
 //sortiran i provjerili smo da je key nije veci od najveceg elementa vektora (tj. ne vrijedi: key > najveci element))
-unsigned int CeilIndex(std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> &v, int l, int r, unsigned int key) {
+unsigned int CeilIndex(std::vector <std::tuple <long long int, long long int, long long int>> &v, int l, int r, long long int key) {
 	while (r - l > 1) {
 		int m = l + (r - l) / 2;
 
@@ -349,33 +338,33 @@ unsigned int CeilIndex(std::vector <std::tuple <unsigned int, unsigned int, unsi
 }
 
 //funkcija koja trazi LIS za zadane matcheve minimizatora (funkcija pazi da u LIS-u ne budu matchevi s istom vrijednoscu query -> pomocno polje)
-std::pair<int, int> find_LIS(std::vector <std::tuple <unsigned int, unsigned int>> &minimizer_matches) {
-	std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> tail(minimizer_matches.size()); //polje za biljezit LIS-a
+std::pair<int, int> find_LIS(std::vector <std::tuple <long long int, long long int>> &minimizer_matches) {
+	std::vector <std::tuple <long long int, long long int, long long int>> tail(minimizer_matches.size()); //polje za biljezit LIS-a
 	//polja su redom:
 	//	1. pozicija prvog matcha LIS-a u minimizer_matches
 	//	2. pozicija zadnjeg matcha LIS-a u minimizer_matches
 	//	3. zadnji element LIS-a
 
-	std::vector <std::tuple <unsigned int, unsigned int, unsigned int>> auxiliary_tail(minimizer_matches.size()); //pomocno polje, ovo polje sluzi kako bi eliminirali
+	std::vector <std::tuple <long long int, long long int, long long int>> auxiliary_tail(minimizer_matches.size()); //pomocno polje, ovo polje sluzi kako bi eliminirali
 														//pojavljivanje matcheva koji imaju istu vrijednost query
 
-	std::vector <unsigned int> changed_indexes; //vektor koji biljezi gdje su se dogodile promjene u tail tako da ih mozemo prepisati u auxiliary_tail
+	std::vector <long long int> changed_indexes; //vektor koji biljezi gdje su se dogodile promjene u tail tako da ih mozemo prepisati u auxiliary_tail
 						//umjesto uvijek da kad predemo sve matcheve koji imaju isti query_position prepisemo cijeli tail u
 						//auxiliary_tail mozemo samo prepisati promijenjene elemente
 	if (minimizer_matches.size() == 0)
 		return std::make_pair(-1, -1); //ako nema matcheva ne treba radit alignment
 
-	unsigned int length = 1; //broji duljinu LIS-a
-	unsigned int auxiliary_tail_length = 1; //velicina pomocnog polja
+	long long int length = 1; //broji duljinu LIS-a
+	long long int auxiliary_tail_length = 1; //velicina pomocnog polja
 
 	//minimizer_matches su sortirani po query_position(prva vrijednost) pa po target_position(druga vrijednost)
 	//kao prvi element LIS-a postavljamo match koji ima najmanju vrijednost target_position, ali
 	//gledamo samo one elemente s prvom (najmanjom) vrijednost query_position
 
-	unsigned int query_value_min = std::get<0>(minimizer_matches[0]);
-	unsigned int first_target_value_position = 0;
+	long long int query_value_min = std::get<0>(minimizer_matches[0]);
+	long long int first_target_value_position = 0;
 
-	for (unsigned int i = 1; query_value_min == std::get<0>(minimizer_matches[i]); i++)
+	for (long long int i = 1; query_value_min == std::get<0>(minimizer_matches[i]); i++)
 		if (std::get<1>(minimizer_matches[first_target_value_position]) < std::get<1>(minimizer_matches[i]))
 			first_target_value_position = i;
 
@@ -392,7 +381,7 @@ std::pair<int, int> find_LIS(std::vector <std::tuple <unsigned int, unsigned int
 
 	for (unsigned int i = 1; i < minimizer_matches.size(); i++) {
 
-		unsigned int target_position = std::get<1>(minimizer_matches[i]);
+		long long int target_position = std::get<1>(minimizer_matches[i]);
 
 		//manji od najmanjeg -> samo zamjenimo najmanji element
 		if (target_position <= std::get<2>(tail[0])) {
@@ -428,7 +417,7 @@ std::pair<int, int> find_LIS(std::vector <std::tuple <unsigned int, unsigned int
 		//2 -> ako ne, ne radimo nista
 
 		else {
-			unsigned int index = CeilIndex(tail, -1, length - 1, target_position);
+			long long int index = CeilIndex(tail, -1, length - 1, target_position);
 
 			if (std::get<0>(minimizer_matches[std::get<1>(tail[index - 1])]) != std::get<0>(minimizer_matches[i])) {
 				tail[index] = std::make_tuple(std::get<0>(tail[index - 1]), i, target_position);
@@ -539,7 +528,7 @@ std::string/* void */ LIS_alignment_PAF(std::vector <std::tuple <unsigned int, u
 						bool print_cigar
 ) {
 
-	std::pair <long long int, long long int> LIS_begin_end; //ovo su pozicije prvog i zadnjeg minimizer match-a LIS-a u match_group-u
+	std::pair <int, int> LIS_begin_end; //ovo su pozicije prvog i zadnjeg minimizer match-a LIS-a u match_group-u
 	std::string query;
 	unsigned int q_begin;
 	unsigned int q_end;
@@ -550,16 +539,44 @@ std::string/* void */ LIS_alignment_PAF(std::vector <std::tuple <unsigned int, u
 	unsigned int t_end;
 	unsigned int t_length;
 
-	LIS_begin_end = find_LIS(match_group);
+	std::vector <std::tuple <long long int, long long int>> auxiliary_match_group;
+
+	if (strand == '+') {
+		for (auto match : match_group)
+			auxiliary_match_group.emplace_back(std::make_tuple(std::get<0>(match), std::get<1>(match)));
+	}
+	else {
+                for (auto match : match_group)
+                        auxiliary_match_group.emplace_back(std::make_tuple((long long int) std::get<0>(match), (-1) * (long long int)std::get<1>(match)));
+        }
+
+	LIS_begin_end = find_LIS(auxiliary_match_group);
 
 	if (std::get<0>(LIS_begin_end) == -1 && std::get<1>(LIS_begin_end) == -1)
 		return "Empty";
 
-	q_begin = std::get<1>(match_group[std::get<0>(LIS_begin_end)]);
-	q_end = std::get<1>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1); //za jedan i drugi end treba dodat jos "k-1" jer se
-										//moramo pozicionirat na kraj zadnjeg minimizatora
+	if (strand == '+') {
+
+		q_begin = std::get<1>(match_group[std::get<0>(LIS_begin_end)]);
+		q_end = std::get<1>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1); //za jedan i drugi end treba dodat jos "k-1" jer se
+											//moramo pozicionirat na kraj zadnjeg minimizatora
+	}
+
+	else {
+
+		q_begin = std::get<1>(match_group[std::get<1>(LIS_begin_end)]);
+                q_end = std::get<1>(match_group[std::get<0>(LIS_begin_end)]) + (k - 1);
+
+	}
+
+	if (q_begin >= q_end)
+        	return "Empty";
+
 	t_begin = std::get<0>(match_group[std::get<0>(LIS_begin_end)]);
-	t_end = std::get<0>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1);
+        t_end = std::get<0>(match_group[std::get<1>(LIS_begin_end)]) + (k - 1);
+
+	if (t_begin >= t_end)
+                return "Empty";
 
 	std::ostringstream os;
 	std::string paf_sekvence;
