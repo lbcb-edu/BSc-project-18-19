@@ -197,16 +197,16 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
             regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
         }
 
-        std::cout << "tu smo" << std::endl;
+        /*std::cout << "tu smo" << std::endl;
         for(auto& j : regions) {
             std::cout << "(" << std::get<0>(j) << "," << std::get<1>(j) << "," << std::get<2>(j) << "," << std::get<3>(j) << "," << std::get<4>(j) << ") " <<std::endl;
-        }
+        }*/
 
         index = T2[len2];
         indexPrvi = T2[len2];
         indexZadnji = T2[len2];
 
-         while(index != -1) {
+         /*while(index != -1) {
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
             absV = absV < 0 ? absV*(-1) : absV;
             if (absV < 500)
@@ -219,6 +219,34 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
                 }
             indexZadnji = index;
             index = R2[index];
+        }*/
+
+        first=true;
+
+        while(index != -1) {
+            int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
+            absV = absV < 0 ? absV*(-1) : absV;
+            if (R2[index] != -1 && absV < 500){
+                if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
+                    indexZadnji = R2[index];
+                } else if (std::get<0>(input[index]) == std::get<0>(input[indexPrvi]) && first){
+                    indexZadnji = R2[index];
+                    first = false;
+                } else {
+                    indexPrvi = R2[index];
+                    first = true;
+                }
+            } else if (R2[index] != -1) {
+                regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+                indexPrvi = R2[index];
+                indexZadnji = R2[index];
+                first = true;
+            }
+            index = R2[index];
+        }
+
+        if(index != indexPrvi) {
+            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
         }
 
         int maxLength = 0;
@@ -496,7 +524,7 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
     int j=0;
     for(int z = thread_begin; z < thread_end; z++) {
             ++j;
-            std::unique_ptr<InputFile> i = first_object[z];
+            auto &i = first_object[z];
             std::cout << j << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             //continue;
