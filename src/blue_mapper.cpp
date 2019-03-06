@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -13,7 +14,6 @@
 #include <map>
 #include <set>
 #include <unordered_map>
-#include <cmath>
 #include "bioparser/bioparser.hpp"
 #include "thread_pool/thread_pool.hpp"
 #include "blue_alignment.hpp"
@@ -89,7 +89,7 @@ int ceilIndex(uubtuple input, int T[], int end, int s) {
         return -1;
 }
 
-std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(uubtuple input){
+std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input){
         int T[input.size()];
         int R[input.size()];
 
@@ -153,7 +153,9 @@ std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(u
         index = T[len];
 
         while(index != -1) {
-            if (R[index] != -1 && std::abs((std::get<0>(input[index]) - std::get<0>(input[R[index]])) - (std::get<1>(input[index]) - std::get<1>(input[R[index]])) > 500))
+            int absV = std::get<1>(input[index]) - std::get<0>(input[index]) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
+            if(absV < 0) absV = absV * (-1);
+            if (R[index] != -1 && absV < 500)
                 {
                     if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
                         regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 0);
@@ -178,7 +180,9 @@ std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(u
         indexZadnji = T2[len2];
 
          while(index != -1) {
-            if (R2[index] != -1 && std::abs((std::get<0>(input[index]) - std::get<0>(input[R2[index]])) - (std::get<1>(input[index]) - std::get<1>(input[R2[index]])) > 500))
+            int absV = std::get<1>(input[index]) - std::get<0>(input[index]) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
+            if(absV < 0) absV = absV * (-1);
+            if (R2[index] != -1 && absV < 500)
                 {
                     if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
                         regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 1);
@@ -189,7 +193,19 @@ std::vector<std::tuple<int, int, int, int, bool>> longestIncreasingSubSequence(u
             index = R2[index];
         }
 
-        return regions;
+        int maxLength = 0;
+        std::tuple<int, int, int, int, bool> maxTuple;
+        for(auto &i : regions) {
+            if(std::get<1>(i) - std::get<0>(i) > 4 && std::get<3>(i) - std::get<2>(i) > 4) {
+                if(std::get<3>(i) - std::get<2>(i) > maxLength){
+                    maxLength = std::get<3>(i) - std::get<2>(i);
+                    maxTuple = i;
+                }
+            } else
+                continue;
+        }
+
+        return maxTuple;
 }
 
 
@@ -383,53 +399,19 @@ int main (int argc, char* argv[]) {
         std::cout << "Cigar string: " << cigar << std::endl;
         std::cout << "Target begin: " << target_begin << std::endl;
 
-/*      std::unordered_map<unsigned int, int> occurences;
-        int j = 0;
-        for(auto& i : first_object) {
-            std::vector<std::tuple<unsigned int, unsigned int, bool>> sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
-            for (auto& minimizer : sequenceMinimizers)
-                ++occurences[std::get<0>(minimizer)];
-                std::cout << ++j << std::endl;
-        }
-
-        int distinctCounter = 0;
-        std::vector<std::pair<unsigned int, int>> nonDistinctMinimizers;
-       	std::unordered_map<unsigned int, int>::iterator it = occurences.begin();
-        while (it != occurences.end()) {
-            if(it->second == 1) ++distinctCounter;
-            else {
-                nonDistinctMinimizers.emplace_back(it->first, it->second);
-            }
-            it++;
-        }
-        std::cout << "Number of distinct minimizers: " << distinctCounter << std::endl;
-
-        typedef std::function<bool(std::pair<unsigned int, int>, std::pair<unsigned int, int>)> Comparator;
-        Comparator comparator =
-			[](std::pair<unsigned int, int> elem1, std::pair<unsigned int, int> elem2)
-			{
-				return elem1.second > elem2.second;
-			};
-
-        sort(nonDistinctMinimizers.begin(), nonDistinctMinimizers.end(), comparator);
-
-        std::cout << nonDistinctMinimizers.size() << std::endl;
-        int minimizer = f * nonDistinctMinimizers.size();
-        std::cout << "Number of occurences of the most frequent minimizer (without top f frequent minimizers): " << nonDistinctMinimizers[minimizer].second << std::endl;*/
-
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
         std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
 
         std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool(paralelization);
         std::vector<std::future<void>> thread_futures;
 
-        for (int i = 0; i < 1; ++i) {
-            thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), mapByValue, type));
+        for (int i = 0; i < paralelization; ++i) {
+            thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(paralelizationVector), std::ref(second_object), mapByValue, type));
         }
+
         for (auto& it: thread_futures) {
             it.wait();
         }
-
 
         return 0;
 }
@@ -469,12 +451,13 @@ uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned 
 }
 
 void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
-                        std::string type) {
+                        std::string type, int start, int length) {
     int j=0;
     for(auto& i : first_object) {
             ++j;
             std::cout << j << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
+            //continue;
 
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
 
@@ -483,55 +466,54 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             }
 
             sort(result.begin(), result.end(), comparator);
-            std::vector<std::tuple<int, int, int, int, bool>> positions = longestIncreasingSubSequence(result);
+            std::tuple<int, int, int, int, bool> position = longestIncreasingSubSequence(result);
 
+            if(std::get<0>(position) == 0 && std::get<1>(position) == 0) continue;
 
-            for(auto& position : positions){
-                unsigned int querySize = std::get<1>(position)-std::get<0>(position)+1;
-                unsigned int targetSize = std::get<3>(position)-std::get<2>(position)+1;
+            unsigned int querySize = std::get<1>(position)-std::get<0>(position)+1;
+            unsigned int targetSize = std::get<3>(position)-std::get<2>(position)+1;
 
-                std::string& aq = i->sequence;
-                std::string& tq = (second_object[0]->sequence);
+            std::string& aq = i->sequence;
+            std::string& tq = (second_object[0]->sequence);
 
-                std::string queryString = aq.substr(std::get<0>(position), querySize);
-                std::string targetString = tq.substr(std::get<2>(position), targetSize);
+            std::string queryString = aq.substr(std::get<0>(position), querySize);
+            std::string targetString = tq.substr(std::get<2>(position), targetSize);
 
-                std::string cigar1;
-                unsigned int target_begin1;
+            std::string cigar1;
+            unsigned int target_begin1;
 
-                blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
+            blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
 
-                //PAF FORMAT
-                std::string paf = i->name + '\t' + std::to_string((i->sequence).size()) + '\t' + std::to_string(std::get<0>(position)) + '\t' + std::to_string(std::get<1>(position)) + '\t';
-                paf += std::get<4>(position) == 0 ? '+' : '-';
-                paf = paf + '\t' + second_object[0]->name + '\t' + std::to_string((second_object[0]->sequence).size()) + '\t' + std::to_string(std::get<2>(position));
-                paf = paf + '\t' + std::to_string(std::get<3>(position)) +'\t';
+            //PAF FORMAT
+            std::string paf = i->name + '\t' + std::to_string((i->sequence).size()) + '\t' + std::to_string(std::get<0>(position)) + '\t' + std::to_string(std::get<1>(position)) + '\t';
+            paf += std::get<4>(position) == 0 ? '+' : '-';
+            paf = paf + '\t' + second_object[0]->name + '\t' + std::to_string((second_object[0]->sequence).size()) + '\t' + std::to_string(std::get<2>(position));
+            paf = paf + '\t' + std::to_string(std::get<3>(position)) +'\t';
 
-                std::string number;
-                int noOfMatches = 0;
-                int blockLength = 0;
+            std::string number;
+            int noOfMatches = 0;
+            int blockLength = 0;
 
-                for(char c : cigar1) {
-                    if(isdigit(c)) {
-                        number += c;
-                    } else if(c == '=') {
-                        noOfMatches += stoi(number);
-                        blockLength += stoi(number);
-                        number = "";
-                    } else {
-                        blockLength += stoi(number);
-                        number = "";
-                    }
+            for(char c : cigar1) {
+                if(isdigit(c)) {
+                    number += c;
+                } else if(c == '=') {
+                    noOfMatches += stoi(number);
+                    blockLength += stoi(number);
+                    number = "";
+                } else {
+                    blockLength += stoi(number);
+                    number = "";
                 }
-                paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
-                paf += (i->quality).empty() ? "255" : i->quality;
-
-                if(cCigar) {
-                    paf += "cg:Z:" + cigar1;
-                }
-
-                //std::cout << paf << std::endl;
             }
 
+            paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
+            paf += (i->quality).empty() ? "255\t" : i->quality;
+
+            if(cCigar) {
+                paf += "cg:Z:" + cigar1;
+            }
+
+            std::cout << paf << std::endl;
         }
 }
