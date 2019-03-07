@@ -106,6 +106,12 @@ namespace blue
 
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
 
+        /*for (int i = 0; i < query_length + 1; i++){
+            for(int j = 0; j < target_length + 1; j++){
+                printf("%d  ", matrix[i][j]);
+            } std::cout << "" << std::endl;
+        }*/
+
         create_cigar_string(matrix, query_length, target_length, cigar, target_begin, query, query_length, target);
         return matrix[query_length][target_length].value;
     }

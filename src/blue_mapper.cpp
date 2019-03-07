@@ -110,9 +110,9 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         for(int i=1; i < input.size(); i++){
 
             if(std::get<2>(input[i]) == 0) {
-                if(std::get<1>(input[T[0]]) > std::get<1>(input[i])){ //|| std::get<0>(input[T[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.*/
+                if(std::get<1>(input[T[0]]) > std::get<1>(input[i]) || std::get<0>(input[T[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.*/
                     T[0] = i;
-                }else if(std::get<1>(input[T[len]]) < std::get<1>(input[i])){ //&&  std::get<0>(input[T[len]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T*/
+                }else if(std::get<1>(input[T[len]]) < std::get<1>(input[i]) &&  std::get<0>(input[T[len]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T*/
                     len += 1;
                     T[len] = i;
                     R[T[len]] = T[len-1];
@@ -124,9 +124,9 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
                 }
 
             } else {
-                 if(std::get<1>(input[T2[0]]) > std::get<1>(input[i])){ //|| std::get<0>(input[T2[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.
+                 if(std::get<1>(input[T2[0]]) > std::get<1>(input[i]) || std::get<0>(input[T2[0]]) > std::get<0>(input[i])) { //if input[i] is less than 0th value of T then replace it there.
                     T2[0] = i;
-                }else if(std::get<1>(input[T2[len2]]) < std::get<1>(input[i])){ //&&  std::get<0>(input[T2[len2]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T
+                }else if(std::get<1>(input[T2[len2]]) < std::get<1>(input[i]) &&  std::get<0>(input[T2[len2]]) < std::get<0>(input[i])) { //if input[i] is greater than last value of T then append it in T
                     len2 += 1;
                     T2[len2] = i;
                     R2[T2[len2]] = T2[len2-1];
@@ -141,112 +141,47 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
 
         std::vector<std::tuple<int, int, int, int, bool>> regions;
         int index = T[len];
-        int indexPrvi = T[len];
-        int indexZadnji = T[len];
+        int pocetniIndex = T[len];
+        int krajnjiIndex = T[len];
 
-        /*std::cout << "gledaj mene" << std::endl;
-        while(index != -1) {
-           std::cout << std::get<0>(input[index]) <<"," << std::get<1>(input[index]) << "," << std::get<2>(input[index]) << std::endl;
-           std::cout << "Član " << R[index] << std::endl;
-            index = R[index];
-        }*/
-
-
-        /*while(index != -1) {
+        while(index != -1){
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
-            absV = absV < 0 ? absV*(-1) : absV;
-            if (absV < 500)
-                {
-                    if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
-                        regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 0);
-                    }
-                    indexPrvi = R[index];
-                }
-            indexZadnji = index;
-            index = R[index];
-        }*/
-
-        //NOVI POKUSAJ LIS-A
-
-        bool first=true;
-
-        while(index != -1) {
-            int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
-            absV = absV < 0 ? absV*(-1) : absV;
-            if (R[index] != -1 && absV < 500){
-                if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
-                    indexZadnji = R[index];
-                } else if (std::get<0>(input[index]) == std::get<0>(input[indexPrvi]) && first){
-                    indexZadnji = R[index];
-                    first = false;
-                } else {
-                    indexPrvi = R[index];
-                    first = true;
-                }
-            } else if (R[index] != -1) {
-                regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
-                indexPrvi = R[index];
-                indexZadnji = R[index];
-                first = true;
+            absV = absV < 0 ? (-1)*absV : absV;
+            if (absV < 500) {
+                krajnjiIndex = R[index];
+            } else {
+                if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
+                    regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 0);
+                pocetniIndex = R[index];
+                krajnjiIndex = R[index];
             }
             index = R[index];
         }
 
-        if(index != indexPrvi) {
-            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
-        }
+        if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
+            regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 0);
 
-        /*std::cout << "tu smo" << std::endl;
-        for(auto& j : regions) {
-            std::cout << "(" << std::get<0>(j) << "," << std::get<1>(j) << "," << std::get<2>(j) << "," << std::get<3>(j) << "," << std::get<4>(j) << ") " <<std::endl;
-        }*/
 
-        index = T2[len2];
-        indexPrvi = T2[len2];
-        indexZadnji = T2[len2];
+        index = T2[len];
+        pocetniIndex = T2[len];
+        krajnjiIndex = T2[len];
 
-         /*while(index != -1) {
+        while(index != -1){
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
-            absV = absV < 0 ? absV*(-1) : absV;
-            if (absV < 500)
-                {
-                    std::cout << "I'm in" << std::endl;
-                    if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
-                        regions.emplace_back(std::get<0>(input[index]), std::get<0>(input[indexPrvi]), std::get<1>(input[index]), std::get<1>(input[indexPrvi]), 1);
-                    }
-                    indexPrvi = R2[index];
-                }
-            indexZadnji = index;
-            index = R2[index];
-        }*/
-
-        first=true;
-
-        while(index != -1) {
-            int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
-            absV = absV < 0 ? absV*(-1) : absV;
-            if (R2[index] != -1 && absV < 500){
-                if(std::get<0>(input[index]) != std::get<0>(input[indexPrvi])) {
-                    indexZadnji = R2[index];
-                } else if (std::get<0>(input[index]) == std::get<0>(input[indexPrvi]) && first){
-                    indexZadnji = R2[index];
-                    first = false;
-                } else {
-                    indexPrvi = R2[index];
-                    first = true;
-                }
-            } else if (R2[index] != -1) {
-                regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
-                indexPrvi = R2[index];
-                indexZadnji = R2[index];
-                first = true;
+            absV = absV < 0 ? (-1)*absV : absV;
+            if (absV < 500) {
+                krajnjiIndex = R2[index];
+            } else {
+                if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
+                    regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 1);
+                pocetniIndex = R2[index];
+                krajnjiIndex = R2[index];
             }
             index = R2[index];
         }
 
-        if(index != indexPrvi) {
-            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
-        }
+        if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
+            regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 1);
 
         int maxLength = 0;
         std::tuple<int, int, int, int, bool> maxTuple;
@@ -446,6 +381,7 @@ int main (int argc, char* argv[]) {
 
         std::string& query = first_object[random_1]->sequence;
         std::string& target = first_object[random_2]->sequence;
+
         std::string cigar;
         unsigned int target_begin;
 
@@ -467,7 +403,7 @@ int main (int argc, char* argv[]) {
 
         for (int i = 0; i < paralelization; ++i) {
             thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), mapByValue, type, thread_begin, thread_end));
-            thread_begin = thread_end;
+            thread_begin = thread_end-1;
             thread_end = thread_begin + each_thread_work;
         }
 
@@ -475,11 +411,12 @@ int main (int argc, char* argv[]) {
            it.wait();
         }
 
-        uubtuple proba{ std::make_tuple(1, 2, false), std::make_tuple(2, 15, false), std::make_tuple(3000, 5000, false), std::make_tuple(3500, 5900, false) };
+        /*uubtuple proba{ std::make_tuple(1, 2, false), std::make_tuple(2, 15, false), std::make_tuple(3000, 5000, false), std::make_tuple(3000, 5400, false), std::make_tuple(3500, 5900, false) };
 
         std::tuple<int, int, int, int, bool> result = longestIncreasingSubSequence(proba);
 
-        std::cout << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;
+        std::cout << std::get<0>(result) << " " << std::get<1>(result) << " " << std::get<2>(result) << " " << std::get<3>(result) << std::endl;*/
+
 
         return 0;
 }
@@ -535,7 +472,12 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             }
 
             sort(result.begin(), result.end(), comparator);
+
+            std::cout << "tu" << std::endl;
+
             std::tuple<int, int, int, int, bool> position = longestIncreasingSubSequence(result);
+
+            std::cout << std::get<0>(position) << ", " << std::get<1>(position) << ", " << "blabla" << std::endl;
 
             if(std::get<0>(position) == 0 && std::get<1>(position) == 0) continue;
 
