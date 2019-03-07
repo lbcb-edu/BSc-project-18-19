@@ -151,7 +151,6 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
             index = R[index];
         }*/
 
-        index = T[len];
 
         /*while(index != -1) {
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
@@ -520,7 +519,7 @@ uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned 
 }
 
 void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
-                        std::string type, int start, int length, int thread_begin, int thread_end) {
+                        std::string type, int thread_begin, int thread_end) {
     int j=0;
     for(int z = thread_begin; z < thread_end; z++) {
             ++j;
