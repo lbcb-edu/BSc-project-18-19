@@ -46,10 +46,10 @@ class InputFile {
 };
 
 typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
-uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome);
-void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
+uubtuple findInGenome(uubtuple& sequenceMinimizers, const std::unordered_map<unsigned int, uubtuple>& mapGenome);
+void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, const std::unordered_map<unsigned int, uubtuple>& mapByValue,
             std::string type, int thread_begin, int thread_end);
-std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome);
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome);
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
     inline size_t operator()(const std::tuple<unsigned int, unsigned int, bool > &v) const {
@@ -144,7 +144,25 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         int pocetniIndex = T[len];
         int krajnjiIndex = T[len];
 
-        while(index != -1){
+
+        /*while(index != -1) {
+            int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
+            absV = absV < 0 ? absV*(-1) : absV;
+            if (R[index] != -1 && absV < 500){
+                indexZadnji = R[index];
+            } else {
+                regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+                indexPrvi = R[index];
+                indexZadnji = R[index];
+            }
+            index = R[index];
+        }
+
+        if(index != indexPrvi) {
+            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+        }*/
+
+        while(R[index] != -1){
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
             absV = absV < 0 ? (-1)*absV : absV;
             if (absV < 500) {
@@ -162,11 +180,31 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 0);
 
 
-        index = T2[len];
-        pocetniIndex = T2[len];
-        krajnjiIndex = T2[len];
+        index = T2[len2];
+        pocetniIndex = T2[len2];
+        krajnjiIndex = T2[len2];
 
-        while(index != -1){
+        std::cout << "index " << index << std::endl;
+
+
+        /*while(index != -1) {
+            int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
+            absV = absV < 0 ? absV*(-1) : absV;
+            if (R2[index] != -1 && absV < 500){
+                indexZadnji = R2[index];
+            } else {
+                regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+                indexPrvi = R2[index];
+                indexZadnji = R2[index];
+            }
+            index = R2[index];
+        }
+
+        if(index != indexPrvi) {
+            regions.emplace_back(std::get<0>(input[indexZadnji]), std::get<0>(input[indexPrvi]), std::get<1>(input[indexZadnji]), std::get<1>(input[indexPrvi]), 0);
+        }*/
+
+        while(R2[index] != -1){
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
             absV = absV < 0 ? (-1)*absV : absV;
             if (absV < 500) {
@@ -182,6 +220,7 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
 
         if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 1);
+
 
         int maxLength = 0;
         std::tuple<int, int, int, int, bool> maxTuple;
@@ -402,8 +441,8 @@ int main (int argc, char* argv[]) {
         int thread_end = each_thread_work + (first_object.size() % paralelization);
 
         for (int i = 0; i < paralelization; ++i) {
-            thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), mapByValue, type, thread_begin, thread_end));
-            thread_begin = thread_end-1;
+            thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), std::ref(mapByValue), type, thread_begin, thread_end));
+            thread_begin = thread_end+1;
             thread_end = thread_begin + each_thread_work;
         }
 
@@ -421,7 +460,7 @@ int main (int argc, char* argv[]) {
         return 0;
 }
 
-std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome) {
     std::unordered_map<unsigned int, uubtuple> mapa;
     for(auto &i : genome) {
         std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapa.find(std::get<0>(i));
@@ -439,7 +478,7 @@ std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple genome) {
     return mapa;
 }
 
-uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned int, uubtuple>& mapGenome) {
+uubtuple findInGenome(uubtuple& sequenceMinimizers, const std::unordered_map<unsigned int, uubtuple>& mapGenome) {
     uubtuple result;
     for(auto& i : sequenceMinimizers) {
         std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapGenome.find(std::get<0>(i));
@@ -455,13 +494,14 @@ uubtuple findInGenome(uubtuple& sequenceMinimizers, std::unordered_map<unsigned 
     return result;
 }
 
-void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, std::unordered_map<unsigned int, uubtuple> mapByValue,
-                        std::string type, int thread_begin, int thread_end) {
+void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, const std::unordered_map<unsigned int, uubtuple>& mapByValue,
+                        std::string type, int thread_begin, int thread_end) { //, std::vector<>& dst) {
     int j=0;
-    for(int z = thread_begin; z < thread_end; z++) {
+    //std::cout << j << std::endl;
+
+    for(int z = thread_begin; z <= thread_end; z++) {
             ++j;
             auto &i = first_object[z];
-            std::cout << j << std::endl;
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             //continue;
 
@@ -473,11 +513,7 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
 
             sort(result.begin(), result.end(), comparator);
 
-            std::cout << "tu" << std::endl;
-
             std::tuple<int, int, int, int, bool> position = longestIncreasingSubSequence(result);
-
-            std::cout << std::get<0>(position) << ", " << std::get<1>(position) << ", " << "blabla" << std::endl;
 
             if(std::get<0>(position) == 0 && std::get<1>(position) == 0) continue;
 
