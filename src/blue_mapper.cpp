@@ -144,6 +144,7 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         int pocetniIndex = T[len];
         int krajnjiIndex = T[len];
 
+        std::cout << "index1 " << index << std::endl;
 
         /*while(index != -1) {
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
@@ -179,12 +180,14 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 0);
 
+        std::cout << "prosao1" << std::endl;
+
 
         index = T2[len2];
         pocetniIndex = T2[len2];
         krajnjiIndex = T2[len2];
 
-        std::cout << "index " << index << std::endl;
+        std::cout << "index2 " << index << std::endl;
 
 
         /*while(index != -1) {
@@ -221,6 +224,8 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 1);
 
+        std::cout << "prosao2" << std::endl;
+
 
         int maxLength = 0;
         std::tuple<int, int, int, int, bool> maxTuple;
@@ -233,6 +238,8 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
             } else
                 continue;
         }
+
+        std::cout << "prosao kraj" << std::endl;
 
         return maxTuple;
 }
@@ -505,6 +512,8 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             //continue;
 
+            std::cout << "velicina sekvence " << (i->sequence).length() << std::endl;
+
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
 
             if (result.size() == 0) {
@@ -514,6 +523,8 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             sort(result.begin(), result.end(), comparator);
 
             std::tuple<int, int, int, int, bool> position = longestIncreasingSubSequence(result);
+
+            std::cout << "dobio sam rez " << std::get<0>(position) << " " << std::get<1>(position) << " " << std::get<2>(position) << " " << std::get<3>(position) << std::endl;
 
             if(std::get<0>(position) == 0 && std::get<1>(position) == 0) continue;
 
@@ -530,6 +541,8 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             unsigned int target_begin1;
 
             blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
+
+            std::cout << "vratio sam se iz alignmenta" << std::endl;
 
             //PAF FORMAT
             std::string paf = i->name + '\t' + std::to_string((i->sequence).size()) + '\t' + std::to_string(std::get<0>(position)) + '\t' + std::to_string(std::get<1>(position)) + '\t';
