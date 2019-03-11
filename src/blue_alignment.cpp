@@ -68,12 +68,8 @@ namespace blue
                                  int match, int mismatch, int gap,
                                  std::string &cigar, unsigned int &target_begin) {
 
-        std::cout << "usao u alignment" << std::endl;
-
         std::vector<std::vector<Cell>> matrix;
         matrix.resize(query_length+1, std::vector<Cell>(target_length+1));
-
-        std::cout << "resizeao sam matricu" << std::endl;
 
         std::pair<int, int> max_cell;
         max_cell.first = 0;
@@ -83,8 +79,6 @@ namespace blue
         AlignmentType type = local;
 
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
-
-        std::cout << "matrica je inicijalizirana" << std::endl;
 
         for(int i = 1; i < query_length+1; i++) {
             for(int j = 1; j<target_length+1; j++ ) {
@@ -98,11 +92,7 @@ namespace blue
         }
 
         create_cigar_string(matrix, max_cell.first, max_cell.second, cigar, target_begin, query, query_length, target);
-
         std::vector<std::vector<Cell>>().swap(matrix);
-
-        std::cout << "velicina matrice " << matrix.size() <<std::endl;
-
         return max_val;
     }
 
@@ -114,14 +104,7 @@ namespace blue
         matrix.resize(query_length+1, std::vector<Cell>(target_length+1));
 
         AlignmentType type = global;
-
         initialize_matrix(query, query_length, target, target_length, match, mismatch, gap, matrix, type);
-
-        /*for (int i = 0; i < query_length + 1; i++){
-            for(int j = 0; j < target_length + 1; j++){
-                printf("%d  ", matrix[i][j]);
-            } std::cout << "" << std::endl;
-        }*/
 
         create_cigar_string(matrix, query_length, target_length, cigar, target_begin, query, query_length, target);
         return matrix[query_length][target_length].value;
@@ -170,8 +153,6 @@ namespace blue
 
         matrix[0][0].value = 0;
         matrix[0][0].trace = 'n';
-
-        std::cout << "inicijaliziram" << std::endl;
 
         if (type == global) {
             for(int i = 1; i < query_length+1; i++) {

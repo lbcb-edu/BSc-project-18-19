@@ -144,8 +144,6 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         int pocetniIndex = T[len];
         int krajnjiIndex = T[len];
 
-        std::cout << "index1 " << index << std::endl;
-
         /*while(index != -1) {
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R[index]]) - std::get<0>(input[R[index]]));
             absV = absV < 0 ? absV*(-1) : absV;
@@ -180,15 +178,9 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 0);
 
-        std::cout << "prosao1" << std::endl;
-
-
         index = T2[len2];
         pocetniIndex = T2[len2];
         krajnjiIndex = T2[len2];
-
-        std::cout << "index2 " << index << std::endl;
-
 
         /*while(index != -1) {
             int absV = (std::get<1>(input[index]) - std::get<0>(input[index])) - (std::get<1>(input[R2[index]]) - std::get<0>(input[R2[index]]));
@@ -224,9 +216,6 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
         if (std::get<0>(input[pocetniIndex]) - std::get<0>(input[krajnjiIndex]) > 4 && std::get<1>(input[pocetniIndex]) - std::get<1>(input[krajnjiIndex]) > 4)
             regions.emplace_back(std::get<0>(input[krajnjiIndex]), std::get<0>(input[pocetniIndex]), std::get<1>(input[krajnjiIndex]), std::get<1>(input[pocetniIndex]), 1);
 
-        std::cout << "prosao2" << std::endl;
-
-
         int maxLength = 0;
         std::tuple<int, int, int, int, bool> maxTuple;
         for(auto &i : regions) {
@@ -238,8 +227,6 @@ std::tuple<int, int, int, int, bool> longestIncreasingSubSequence(uubtuple input
             } else
                 continue;
         }
-
-        std::cout << "prosao kraj" << std::endl;
 
         return maxTuple;
 }
@@ -512,8 +499,6 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
             //continue;
 
-            std::cout << "velicina sekvence " << (i->sequence).length() << std::endl;
-
             uubtuple result = findInGenome(sequenceMinimizers, mapByValue);
 
             if (result.size() == 0) {
@@ -521,11 +506,7 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             }
 
             sort(result.begin(), result.end(), comparator);
-
             std::tuple<int, int, int, int, bool> position = longestIncreasingSubSequence(result);
-
-            std::cout << "dobio sam rez " << std::get<0>(position) << " " << std::get<1>(position) << " " << std::get<2>(position) << " " << std::get<3>(position) << std::endl;
-
             if(std::get<0>(position) == 0 && std::get<1>(position) == 0) continue;
 
             unsigned int querySize = std::get<1>(position)-std::get<0>(position)+1;
@@ -537,43 +518,47 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             std::string queryString = aq.substr(std::get<0>(position), querySize);
             std::string targetString = tq.substr(std::get<2>(position), targetSize);
 
-            std::string cigar1;
-            unsigned int target_begin1;
-
-            //blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
-
-            std::cout << "vratio sam se iz alignmenta" << std::endl;
-
             //PAF FORMAT
             std::string paf = i->name + '\t' + std::to_string((i->sequence).size()) + '\t' + std::to_string(std::get<0>(position)) + '\t' + std::to_string(std::get<1>(position)) + '\t';
             paf += std::get<4>(position) == 0 ? '+' : '-';
             paf = paf + '\t' + second_object[0]->name + '\t' + std::to_string((second_object[0]->sequence).size()) + '\t' + std::to_string(std::get<2>(position));
             paf = paf + '\t' + std::to_string(std::get<3>(position)) +'\t';
 
-            std::string number;
-            int noOfMatches = 0;
-            int blockLength = 0;
-
-            for(char c : cigar1) {
-                if(isdigit(c)) {
-                    number += c;
-                } else if(c == '=') {
-                    noOfMatches += stoi(number);
-                    blockLength += stoi(number);
-                    number = "";
-                } else {
-                    blockLength += stoi(number);
-                    number = "";
-                }
-            }
-
-            paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
-            paf += (i->quality).empty() ? "255\t" : i->quality;
+            std::string cigar1;
+            unsigned int target_begin1;
 
             if(cCigar) {
-                paf += "cg:Z:" + cigar1;
-            }
+                blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
 
+                std::string number;
+                int noOfMatches = 0;
+                int blockLength = 0;
+
+                for(char c : cigar1) {
+                    if(isdigit(c)) {
+                        number += c;
+                    } else if(c == '=') {
+                        noOfMatches += stoi(number);
+                        blockLength += stoi(number);
+                        number = "";
+                    } else {
+                        blockLength += stoi(number);
+                        number = "";
+                    }
+                }
+
+                paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
+                paf += (i->quality).empty() ? "255\t" : i->quality;
+                paf += "cg:Z:" + cigar1;
+
+            } else {
+                int estimatedNoOfMatches = std::get<1>(position) - std::get<0>(position);
+                int noOfMatches = estimatedNoOfMatches;
+                int blockLength = estimatedNoOfMatches;
+
+                paf += std::to_string(noOfMatches) + '\t' + std::to_string(blockLength) + '\t';
+                paf += (i->quality).empty() ? "255\t" : i->quality;
+            }
             std::cout << paf << std::endl;
         }
 }
