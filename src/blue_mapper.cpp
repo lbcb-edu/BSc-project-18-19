@@ -540,7 +540,7 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
             std::string cigar1;
             unsigned int target_begin1;
 
-            blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
+            //blue::pairwise_alignment(queryString.c_str(), querySize, targetString.c_str(), targetSize, blue::getType(type), match, mismatch, gap, cigar1, target_begin1);
 
             std::cout << "vratio sam se iz alignmenta" << std::endl;
 
