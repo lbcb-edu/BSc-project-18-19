@@ -436,7 +436,7 @@ int main (int argc, char* argv[]) {
 
         for (int i = 0; i < paralelization; ++i) {
             thread_futures.emplace_back(thread_pool->submit_task(finalCountdown, std::ref(first_object), std::ref(second_object), std::ref(mapByValue), type, thread_begin, thread_end));
-            thread_begin = thread_end+1;
+            thread_begin = thread_end;
             thread_end = thread_begin + each_thread_work;
         }
 
@@ -493,7 +493,7 @@ void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::
     int j=0;
     //std::cout << j << std::endl;
 
-    for(int z = thread_begin; z <= thread_end; z++) {
+    for(int z = thread_begin; z < thread_end; z++) {
             ++j;
             auto &i = first_object[z];
             uubtuple sequenceMinimizers = blue::minimizers(i->sequence.c_str(), (i->sequence).length(), kmer_length, window_length);
