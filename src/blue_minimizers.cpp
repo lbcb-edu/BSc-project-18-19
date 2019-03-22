@@ -141,12 +141,12 @@ namespace blue
                 return minimizerSet;
             }
             if (std::get<0>(current) == minimum) {
-                minimizerSet.emplace_back(minimum, position+window_length-1, isOriginal);
+                minimizerSet.emplace_back(minimum, position + window_length - 1 , isOriginal);   //pozicije na rk trebaju ici obrnuto!
                 return minimizerSet;
             }
         }
 
-        minimizerSet.emplace_back(minimum, position+window_length-1, isOriginal);
+        minimizerSet.emplace_back(minimum, position + window_length - 1 , isOriginal);   //pozicije na rk trebaju ici obrnuto2
 
         for(int i = 1; i <= window_length; i++) {
             unsigned int bitResult = kMers & mask;
@@ -157,7 +157,7 @@ namespace blue
                 minimizerSet.clear();
             }
 
-            minimizerSet.emplace_back(bitResult, position+window_length-i, isOriginal);
+            minimizerSet.emplace_back(bitResult, position + window_length - 1 , isOriginal);
         }
         return minimizerSet;
     }

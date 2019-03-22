@@ -49,7 +49,7 @@ typedef std::vector<std::tuple<unsigned int, unsigned int, bool>> uubtuple;
 uubtuple findInGenome(uubtuple& sequenceMinimizers, const std::unordered_map<unsigned int, uubtuple>& mapGenome);
 void finalCountdown(std::vector<std::unique_ptr<InputFile>>& first_object, std::vector<std::unique_ptr<InputFile>>& second_object, const std::unordered_map<unsigned int, uubtuple>& mapByValue,
             std::string type, int thread_begin, int thread_end);
-std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome);
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome, unsigned int length);
 namespace std {
 template <> struct hash<std::tuple<unsigned int, unsigned int, bool >> {
     inline size_t operator()(const std::tuple<unsigned int, unsigned int, bool > &v) const {
@@ -424,7 +424,7 @@ int main (int argc, char* argv[]) {
         std::cout << "Target begin: " << target_begin << std::endl;
 
         uubtuple genomeMinimizers = blue::minimizers(second_object[0]->sequence.c_str(), (second_object[0]->sequence).length(), kmer_length, window_length);
-        std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers);
+        std::unordered_map<unsigned int, uubtuple> mapByValue = makeMap(genomeMinimizers, (second_object[0]->sequence).length());
 
         std::shared_ptr<thread_pool::ThreadPool> thread_pool = thread_pool::createThreadPool(paralelization);
         std::vector<std::future<void>> thread_futures;
@@ -454,9 +454,13 @@ int main (int argc, char* argv[]) {
         return 0;
 }
 
-std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome) {
+std::unordered_map<unsigned int, uubtuple> makeMap(uubtuple& genome, unsigned int length) {
     std::unordered_map<unsigned int, uubtuple> mapa;
     for(auto &i : genome) {
+        if (!std::get<2>(i)){
+            std::get<1>(i) = length - std::get<1>(i) - 1;
+        }
+
         std::unordered_map<unsigned int, uubtuple>::const_iterator got = mapa.find(std::get<0>(i));
         if ( got == mapa.end() ) {
             uubtuple novi;
