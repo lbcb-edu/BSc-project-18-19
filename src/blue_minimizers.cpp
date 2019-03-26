@@ -157,7 +157,7 @@ namespace blue
                 minimizerSet.clear();
             }
 
-            minimizerSet.emplace_back(bitResult, position + window_length - 1 , isOriginal);
+            minimizerSet.emplace_back(bitResult, position + window_length - i , isOriginal);
         }
         return minimizerSet;
     }
